@@ -1,26 +1,114 @@
 @import "tailwindcss";
 
+/* BookCringe Design Tokens — extracted from brand logo */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Brand palette */
+  --bc-cream: #F7F3EC;
+  --bc-ink: #1A1A1A;
+  --bc-red: #E8302A;
+  --bc-red-dark: #C4241E;
+  --bc-red-light: #F5534E;
+  --bc-white: #FFFFFF;
+  --bc-muted: #6B6B6B;
+  --bc-border: #E5E0D8;
+  --bc-surface: #F0EBE2;
+
+  /* Semantics */
+  --background: var(--bc-cream);
+  --foreground: var(--bc-ink);
+  --accent: var(--bc-red);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
+
+  /* Brand colors as Tailwind utilities */
+  --color-cream: var(--bc-cream);
+  --color-ink: var(--bc-ink);
+  --color-brand: var(--bc-red);
+  --color-brand-dark: var(--bc-red-dark);
+  --color-brand-light: var(--bc-red-light);
+  --color-muted: var(--bc-muted);
+  --color-border: var(--bc-border);
+  --color-surface: var(--bc-surface);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Base */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  line-height: 1.6;
 }
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+/* Focus */
+:focus-visible {
+  outline: 2px solid var(--bc-red);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Selection */
+::selection {
+  background: var(--bc-red);
+  color: var(--bc-white);
+}
+
+/* Animations */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.6s ease forwards;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease forwards;
+}
+
+/* Stagger utility for children */
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 80ms; }
+.stagger > *:nth-child(3) { animation-delay: 160ms; }
+.stagger > *:nth-child(4) { animation-delay: 240ms; }
+.stagger > *:nth-child(5) { animation-delay: 320ms; }
+.stagger > *:nth-child(6) { animation-delay: 400ms; }
+.stagger > *:nth-child(7) { animation-delay: 480ms; }
+.stagger > *:nth-child(8) { animation-delay: 560ms; }

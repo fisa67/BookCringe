@@ -1,0 +1,17 @@
+{
+  "name": "BookCringe",
+  "short_name": "BookCringe",
+  "description": "Cringe por fora, cult por dentro.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F7F3EC",
+  "theme_color": "#E8302A",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

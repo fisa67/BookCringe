@@ -1,36 +1,93 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BookCringe
 
-## Getting Started
+> **"Cringe por fora, cult por dentro."**
 
-First, run the development server:
+Plataforma literária brasileira. Vídeos, resenhas, estatísticas, clube de leitura e conteúdo para redes sociais.
+
+---
+
+## Stack
+
+- **Next.js 16** (App Router, Static Generation)
+- **React 19** + **TypeScript**
+- **Tailwind CSS v4**
+- **Geist** (fonte principal)
+
+---
+
+## Iniciar o projeto
 
 ```bash
+# Instalar dependências
+npm install
+
+# Servidor de desenvolvimento
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# Build de produção
+npm run build
+
+# Servir o build
+npm start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Acesse em [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Estrutura
 
-## Learn More
+```
+src/
+├── app/                    # Rotas (Next.js App Router)
+│   ├── page.tsx            # Home
+│   ├── sobre/
+│   ├── biblioteca/
+│   ├── clube-de-leitura/
+│   ├── estatisticas/
+│   ├── trabalhe-comigo/
+│   └── contato/
+│
+├── components/
+│   ├── layout/             # Header, Footer
+│   ├── ui/                 # Button, Card, Badge, SectionHeader, PageHero
+│   └── home/               # Hero, StatsSection, AboutSection, RecentReads, ClubCTA
+│
+├── data/
+│   └── mock/               # Dados mock (substituir por API/Bookly)
+│
+└── lib/
+    ├── constants.ts        # Nome do site, navegação, redes sociais
+    ├── types.ts            # Tipos globais (Book, ReadingStats, etc.)
+    └── utils.ts            # cn(), formatNumber(), slugify(), etc.
+```
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Identidade visual
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Extraída diretamente da logo oficial. Tokens em `src/app/globals.css`:
 
-## Deploy on Vercel
+| Token | Valor | Uso |
+|---|---|---|
+| `--bc-cream` | `#F7F3EC` | Background principal |
+| `--bc-ink` | `#1A1A1A` | Texto e elementos escuros |
+| `--bc-red` | `#E8302A` | Cor de destaque (brand) |
+| `--bc-muted` | `#6B6B6B` | Textos secundários |
+| `--bc-border` | `#E5E0D8` | Bordas e divisores |
+| `--bc-surface` | `#F0EBE2` | Backgrounds de seção |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Roadmap futuro
+
+- [ ] Integração com API do **Bookly**
+- [ ] Blog / Resenhas (MDX ou CMS headless)
+- [ ] Newsletter (Resend ou Mailchimp)
+- [ ] Sistema de busca na biblioteca
+- [ ] Filtros avançados (gênero, país, autor, ano)
+- [ ] Timeline de leituras
+- [ ] Área para editoras / formulário de envio de livros
+- [ ] Mídia Kit para download
+- [ ] Dashboard de leitura em tempo real
+- [ ] Autenticação (área de membros do clube)
