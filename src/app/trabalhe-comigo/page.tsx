@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { PageHero } from "@/components/ui/PageHero";
-import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { TrabalheComigoForm } from "@/components/forms/TrabalheComigoForm";
 
 export const metadata: Metadata = {
   title: "Trabalhe Comigo",
@@ -107,18 +106,19 @@ export default function TrabalheComigoPage() {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* Form */}
       <section className="py-20 px-6">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-[var(--bc-ink)] mb-4">
-            Interessado em uma parceria?
-          </h2>
-          <p className="text-[var(--bc-muted)] mb-8 leading-relaxed">
-            Entre em contato com detalhes do projeto, produto ou ideia. Responderei em até 5 dias úteis.
-          </p>
-          <Link href="/contato">
-            <Button size="lg">Entrar em contato</Button>
-          </Link>
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold text-[var(--bc-ink)] mb-4">
+              Interessado em uma parceria?
+            </h2>
+            <p className="text-[var(--bc-muted)] leading-relaxed">
+              Preencha o formulário com detalhes do projeto, produto ou ideia.
+              Responderei em até 5 dias úteis.
+            </p>
+          </div>
+          <TrabalheComigoForm />
         </div>
       </section>
     </>

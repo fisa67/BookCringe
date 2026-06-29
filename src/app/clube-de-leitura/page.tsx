@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHero } from "@/components/ui/PageHero";
 import { Button } from "@/components/ui/Button";
+import { ClubeInteresseForm } from "@/components/forms/ClubeInteresseForm";
 import { mockClubSessions } from "@/data/mock/stats";
 
 export const metadata: Metadata = {
@@ -74,9 +75,11 @@ export default function ClubePage() {
                         {session.description}
                       </p>
                     )}
-                    <Button variant="primary" size="md">
-                      Quero participar
-                    </Button>
+                    <Link href="/contato">
+                      <Button variant="primary" size="md">
+                        Quero participar
+                      </Button>
+                    </Link>
                   </div>
                   <div className="text-right">
                     <p className="text-4xl font-bold text-white/10 select-none">
@@ -136,16 +139,16 @@ export default function ClubePage() {
 
       {/* CTA */}
       <section className="py-16 px-6">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-[var(--bc-ink)] mb-4">
-            Quer ser avisado das próximas edições?
-          </h2>
-          <p className="text-[var(--bc-muted)] mb-8 leading-relaxed">
-            Deixe seu contato e te avisamos quando a inscrição para a próxima sessão abrir.
-          </p>
-          <Link href="/contato">
-            <Button size="lg">Quero ser avisado</Button>
-          </Link>
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold text-[var(--bc-ink)] mb-4">
+              Quer ser avisado das próximas edições?
+            </h2>
+            <p className="text-[var(--bc-muted)] leading-relaxed">
+              Deixe seu contato e te avisamos quando a inscrição para a próxima sessão abrir.
+            </p>
+          </div>
+          <ClubeInteresseForm />
         </div>
       </section>
     </>
