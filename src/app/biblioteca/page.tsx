@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { PageHero } from "@/components/ui/PageHero";
 import { Badge } from "@/components/ui/Badge";
 import { mockRecentBooks } from "@/data/mock/stats";
-import type { Book } from "@/lib/types";
+import type { DetailedBook } from "@/lib/types";
+import { BookCard as GlobalBookCard } from "@/components/book/BookCard";
 
 export const metadata: Metadata = {
   title: "Biblioteca",
@@ -14,29 +15,24 @@ const allGenres = Array.from(
   new Set(mockRecentBooks.flatMap((b) => b.genre ?? []))
 ).sort();
 
-function BookCard({ book }: { book: Book }) {
+function LibraryBookCard({ book }: { book: DetailedBook }) {
   return (
-    <div className="group p-5 rounded-xl border border-[var(--bc-border)] bg-white hover:border-[var(--bc-ink)]/20 hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3">
-      <div className="w-full h-40 rounded-lg bg-[var(--bc-surface)] flex items-center justify-center shrink-0">
-        <span className="text-4xl select-none">📖</span>
-      </div>
-      <div className="flex-1 flex flex-col gap-1.5">
-        <h3 className="font-bold text-[var(--bc-ink)] text-sm leading-tight line-clamp-2">
-          {book.title}
-        </h3>
-        <p className="text-xs text-[var(--bc-muted)]">{book.author}</p>
-        {book.country && (
-          <p className="text-xs text-[var(--bc-muted)]">{book.country}</p>
-        )}
-        {typeof book.rating === "number" && (
-          <div className="flex items-center gap-1 mt-1">
-            <span className="text-[var(--bc-red)] text-sm">{"★".repeat(book.rating)}</span>
-            <span className="text-[var(--bc-border)] text-sm">{"★".repeat(5 - book.rating)}</span>
-          </div>
-        )}
-      </div>
+    <GlobalBookCard book={book} clubHref="/biblioteca" clubLabel="Ver detalhes">
+      {typeof book.rating === "number" && (
+        <div className="flex items-center gap-1" role="img" aria-label={`${book.rating} de 5 estrelas`}>
+          <span className="text-[var(--bc-red)] text-sm" aria-hidden="true">
+            {"★".repeat(book.rating)}
+          </span>
+          <span className="text-[var(--bc-border)] text-sm" aria-hidden="true">
+            {"★".repeat(5 - book.rating)}
+          </span>
+        </div>
+      )}
+      {book.country && (
+        <p className="text-xs text-[var(--bc-muted)]">{book.country}</p>
+      )}
       {book.genre && (
-        <div className="flex flex-wrap gap-1 mt-auto">
+        <div className="flex flex-wrap gap-1">
           {book.genre.slice(0, 2).map((g) => (
             <Badge key={g} variant="muted">
               {g}
@@ -44,7 +40,7 @@ function BookCard({ book }: { book: Book }) {
           ))}
         </div>
       )}
-    </div>
+    </GlobalBookCard>
   );
 }
 
@@ -78,7 +74,7 @@ export default function BibliotecaPage() {
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 stagger">
             {mockRecentBooks.map((book) => (
-              <BookCard key={book.id} book={book} />
+              <LibraryBookCard key={book.id} book={book} />
             ))}
           </div>
 

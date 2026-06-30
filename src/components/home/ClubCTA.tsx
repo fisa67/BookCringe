@@ -1,13 +1,19 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
-import { mockClubSessions } from "@/data/mock/stats";
+import { getFeaturedBook } from "@/lib/bookclub";
+import { bookclub2026 } from "@/data/bookclub2026";
+import { featuredBook } from "@/data/featuredBook";
+import { BookCover } from "@/components/book/BookCover";
+import { BookCTA } from "@/components/book/BookCTA";
 
 export function ClubCTA() {
-  const next = mockClubSessions.find((s) => s.isUpcoming);
+  const book = getFeaturedBook({ override: featuredBook, books: bookclub2026 });
 
   return (
     <section className="py-20 px-6 bg-[var(--bc-ink)]">
       <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+
+        {/* ── Left: club pitch */}
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-[var(--bc-red)] mb-3">
             Clube de Leitura
@@ -26,26 +32,46 @@ export function ClubCTA() {
           </Link>
         </div>
 
-        {next && (
+        {/* ── Right: featured book (dynamic) */}
+        {book && (
           <div className="rounded-xl border border-white/10 bg-white/5 p-6">
-            <p className="text-xs font-semibold uppercase tracking-widest text-[var(--bc-red)] mb-4">
-              Próxima sessão
+            <p className="text-xs font-semibold uppercase tracking-widest text-[var(--bc-red)] mb-5">
+              Lendo agora
             </p>
-            <h3 className="text-xl font-bold text-white mb-1">{next.book.title}</h3>
-            <p className="text-white/50 text-sm mb-4">{next.book.author}</p>
-            {next.theme && (
-              <p className="text-white/70 text-sm mb-1 font-medium">Tema: {next.theme}</p>
-            )}
-            {next.description && (
-              <p className="text-white/50 text-sm leading-relaxed">{next.description}</p>
-            )}
-            <p className="mt-4 text-xs text-white/30">
-              {new Date(next.date).toLocaleDateString("pt-BR", {
-                day: "2-digit",
-                month: "long",
-                year: "numeric",
-              })}
-            </p>
+
+            <div className="flex gap-5 items-start">
+              {/* Cover */}
+              <div className="w-20 shrink-0">
+                <div className="aspect-[3/4] rounded-md overflow-hidden">
+                  <BookCover
+                    title={book.title}
+                    cover={book.cover}
+                    amazonUrl={book.amazonUrl}
+                    width={80}
+                    height={112}
+                    className="aspect-[3/4]"
+                  />
+                </div>
+              </div>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0 flex flex-col gap-3">
+                <div>
+                  <h3 className="text-lg font-bold text-white leading-tight line-clamp-2">
+                    {book.title}
+                  </h3>
+                  <p className="text-white/50 text-sm mt-0.5">{book.author}</p>
+                </div>
+
+                {/* CTA: Amazon + club page */}
+                <BookCTA
+                  amazonUrl={book.amazonUrl}
+                  clubHref="/clube-de-leitura"
+                  clubLabel="Ver no clube"
+                  size="sm"
+                />
+              </div>
+            </div>
           </div>
         )}
       </div>

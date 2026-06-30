@@ -1,4 +1,4 @@
-import type { ReadingStats, Book, ClubSession } from "@/lib/types";
+import type { ReadingStats, DetailedBook, ClubSession } from "@/lib/types";
 
 export const mockStats: ReadingStats = {
   booksRead: 47,
@@ -12,7 +12,7 @@ export const mockStats: ReadingStats = {
   annualProgress: 47,
 };
 
-export const mockRecentBooks: Book[] = [
+export const mockRecentBooks: DetailedBook[] = [
   {
     id: "1",
     title: "A Metamorfose",
@@ -23,7 +23,8 @@ export const mockRecentBooks: Book[] = [
     genre: ["Ficção", "Clássico"],
     country: "Alemanha",
     readAt: "2024-11-15",
-    status: "read",
+    status: "finished",
+    amazonUrl: "https://www.amazon.com.br/dp/6556392975",
   },
   {
     id: "2",
@@ -35,7 +36,8 @@ export const mockRecentBooks: Book[] = [
     genre: ["Romance Contemporâneo", "Drama"],
     country: "Irlanda",
     readAt: "2024-10-28",
-    status: "read",
+    status: "finished",
+    amazonUrl: "https://www.amazon.com.br/dp/0571334650",
   },
   {
     id: "3",
@@ -47,7 +49,8 @@ export const mockRecentBooks: Book[] = [
     genre: ["Fantasia", "Clássico"],
     country: "Reino Unido",
     readAt: "2024-09-10",
-    status: "read",
+    status: "finished",
+    amazonUrl: "https://www.amazon.com.br/dp/8533613377",
   },
   {
     id: "4",
@@ -59,7 +62,8 @@ export const mockRecentBooks: Book[] = [
     genre: ["Ficção Brasileira", "Drama"],
     country: "Brasil",
     readAt: "2024-08-22",
-    status: "read",
+    status: "finished",
+    amazonUrl: "https://www.amazon.com.br/dp/6587234109",
   },
 ];
 
