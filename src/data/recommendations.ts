@@ -1,127 +1,146 @@
 /**
  * BookCringe — Recomendações curatoriais
  *
- * Para adicionar uma capa real:
- *   cover: "https://covers.openlibrary.org/b/isbn/ISBN_AQUI-L.jpg"
- *   (substitua ISBN_AQUI pelo ISBN-13 do livro)
+ * Esta lista representa os livros em destaque no BookCringe.
+ * Não é a biblioteca completa do Filipe.
  *
- * Para adicionar link Amazon:
- *   amazonUrl: "https://www.amazon.com.br/dp/ASIN_AQUI"
+ * Os livros exibidos aqui podem possuir:
+ * - Reel publicado
+ * - Resenha
+ * - Conteúdo especial
+ * - Parceria com editora
+ *
+ * Para adicionar capa local:
+ * cover: "/books/covers/nome-do-arquivo.jpg"
  */
 
 import type { Book } from "@/lib/types";
 
 export interface RecommendedBook extends Book {
   id: string;
-  /** Breve descrição editorial (1–2 frases) */
   blurb: string;
-  /** Tags para filtro futuro */
   tags: string[];
-  /** Ano de publicação original */
   year?: number;
 }
 
 export const recommendations: RecommendedBook[] = [
   {
-    id: "rec-01",
-    title: "Torto Arado",
-    author: "Itamar Vieira Junior",
-    blurb:
-      "Épico e lírico sobre duas irmãs que crescem em terras áridas do sertão baiano. Um dos mais importantes romances brasileiros recentes.",
-    tags: ["Ficção Brasileira", "Drama", "Premiado"],
-    year: 2019,
+    id: "morte-ivan-ilitch",
+    title: "A Morte de Ivan Ilitch",
+    author: "Liev Tolstói",
+    blurb: "Uma das novelas mais impactantes sobre vida, morte e sentido da existência.",
+    tags: ["Clássico", "Literatura Russa"],
     status: "finished",
-    amazonUrl: "https://www.amazon.com.br/dp/6587234109",
-    cover: "https://covers.openlibrary.org/b/isbn/9786587234106-L.jpg",
+    cover: "/books/covers/a-morte-de-ivan-ilitch.jpg",
   },
+
   {
-    id: "rec-02",
-    title: "A Menina que Roubava Livros",
-    author: "Markus Zusak",
-    blurb:
-      "Narrada pela Morte, uma história sobre palavras, guerra e a força da leitura como ato de resistência.",
-    tags: ["Ficção Histórica", "YA", "Emocionante"],
-    year: 2005,
+    id: "segredo-final",
+    title: "O Segredo Final",
+    author: "Dan Brown",
+    blurb: "Suspense repleto de códigos, inteligência artificial e reviravoltas.",
+    tags: ["Suspense", "Mistério"],
     status: "finished",
-    amazonUrl: "https://www.amazon.com.br/dp/8501079472",
-    cover: "https://covers.openlibrary.org/b/isbn/9780375842207-L.jpg",
+    cover: "/books/covers/o-segredo-final.jpg",
   },
+
   {
-    id: "rec-03",
-    title: "Normal People",
-    author: "Sally Rooney",
-    blurb:
-      "Dois jovens irlandeses que se atraem e se afastam ao longo dos anos. Romance contemporâneo e preciso sobre classe, amor e identidade.",
-    tags: ["Romance Contemporâneo", "Drama"],
-    year: 2018,
+    id: "walking-the-talk",
+    title: "Walking the Talk",
+    author: "Carolyn Taylor",
+    blurb: "Como líderes transformam cultura através do exemplo.",
+    tags: ["Liderança", "Negócios"],
     status: "finished",
-    amazonUrl: "https://www.amazon.com.br/dp/0571334650",
+    cover: "/books/covers/walking-the-talk.jpg",
   },
+
   {
-    id: "rec-04",
-    title: "Sapiens: Uma Breve História da Humanidade",
+    id: "maquina-do-caos",
+    title: "A Máquina do Caos",
+    author: "Max Fisher",
+    blurb: "Uma investigação sobre redes sociais, polarização e manipulação.",
+    tags: ["Tecnologia", "Sociedade"],
+    status: "finished",
+    cover: "/books/covers/a-maquina-do-caos.jpg",
+  },
+
+  {
+    id: "era-da-influencia",
+    title: "A Era da Influência",
+    author: "João Pedro Paes Leme",
+    blurb: "Os bastidores da creator economy e do marketing de influência.",
+    tags: ["Marketing", "Negócios"],
+    status: "finished",
+    cover: "/books/covers/a-era-da-influencia.jpg",
+  },
+
+  {
+    id: "vicio-dos-livros",
+    title: "O Vício dos Livros",
+    author: "Afonso Cruz",
+    blurb: "Uma apaixonante homenagem aos leitores e ao universo dos livros.",
+    tags: ["Literatura", "Livros"],
+    status: "finished",
+    cover: "/books/covers/o-vicio-dos-livros.jpg",
+  },
+
+  {
+    id: "knulp",
+    title: "Knulp",
+    author: "Hermann Hesse",
+    blurb: "Um clássico sobre liberdade, caminhos e escolhas.",
+    tags: ["Clássico", "Literatura Alemã"],
+    status: "finished",
+    cover: "/books/covers/knulp.jpg",
+  },
+
+  {
+    id: "leading-with-the-heart",
+    title: "Liderando com o Coração",
+    author: "Mike Krzyzewski",
+    blurb: "Lições de liderança do lendário técnico Coach K.",
+    tags: ["Liderança", "Esportes"],
+    status: "finished",
+    cover: "/books/covers/leading-with-the-heart.jpg",
+  },
+
+  {
+    id: "nexus",
+    title: "Nexus",
     author: "Yuval Noah Harari",
-    blurb:
-      "Uma jornada de 70 mil anos pela história da nossa espécie. Essencial e perturbador.",
-    tags: ["Não-ficção", "História", "Ciência"],
-    year: 2011,
+    blurb: "Uma reflexão sobre informação, redes e o futuro da humanidade.",
+    tags: ["História", "Tecnologia"],
     status: "finished",
-    amazonUrl: "https://www.amazon.com.br/dp/8535922909",
-    cover: "https://covers.openlibrary.org/b/isbn/9780062316097-L.jpg",
+    cover: "/books/covers/nexus.jpg",
   },
+
   {
-    id: "rec-05",
-    title: "Não Me Abandone Jamais",
-    author: "Kazuo Ishiguro",
-    blurb:
-      "Três amigos crescem numa escola isolada sem saber o destino que os aguarda. Melancólico, belo e impossível de esquecer.",
-    tags: ["Ficção Científica", "Drama", "Distopia"],
-    year: 2005,
+    id: "ikigai",
+    title: "Ikigai",
+    author: "Héctor García e Francesc Miralles",
+    blurb: "Os princípios japoneses para uma vida longa e significativa.",
+    tags: ["Desenvolvimento Pessoal"],
     status: "finished",
-    amazonUrl: "https://www.amazon.com.br/dp/8535911189",
+    cover: "/books/covers/ikigai.jpg",
   },
+
   {
-    id: "rec-06",
-    title: "A Metamorfose",
-    author: "Franz Kafka",
-    blurb:
-      "Gregor Samsa acorda transformado. Uma novela brevíssima com uma das primeiras frases mais memoráveis da literatura.",
-    tags: ["Clássico", "Ficção Absurda"],
-    year: 1915,
+    id: "vamos-comprar-um-poeta",
+    title: "Vamos Comprar um Poeta",
+    author: "Afonso Cruz",
+    blurb: "Uma fábula delicada sobre arte, poesia e humanidade.",
+    tags: ["Literatura", "Fábula"],
     status: "finished",
-    amazonUrl: "https://www.amazon.com.br/dp/6556392975",
-    cover: "https://covers.openlibrary.org/b/isbn/9780679722020-L.jpg",
+    cover: "/books/covers/vamos-comprar-um-poeta.jpg",
   },
+
   {
-    id: "rec-07",
-    title: "Flores para Algernon",
-    author: "Daniel Keyes",
-    blurb:
-      "Charlie Gordon passa por um experimento que vai transformar sua inteligência — e talvez destruí-lo. Clássico da FC americana.",
-    tags: ["Ficção Científica", "Clássico", "Emocionante"],
-    year: 1966,
+    id: "versos-para-acalmar-o-vento",
+    title: "Versos para Acalmar o Vento",
+    author: "Priscilla B. M. Navas",
+    blurb: "Poemas sobre afeto, silêncio e recomeços.",
+    tags: ["Poesia"],
     status: "finished",
-    amazonUrl: "https://www.amazon.com.br/dp/8535909036",
-  },
-  {
-    id: "rec-08",
-    title: "Alta Fidelidade",
-    author: "Nick Hornby",
-    blurb:
-      "Rob Fleming, dono de uma loja de discos, refaz suas top-5 listas enquanto tenta entender por que seus relacionamentos falham.",
-    tags: ["Romance", "Humor", "Música"],
-    year: 1995,
-    status: "finished",
-    amazonUrl: "https://www.amazon.com.br/dp/8535929622",
+    cover: "/books/covers/versos-para-acalmar-o-vento.jpg",
   },
 ];
-
-/** Filtra recomendações por tag */
-export function filterByTag(tag: string): RecommendedBook[] {
-  return recommendations.filter((b) => b.tags.includes(tag));
-}
-
-/** Retorna todas as tags únicas das recomendações */
-export function getAllTags(): string[] {
-  return Array.from(new Set(recommendations.flatMap((b) => b.tags))).sort();
-}
