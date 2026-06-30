@@ -26,7 +26,7 @@ export const mockRecentBooks = [
     readAt: "2026-06-20",
   },
   {
-    title: "Walking the Talk",
+    title: "Walking the Talk: a Cultura atraves do exemplo",
     author: "Carolyn Taylor",
     rating: 5,
     readAt: "2026-06-15",
