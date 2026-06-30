@@ -37,6 +37,7 @@ export const mockRecentBooks: DetailedBook[] = [
     country: "Rússia",
     readAt: "2026-06-20",
     status: "finished",
+    cover: "/books/covers/a-morte-de-ivan-ilitch.jpg",
   },
   {
     id: "3",
@@ -49,6 +50,7 @@ export const mockRecentBooks: DetailedBook[] = [
     country: "Austrália",
     readAt: "2026-06-15",
     status: "finished",
+    cover: "/books/covers/walking-the-talk.jpg",
   },
   {
     id: "4",
@@ -61,5 +63,6 @@ export const mockRecentBooks: DetailedBook[] = [
     country: "Estados Unidos",
     readAt: "2026-06-10",
     status: "finished",
+    cover: "/books/covers/a-maquina-do-caos.jpg",
   },
 ];
