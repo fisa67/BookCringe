@@ -1,3 +1,15 @@
+export const mockStats: ReadingStats = {
+  booksRead: 47,
+  pagesRead: 14823,
+  hoursRead: 312,
+  avgRating: 3.8,
+  authorsRead: 39,
+  countriesRead: 18,
+  genresRead: 12,
+  annualGoal: 52,
+  annualProgress: 47,
+};
+
 export const mockRecentBooks: DetailedBook[] = [
   {
     id: "1",
