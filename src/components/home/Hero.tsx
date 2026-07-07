@@ -21,7 +21,7 @@ export function Hero() {
             </p>
             <p className="text-base text-[var(--bc-muted)] leading-relaxed mb-10 max-w-md">
               Vídeos, resenhas, estatísticas, listas e clube de leitura para
-              quem leva os livros a sério — mas não se leva tanto assim.
+              quem leva os livros a sério, mas não se leva tanto assim.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link href="/biblioteca">

@@ -41,8 +41,8 @@ export function AboutSection() {
               title="Leitura sem frescura, mas com muito estilo."
             />
             <p className="text-[var(--bc-muted)] leading-relaxed mb-4">
-              BookCringe nasceu da ideia de que os livros não precisam ser tratados com reverência excessiva.
-              A leitura pode ser divertida, crítica, honesta — e um pouco cringe.
+            Boas histórias aparecem em livros, filmes, séries e até naquela música que não sai da cabeça. 
+            O BookCringe junta tudo isso para fazer você enxergar cada obra por um novo ângulo.
             </p>
             <p className="text-[var(--bc-muted)] leading-relaxed mb-8">
               Aqui você encontra resenhas sem spoiler (e às vezes com), listas
