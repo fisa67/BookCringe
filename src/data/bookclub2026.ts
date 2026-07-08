@@ -85,10 +85,10 @@ export const bookclub2026: BookClubEntry[] = [
   },
   {
     month: "Setembro",
-    title: "Cabra da Peste",
+    title: "Cabrita da Peste",
     author: "Luan Barbosa",
     status: "future",
-    cover: "/books/cabra-da-peste.jpg",
+    cover: "/books/cabrita-da-peste.jpg",
   },
   {
     month: "Outubro",

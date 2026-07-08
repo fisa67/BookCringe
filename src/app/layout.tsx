@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
+import { MicrosoftClarity } from "@/components/analytics/MicrosoftClarity";
 import {
   SITE_NAME,
   SITE_DESCRIPTION,
@@ -38,10 +40,17 @@ export const metadata: Metadata = {
     "booktuber",
     "bookstagram",
     "livros brasileiros",
+    "conteúdo literário",
+    "filmes",
+    "séries",
+    "cultura pop",
   ],
   authors: [{ name: SITE_NAME, url: SITE_URL }],
   creator: SITE_NAME,
   publisher: SITE_NAME,
+  alternates: {
+    canonical: SITE_URL,
+  },
   robots: {
     index: true,
     follow: true,
@@ -59,7 +68,7 @@ export const metadata: Metadata = {
         url: "/logo.png",
         width: 900,
         height: 900,
-        alt: "BookCringe — Cringe por fora, cult por dentro.",
+        alt: `${SITE_NAME} — ${SITE_SLOGAN}`,
       },
     ],
   },
@@ -73,12 +82,14 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/logo.png", type: "image/png" },
+      { url: "/favicon/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon/favicon.ico" },
     ],
     apple: [
-      { url: "/logo.png", sizes: "180x180", type: "image/png" },
+      { url: "/favicon/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
     ],
-    shortcut: "/logo.png",
+    shortcut: "/favicon/favicon.ico",
   },
   manifest: "/site.webmanifest",
 };
@@ -100,6 +111,8 @@ export default function RootLayout({
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />
+        <GoogleAnalytics />
+        <MicrosoftClarity />
       </body>
     </html>
   );

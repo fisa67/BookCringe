@@ -71,7 +71,7 @@ export const recommendations: RecommendedBook[] = [
     blurb: "Os bastidores da creator economy e do marketing de influência.",
     tags: ["Marketing", "Negócios"],
     status: "finished",
-    cover: "/books/covers/a-era-da-influencia.jpg",
+    // cover file not yet available locally — BookCover renders its own fallback
   },
 
   {
@@ -81,7 +81,7 @@ export const recommendations: RecommendedBook[] = [
     blurb: "Uma apaixonante homenagem aos leitores e ao universo dos livros.",
     tags: ["Literatura", "Livros"],
     status: "finished",
-    cover: "/books/covers/o-vicio-dos-livros.jpg",
+    // cover file not yet available locally — BookCover renders its own fallback
   },
 
   {
@@ -101,7 +101,7 @@ export const recommendations: RecommendedBook[] = [
     blurb: "Lições de liderança do lendário técnico Coach K.",
     tags: ["Liderança", "Esportes"],
     status: "finished",
-    cover: "/books/covers/leading-with-the-heart.jpg",
+    // cover file not yet available locally — BookCover renders its own fallback
   },
 
   {
@@ -131,7 +131,7 @@ export const recommendations: RecommendedBook[] = [
     blurb: "Uma fábula delicada sobre arte, poesia e humanidade.",
     tags: ["Literatura", "Fábula"],
     status: "finished",
-    cover: "/books/covers/vamos-comprar-um-poeta.jpg",
+    // cover file not yet available locally — BookCover renders its own fallback
   },
 
   {
@@ -141,6 +141,6 @@ export const recommendations: RecommendedBook[] = [
     blurb: "Poemas sobre afeto, silêncio e recomeços.",
     tags: ["Poesia"],
     status: "finished",
-    cover: "/books/covers/versos-para-acalmar-o-vento.jpg",
+    // cover file not yet available locally — BookCover renders its own fallback
   },
 ];

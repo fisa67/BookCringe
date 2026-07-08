@@ -20,8 +20,7 @@ export function Hero() {
               &ldquo;Cringe por fora, cult por dentro.&rdquo;
             </p>
             <p className="text-base text-[var(--bc-muted)] leading-relaxed mb-10 max-w-md">
-              Vídeos, resenhas, estatísticas, listas e clube de leitura para
-              quem leva os livros a sério, mas não se leva tanto assim.
+              Livros, filmes, séries e cultura pop conectados de um jeito que você dificilmente encontra por aí. Porque algumas histórias merecem ser vistas por mais de um ângulo.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link href="/biblioteca">
