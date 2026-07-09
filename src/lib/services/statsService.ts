@@ -18,10 +18,16 @@ export async function getStatisticsByYear(year: number): Promise<CmsStatisticsRe
   return data;
 }
 
-export async function createOrUpdateStatistics(payload: CmsStatisticsRecord): Promise<CmsStatisticsRecord | null> {
+export async function createOrUpdateStatistics(payload: Partial<CmsStatisticsRecord> & { year: number }): Promise<CmsStatisticsRecord | null> {
   const { data, error } = await supabaseAdminClient
     .from<CmsStatisticsRecord>(TABLE)
-    .upsert(payload, { onConflict: ["year"] })
+    .upsert(
+      {
+        ...payload,
+        metadata: payload.metadata ?? {},
+      },
+      { onConflict: ["year"] }
+    )
     .select()
     .single();
 

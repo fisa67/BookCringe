@@ -4,6 +4,7 @@ import type {
   CmsBookUpdate,
 } from "@/lib/types/cms";
 import { supabaseAdminClient } from "@/lib/supabase/client";
+import { buildAmazonAffiliateUrl } from "@/lib/services/affiliateService";
 
 const TABLE = "books";
 
@@ -65,4 +66,11 @@ export async function updateBook(payload: CmsBookUpdate): Promise<CmsBookRecord 
   }
 
   return data;
+}
+
+export function attachBookAffiliateUrl(book: CmsBookRecord, amazonAssociateId?: string): CmsBookRecord {
+  return {
+    ...book,
+    affiliate_url: buildAmazonAffiliateUrl(book.amazon_url, amazonAssociateId),
+  };
 }

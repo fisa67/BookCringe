@@ -23,6 +23,7 @@ export interface CmsBookRecord {
   country?: string;
   genres: string[];
   amazon_url?: string;
+  affiliate_url?: string;
   cover_path?: string;
   notes?: string;
   metadata: Record<string, unknown>;
@@ -138,6 +139,7 @@ export interface CmsSettingsRecord {
   youtube_url?: string;
   spotify_url?: string;
   amazon_url?: string;
+  amazon_associate_id?: string;
   goodreads_url?: string;
   threads_url?: string;
   logo_path?: string;
