@@ -50,7 +50,7 @@ export function BookTimeline({ books, year = 2026 }: BookTimelineProps) {
               const cfg = STATUS_CONFIG[entry.status];
 
               return (
-                <li key={entry.month} className="relative flex items-start gap-4 lg:gap-6">
+                <li key={`${entry.month}-${entry.title}-${i}`} className="relative flex items-start gap-4 lg:gap-6">
                   {/* Timeline dot (visible on large screens) */}
                   <div className="hidden lg:flex w-9 h-9 shrink-0 rounded-full border-2 border-white bg-[var(--bc-cream)] items-center justify-center z-10 mt-0.5">
                     <span

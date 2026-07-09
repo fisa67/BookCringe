@@ -2,7 +2,7 @@
  * Featured book override for the Home page.
  *
  * • Set to `null`   → the Home picks the current book automatically
- *                     (first entry with status: "reading" in bookclub2026.ts)
+ *                     (first entry with status: "reading" in bookclub calendars)
  *
  * • Set to a Book   → that specific book is always shown, regardless of the
  *                     club calendar.

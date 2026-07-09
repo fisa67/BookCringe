@@ -1,13 +1,13 @@
-import { getCurrentBook, type BookClubEntry } from "@/lib/bookclub";
+import type { BookClubCurrentReading } from "@/lib/bookclub";
 
 interface ReadingBannerProps {
-  books: BookClubEntry[];
+  currentReading?: BookClubCurrentReading;
 }
 
-export function ReadingBanner({ books }: ReadingBannerProps) {
-  const current = getCurrentBook(books);
+export function ReadingBanner({ currentReading }: ReadingBannerProps) {
+  if (!currentReading) return null;
 
-  if (!current) return null;
+  const current = currentReading;
 
   return (
     <section className="px-6 py-10 bg-[var(--bc-cream)] border-b border-[var(--bc-border)]">
@@ -31,9 +31,9 @@ export function ReadingBanner({ books }: ReadingBannerProps) {
                 Estamos lendo neste mês · {current.month}
               </p>
               <h2 className="text-xl md:text-2xl font-bold text-[var(--bc-ink)] leading-tight truncate">
-                {current.title}
+                {current.books[0]?.title}
               </h2>
-              <p className="text-sm text-[var(--bc-muted)] mt-0.5">{current.author}</p>
+              <p className="text-sm text-[var(--bc-muted)] mt-0.5">{current.books[0]?.author}</p>
             </div>
 
             {/* Pulse indicator */}

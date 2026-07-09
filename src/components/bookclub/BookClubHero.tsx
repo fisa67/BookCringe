@@ -4,9 +4,10 @@ import { getFinishedBooks } from "@/lib/bookclub";
 
 interface BookClubHeroProps {
   books: BookClubEntry[];
+  year: number;
 }
 
-export function BookClubHero({ books }: BookClubHeroProps) {
+export function BookClubHero({ books, year }: BookClubHeroProps) {
   const finished = getFinishedBooks(books);
   const totalBooks = books.length;
 
@@ -28,7 +29,7 @@ export function BookClubHero({ books }: BookClubHeroProps) {
           {/* Left — text */}
           <div className="animate-fade-up">
             <p className="text-xs font-semibold uppercase tracking-widest text-[var(--bc-red)] mb-5">
-              Clube de Leitura · 2026
+              Clube de Leitura · {year}
             </p>
 
             <h1 className="text-5xl md:text-6xl font-bold text-white tracking-tight leading-[1.05] mb-6">
@@ -53,7 +54,7 @@ export function BookClubHero({ books }: BookClubHeroProps) {
             {/* Stats strip */}
             <div className="flex flex-wrap gap-6 pt-6 border-t border-white/10">
               {[
-                { value: totalBooks, label: "livros em 2026" },
+                { value: totalBooks, label: `livros em ${year}` },
                 { value: finished.length, label: "já concluídos" },
                 { value: "gratuito", label: "entrada livre" },
               ].map((stat) => (

@@ -27,6 +27,45 @@ export interface BookClubEntry extends Book {
   status: BookStatus;
 }
 
+export type BookClubMonthEntry = Omit<BookClubEntry, "status" | "month">;
+
+export interface BookClubMonthDefinition {
+  month: number;
+  title?: string;
+  theme?: string;
+  books: BookClubMonthEntry[];
+}
+
+export interface BookClubMonth {
+  monthNumber: number;
+  monthLabel: string;
+  title?: string;
+  theme?: string;
+  status: BookStatus;
+  books: BookClubEntry[];
+}
+
+export interface BookClubCalendarDefinition {
+  year: number;
+  months: BookClubMonthDefinition[];
+}
+
+export interface BookClubCalendar {
+  year: number;
+  months: BookClubMonth[];
+  books: BookClubEntry[];
+}
+
+export interface BookClubCurrentReading {
+  calendar: BookClubCalendar;
+  month: string;
+  monthNumber: number;
+  title?: string;
+  theme?: string;
+  books: BookClubEntry[];
+  status: BookStatus;
+}
+
 export interface RegistrationPayload {
   name: string;
   /** E-mail or WhatsApp number */
@@ -107,6 +146,21 @@ export const READING_PROFILE_LABELS: Record<RegistrationPayload["readingProfile"
 // Helpers
 // ─────────────────────────────────────────────
 
+const MONTH_LABELS = [
+  "Janeiro",
+  "Fevereiro",
+  "Março",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro",
+];
+
 export function getCurrentBook(books: BookClubEntry[]): BookClubEntry | undefined {
   return books.find((b) => b.status === "reading");
 }
@@ -117,6 +171,155 @@ export function getUpcomingBook(books: BookClubEntry[]): BookClubEntry | undefin
 
 export function getFinishedBooks(books: BookClubEntry[]): BookClubEntry[] {
   return books.filter((b) => b.status === "finished");
+}
+
+function getMonthLabel(monthNumber: number): string {
+  return MONTH_LABELS[monthNumber - 1] ?? `Mês ${monthNumber}`;
+}
+
+function getNormalizedMonthLabel(month: BookClubMonthDefinition): string {
+  const label = getMonthLabel(month.month);
+  if (month.title) return `${label} — ${month.title}`;
+  if (month.theme) return `${label} — ${month.theme}`;
+  return label;
+}
+
+export function validateBookClubCalendarDefinition(calendar: BookClubCalendarDefinition): void {
+  if (!Array.isArray(calendar.months)) {
+    throw new Error(`Calendário ${calendar.year} inválido. Deve conter uma lista de meses.`);
+  }
+
+  const foundNumbers = new Set<number>();
+  const duplicateMonths: string[] = [];
+  const invalidMonths: string[] = [];
+  const emptyMonths: string[] = [];
+
+  calendar.months.forEach((month) => {
+    if (!Number.isInteger(month.month) || month.month < 1 || month.month > 12) {
+      invalidMonths.push(String(month.month));
+      return;
+    }
+
+    if (foundNumbers.has(month.month)) {
+      duplicateMonths.push(getMonthLabel(month.month));
+    } else {
+      foundNumbers.add(month.month);
+    }
+
+    if (!Array.isArray(month.books) || month.books.length === 0) {
+      emptyMonths.push(getMonthLabel(month.month));
+    }
+  });
+
+  const missingMonths = MONTH_LABELS.filter((_, index) => !foundNumbers.has(index + 1));
+  const errors: string[] = [];
+
+  if (calendar.months.length !== 12 || missingMonths.length > 0) {
+    errors.push(`O calendário deve conter 12 meses. Encontrado(s): ${calendar.months.length}.`);
+  }
+
+  if (duplicateMonths.length > 0) {
+    errors.push(`Mês(es) duplicado(s): ${duplicateMonths.join(", ")}.`);
+  }
+
+  if (invalidMonths.length > 0) {
+    errors.push(`Mês(es) inválido(s): ${invalidMonths.join(", ")}. Use valores de 1 a 12.`);
+  }
+
+  if (emptyMonths.length > 0) {
+    errors.push(`Mês(es) sem livros: ${emptyMonths.join(", ")}.`);
+  }
+
+  if (errors.length > 0) {
+    throw new Error(`Calendário ${calendar.year} inválido.\n${errors.join("\n")}`);
+  }
+}
+
+function getStatusForMonth(calendarYear: number, monthNumber: number, now = new Date()): BookStatus {
+  const currentYear = now.getFullYear();
+  const currentMonthIndex = now.getMonth() + 1;
+
+  if (calendarYear < currentYear) {
+    return "finished";
+  }
+
+  if (calendarYear > currentYear) {
+    return "future";
+  }
+
+  if (monthNumber < currentMonthIndex) {
+    return "finished";
+  }
+
+  if (monthNumber === currentMonthIndex) {
+    return "reading";
+  }
+
+  return "future";
+}
+
+export function normalizeBookClubCalendar(
+  calendar: BookClubCalendarDefinition,
+  now = new Date()
+): BookClubCalendar {
+  validateBookClubCalendarDefinition(calendar);
+
+  const sortedMonths = [...calendar.months].sort((a, b) => a.month - b.month);
+  const months = sortedMonths.map((month) => ({
+    monthNumber: month.month,
+    monthLabel: getNormalizedMonthLabel(month),
+    title: month.title,
+    theme: month.theme,
+    status: getStatusForMonth(calendar.year, month.month, now),
+    books: month.books.map((entry) => ({
+      ...entry,
+      month: getNormalizedMonthLabel(month),
+      status: getStatusForMonth(calendar.year, month.month, now),
+    })),
+  }));
+
+  return {
+    year: calendar.year,
+    months,
+    books: months.flatMap((month) => month.books),
+  };
+}
+
+export function getCalendarByYear(
+  calendars: readonly BookClubCalendarDefinition[],
+  year: number,
+  now = new Date()
+): BookClubCalendar | undefined {
+  const calendar = calendars.find((calendar) => calendar.year === year);
+  return calendar ? normalizeBookClubCalendar(calendar, now) : undefined;
+}
+
+export function getCurrentCalendar(
+  calendars: readonly BookClubCalendarDefinition[],
+  now = new Date()
+): BookClubCalendar | undefined {
+  return getCalendarByYear(calendars, now.getFullYear(), now);
+}
+
+export function getCurrentReading(
+  calendars: readonly BookClubCalendarDefinition[],
+  now = new Date()
+): BookClubCurrentReading | undefined {
+  const calendar = getCurrentCalendar(calendars, now);
+  if (!calendar) return undefined;
+
+  const month = calendar.months.find((entry) => entry.status === "reading");
+  if (!month) return undefined;
+
+  return {
+    calendar,
+    month: month.monthLabel,
+    monthNumber: month.monthNumber,
+    title: month.title,
+    theme: month.theme,
+    books: month.books,
+    status: month.status,
+  };
 }
 
 /**

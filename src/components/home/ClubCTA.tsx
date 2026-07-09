@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
-import { getFeaturedBook } from "@/lib/bookclub";
-import { bookclub2026 } from "@/data/bookclub2026";
+import { getCurrentCalendar, getFeaturedBook } from "@/lib/bookclub";
+import { bookclubCalendars } from "@/data/bookclub";
 import { featuredBook } from "@/data/featuredBook";
 import { BookCover } from "@/components/book/BookCover";
 import { BookCTA } from "@/components/book/BookCTA";
 
 export function ClubCTA() {
-  const book = getFeaturedBook({ override: featuredBook, books: bookclub2026 });
+  const currentCalendar = getCurrentCalendar(bookclubCalendars);
+  const currentBooks = currentCalendar?.books ?? [];
+  const book = getFeaturedBook({ override: featuredBook, books: currentBooks });
 
   return (
     <section className="py-20 px-6 bg-[var(--bc-ink)]">
