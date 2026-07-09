@@ -17,12 +17,22 @@ export type BookStatus = NonNullable<Book["status"]>;
  *   rating    — club rating 1–5 (separate from the library rating)
  *   instagram — URL to the Instagram Reel published after the session
  */
+export interface BookContent {
+  instagram?: string;
+  tiktok?: string;
+  youtube?: string;
+}
+
 export interface BookClubEntry extends Book {
   month: string;
   /** 1–5 stars. Omit when not yet rated. */
   rating?: number;
-  /** URL to the Instagram Reel. Omit when unavailable. */
+  /** Optional multi-platform content links. */
+  content?: BookContent;
+  /** Legacy Instagram reel URL. Retained for backward compatibility. */
   instagram?: string;
+  /** Legacy reel URL interpreted as YouTube Shorts during migration. */
+  reelUrl?: string;
   /** status is required for club entries (override optional from Book) */
   status: BookStatus;
 }
@@ -171,6 +181,44 @@ export function getUpcomingBook(books: BookClubEntry[]): BookClubEntry | undefin
 
 export function getFinishedBooks(books: BookClubEntry[]): BookClubEntry[] {
   return books.filter((b) => b.status === "finished");
+}
+
+export type BookContentPlatform = "instagram" | "tiktok" | "youtube";
+
+export interface BookContentLink {
+  url: string;
+  platform: BookContentPlatform;
+  label: string;
+}
+
+function getYouTubeLabel(url: string) {
+  return url.includes("/shorts/") ? "Assistir Shorts" : "Assistir vídeo";
+}
+
+export function getBookContentLink(entry: BookClubEntry): BookContentLink | undefined {
+  const content = entry.content;
+
+  if (content?.instagram) {
+    return { url: content.instagram, platform: "instagram", label: "Assistir Reel" };
+  }
+
+  if (content?.tiktok) {
+    return { url: content.tiktok, platform: "tiktok", label: "Assistir Reel" };
+  }
+
+  if (content?.youtube) {
+    return { url: content.youtube, platform: "youtube", label: getYouTubeLabel(content.youtube) };
+  }
+
+  if (entry.reelUrl) {
+    return { url: entry.reelUrl, platform: "youtube", label: getYouTubeLabel(entry.reelUrl) };
+  }
+
+  if (entry.instagram) {
+    return { url: entry.instagram, platform: "instagram", label: "Assistir Reel" };
+  }
+
+  return undefined;
 }
 
 function getMonthLabel(monthNumber: number): string {

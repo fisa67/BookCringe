@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { STATUS_CONFIG, type BookClubEntry } from "@/lib/bookclub";
+import { STATUS_CONFIG, type BookClubEntry, getBookContentLink, type BookContentLink } from "@/lib/bookclub";
 import { StatusBadge } from "./StatusBadge";
 import { Rating } from "./Rating";
 import { BookCover } from "@/components/book/BookCover";
@@ -14,6 +14,7 @@ export function BookCard({ entry, index }: BookCardProps) {
   const isActive = entry.status === "reading";
   const isDone = entry.status === "finished";
   const isFuture = entry.status === "future" || entry.status === "comingSoon";
+  const contentLink = getBookContentLink(entry);
 
   return (
     <div
@@ -98,29 +99,35 @@ export function BookCard({ entry, index }: BookCardProps) {
             <Rating value={entry.rating} size="sm" />
           )}
 
-          {/* Reel link — finished with instagram, or "Em breve" label */}
-          {isDone && entry.instagram ? (
-            <a
-              href={entry.instagram}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--bc-ink)] hover:text-[var(--bc-red)] transition-colors w-fit"
-              aria-label={`Assistir Reel do livro ${entry.title}`}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                className="w-3.5 h-3.5"
-                aria-hidden="true"
+          {/* Content link — finished with social/video link or "Em breve" label */}
+          {isDone ? (
+            contentLink ? (
+              <a
+                href={contentLink.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--bc-ink)] hover:text-[var(--bc-red)] transition-colors w-fit"
+                aria-label={`${contentLink.label} do livro ${entry.title}`}
               >
-                <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-              </svg>
-              Assistir Reel
-            </a>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  className="w-3.5 h-3.5"
+                  aria-hidden="true"
+                >
+                  <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                </svg>
+                {contentLink.label}
+              </a>
+            ) : (
+              entry.status === "comingSoon" && (
+                <p className="text-xs text-amber-600/80 font-medium">Em breve</p>
+              )
+            )
           ) : (
             entry.status === "comingSoon" && (
-              <p className="text-xs text-amber-600/80 font-medium">Reel em breve</p>
+              <p className="text-xs text-amber-600/80 font-medium">Em breve</p>
             )
           )}
 

@@ -10,6 +10,7 @@ import {
 } from "react";
 import { Toaster, toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { isEmail } from "@/lib/bookclub";
 import type { RegistrationPayload } from "@/lib/bookclub";
 
 // ─────────────────────────────────────────────
@@ -356,8 +357,10 @@ export function BookClubForm({ id = "inscricao" }: BookClubFormProps) {
               Inscrição recebida!
             </h3>
             <p className="mt-2 text-[var(--bc-muted)] leading-relaxed max-w-sm mx-auto">
-              Obrigado pela inscrição no Clube de Leitura BookCringe. Em breve
-              você receberá novidades por aqui.
+              Obrigado pela inscrição no Clube de Leitura BookCringe.
+              {isEmail(values.contact)
+                ? " Em breve você receberá novidades por e-mail."
+                : " Fique de olho no seu WhatsApp para mais informações."}
             </p>
           </div>
         ) : (
