@@ -7,7 +7,7 @@ const TABLE = "contents";
 
 export async function getContentByBook(bookId: string): Promise<CmsContentRecord[] | null> {
   const { data, error } = await supabaseAdminClient
-    .from<CmsContentRecord>(TABLE)
+    .from(TABLE)
     .select("*")
     .eq("book_id", bookId)
     .order("published_at", { ascending: false });
@@ -22,7 +22,7 @@ export async function getContentByBook(bookId: string): Promise<CmsContentRecord
 
 export async function createContent(payload: Omit<CmsContentRecord, "id" | "created_at" | "updated_at">): Promise<CmsContentRecord | null> {
   const { data, error } = await supabaseAdminClient
-    .from<CmsContentRecord>(TABLE)
+    .from(TABLE)
     .insert(payload)
     .select()
     .single();
@@ -37,7 +37,7 @@ export async function createContent(payload: Omit<CmsContentRecord, "id" | "crea
 
 export async function updateContent(payload: Partial<CmsContentRecord> & { id: string }): Promise<CmsContentRecord | null> {
   const { data, error } = await supabaseAdminClient
-    .from<CmsContentRecord>(TABLE)
+    .from(TABLE)
     .update(payload)
     .eq("id", payload.id)
     .select()

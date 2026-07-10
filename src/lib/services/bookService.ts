@@ -10,7 +10,7 @@ const TABLE = "books";
 
 export async function getBooks(): Promise<CmsBookRecord[] | null> {
   const { data, error } = await supabaseAdminClient
-    .from<CmsBookRecord>(TABLE)
+    .from(TABLE)
     .select("*")
     .order("title", { ascending: true });
 
@@ -24,7 +24,7 @@ export async function getBooks(): Promise<CmsBookRecord[] | null> {
 
 export async function getBookById(id: string): Promise<CmsBookRecord | null> {
   const { data, error } = await supabaseAdminClient
-    .from<CmsBookRecord>(TABLE)
+    .from(TABLE)
     .select("*")
     .eq("id", id)
     .single();
@@ -39,7 +39,7 @@ export async function getBookById(id: string): Promise<CmsBookRecord | null> {
 
 export async function createBook(payload: CmsBookCreate): Promise<CmsBookRecord | null> {
   const { data, error } = await supabaseAdminClient
-    .from<CmsBookRecord>(TABLE)
+    .from(TABLE)
     .insert({ ...payload, genres: payload.genres ?? [] })
     .select()
     .single();
@@ -54,7 +54,7 @@ export async function createBook(payload: CmsBookCreate): Promise<CmsBookRecord 
 
 export async function updateBook(payload: CmsBookUpdate): Promise<CmsBookRecord | null> {
   const { data, error } = await supabaseAdminClient
-    .from<CmsBookRecord>(TABLE)
+    .from(TABLE)
     .update({ ...payload })
     .eq("id", payload.id)
     .select()

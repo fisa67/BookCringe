@@ -5,7 +5,7 @@ const TABLE = "settings";
 
 export async function getSettings(): Promise<CmsSettingsRecord | null> {
   const { data, error } = await supabaseAdminClient
-    .from<CmsSettingsRecord>(TABLE)
+    .from(TABLE)
     .select("*")
     .maybeSingle();
 
@@ -28,7 +28,7 @@ export async function getOrCreateSettings(): Promise<CmsSettingsRecord | null> {
 
 export async function createDefaultSettings(): Promise<CmsSettingsRecord | null> {
   const { data, error } = await supabaseAdminClient
-    .from<CmsSettingsRecord>(TABLE)
+    .from(TABLE)
     .insert({
       project_name: "BookCringe",
       annual_goal: 52,
@@ -49,7 +49,7 @@ export async function updateSettings(
   payload: Partial<CmsSettingsRecord> & { id: string }
 ): Promise<CmsSettingsRecord | null> {
   const { data, error } = await supabaseAdminClient
-    .from<CmsSettingsRecord>(TABLE)
+    .from(TABLE)
     .update({ ...payload })
     .eq("id", payload.id)
     .select()

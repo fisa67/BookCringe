@@ -5,7 +5,7 @@ const TABLE = "book_readings";
 
 export async function getReadingByBook(bookId: string): Promise<CmsBookReadingRecord | null> {
   const { data, error } = await supabaseAdminClient
-    .from<CmsBookReadingRecord>(TABLE)
+    .from(TABLE)
     .select("*")
     .eq("book_id", bookId)
     .maybeSingle();
@@ -22,7 +22,7 @@ export async function createReading(
   payload: Omit<CmsBookReadingRecord, "id" | "created_at" | "updated_at">
 ): Promise<CmsBookReadingRecord | null> {
   const { data, error } = await supabaseAdminClient
-    .from<CmsBookReadingRecord>(TABLE)
+    .from(TABLE)
     .insert(payload)
     .select()
     .single();
@@ -39,7 +39,7 @@ export async function updateReading(
   payload: Partial<CmsBookReadingRecord> & { id: string }
 ): Promise<CmsBookReadingRecord | null> {
   const { data, error } = await supabaseAdminClient
-    .from<CmsBookReadingRecord>(TABLE)
+    .from(TABLE)
     .update(payload)
     .eq("id", payload.id)
     .select()
@@ -60,7 +60,6 @@ export async function saveReading(
 
   if (existingReading) {
     return updateReading({
-      id: existingReading.id,
       ...existingReading,
       ...payload,
     });

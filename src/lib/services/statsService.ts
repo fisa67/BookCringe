@@ -5,7 +5,7 @@ const TABLE = "statistics";
 
 export async function getStatisticsByYear(year: number): Promise<CmsStatisticsRecord | null> {
   const { data, error } = await supabaseAdminClient
-    .from<CmsStatisticsRecord>(TABLE)
+    .from(TABLE)
     .select("*")
     .eq("year", year)
     .single();
@@ -20,13 +20,13 @@ export async function getStatisticsByYear(year: number): Promise<CmsStatisticsRe
 
 export async function createOrUpdateStatistics(payload: Partial<CmsStatisticsRecord> & { year: number }): Promise<CmsStatisticsRecord | null> {
   const { data, error } = await supabaseAdminClient
-    .from<CmsStatisticsRecord>(TABLE)
+    .from(TABLE)
     .upsert(
       {
         ...payload,
         metadata: payload.metadata ?? {},
       },
-      { onConflict: ["year"] }
+      { onConflict: "year" }
     )
     .select()
     .single();

@@ -19,7 +19,8 @@ export function Header() {
   }, []);
 
   useEffect(() => {
-    setIsMobileOpen(false);
+    const timeout = setTimeout(() => setIsMobileOpen(false), 0);
+    return () => clearTimeout(timeout);
   }, [pathname]);
 
   return (

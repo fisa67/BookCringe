@@ -11,7 +11,7 @@ const MONTH_BOOKS_TABLE = "bookclub_month_books";
 
 export async function getBookClubYears(): Promise<CmsBookClubYearRecord[] | null> {
   const { data, error } = await supabaseAdminClient
-    .from<CmsBookClubYearRecord>(YEARS_TABLE)
+    .from(YEARS_TABLE)
     .select("*")
     .order("year", { ascending: false });
 
@@ -25,7 +25,7 @@ export async function getBookClubYears(): Promise<CmsBookClubYearRecord[] | null
 
 export async function getBookClubMonths(yearId: string): Promise<CmsBookClubMonthRecord[] | null> {
   const { data, error } = await supabaseAdminClient
-    .from<CmsBookClubMonthRecord>(MONTHS_TABLE)
+    .from(MONTHS_TABLE)
     .select("*")
     .eq("year_id", yearId)
     .order("month", { ascending: true });
@@ -40,7 +40,7 @@ export async function getBookClubMonths(yearId: string): Promise<CmsBookClubMont
 
 export async function getBookClubMonthBooks(monthId: string): Promise<CmsBookClubMonthBookRecord[] | null> {
   const { data, error } = await supabaseAdminClient
-    .from<CmsBookClubMonthBookRecord>(MONTH_BOOKS_TABLE)
+    .from(MONTH_BOOKS_TABLE)
     .select("*")
     .eq("month_id", monthId)
     .order("position", { ascending: true });
@@ -55,7 +55,7 @@ export async function getBookClubMonthBooks(monthId: string): Promise<CmsBookClu
 
 export async function createBookClubYear(payload: Omit<CmsBookClubYearRecord, "id" | "created_at" | "updated_at">): Promise<CmsBookClubYearRecord | null> {
   const { data, error } = await supabaseAdminClient
-    .from<CmsBookClubYearRecord>(YEARS_TABLE)
+    .from(YEARS_TABLE)
     .insert(payload)
     .select()
     .single();
@@ -70,7 +70,7 @@ export async function createBookClubYear(payload: Omit<CmsBookClubYearRecord, "i
 
 export async function createBookClubMonth(payload: Omit<CmsBookClubMonthRecord, "id" | "created_at" | "updated_at">): Promise<CmsBookClubMonthRecord | null> {
   const { data, error } = await supabaseAdminClient
-    .from<CmsBookClubMonthRecord>(MONTHS_TABLE)
+    .from(MONTHS_TABLE)
     .insert(payload)
     .select()
     .single();
@@ -85,7 +85,7 @@ export async function createBookClubMonth(payload: Omit<CmsBookClubMonthRecord, 
 
 export async function createBookClubMonthBook(payload: Omit<CmsBookClubMonthBookRecord, "id" | "created_at" | "updated_at">): Promise<CmsBookClubMonthBookRecord | null> {
   const { data, error } = await supabaseAdminClient
-    .from<CmsBookClubMonthBookRecord>(MONTH_BOOKS_TABLE)
+    .from(MONTH_BOOKS_TABLE)
     .insert(payload)
     .select()
     .single();

@@ -1,4 +1,6 @@
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const fs = require("fs");
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const path = require("path");
 
 const directory = path.join(__dirname, "../src/data/bookclub");
@@ -10,7 +12,7 @@ const files = fs
   .sort((a, b) => Number(a.slice(0, 4)) - Number(b.slice(0, 4)));
 
 const imports = files
-  .map((file, index) => `import bookclub${file.slice(0, 4)} from "./${file.replace(/\.ts$/, "")}";`)
+  .map((file) => `import bookclub${file.slice(0, 4)} from "./${file.replace(/\.ts$/, "")}";`)
   .join("\n");
 
 const exportedArray = `export const bookclubCalendars = [\n${files
