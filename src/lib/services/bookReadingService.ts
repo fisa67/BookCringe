@@ -3,6 +3,19 @@ import { supabaseAdminClient } from "@/lib/supabase/client";
 
 const TABLE = "book_readings";
 
+export async function getReadingsCount(): Promise<number | null> {
+  const { count, error } = await supabaseAdminClient
+    .from(TABLE)
+    .select("*", { count: "exact", head: true });
+
+  if (error) {
+    console.error("[bookReadingService] getReadingsCount error", error);
+    return null;
+  }
+
+  return count;
+}
+
 export async function getReadingByBook(bookId: string): Promise<CmsBookReadingRecord | null> {
   const { data, error } = await supabaseAdminClient
     .from(TABLE)

@@ -37,32 +37,60 @@ cp .env.example .env.local
 | `AUTH_GITHUB_SECRET` | Auth | Client Secret do GitHub OAuth App |
 | `ADMIN_GITHUB_LOGIN` | Auth | Username do GitHub autorizado (allowlist de 1) |
 
-As variáveis de `Auth` só passam a ser exigidas quando a autenticação for
-ativada (Fase 1B). Na Fase 1A elas ficam apenas documentadas.
+As variáveis de `Auth` são exigidas a partir da Fase 1B (autenticação ativa).
 
-### GitHub OAuth App (para a Fase 1B)
+### GitHub OAuth Apps (dois, um por ambiente)
 
-1. GitHub → **Settings** → **Developer settings** → **OAuth Apps** → **New OAuth App**.
-2. *Homepage URL*: `http://localhost:3000` (dev) ou o domínio de produção.
-3. *Authorization callback URL*: `http://localhost:3000/api/auth/callback/github`.
-4. Copie o **Client ID** e gere um **Client Secret** para `.env.local`.
+Para evitar troca de callback URL a cada deploy, use **dois OAuth Apps
+separados** — mesmas variáveis de ambiente em ambos, valores diferentes por
+ambiente, sem qualquer alteração de código:
+
+| | Desenvolvimento | Produção |
+|---|---|---|
+| Homepage URL | `http://localhost:3000` | `https://bookcringe.com.br` |
+| Authorization callback URL | `http://localhost:3000/api/auth/callback/github` | `https://bookcringe.com.br/api/auth/callback/github` |
+| Onde configurar | `.env.local` | Variáveis de ambiente do hosting |
+
+Para cada app: GitHub → **Settings** → **Developer settings** → **OAuth Apps**
+→ **New OAuth App** → copie o **Client ID** e gere um **Client Secret** para
+`AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` no ambiente correspondente.
 
 ---
 
 ## Autenticação — arquitetura
 
-Padrão de "split config" do Auth.js, para permitir ativação isolada:
+Padrão de "split config" do Auth.js:
 
 - `src/lib/auth/types.ts` — tipos da sessão e augmentation do Auth.js.
 - `src/lib/auth/config.ts` — objeto `authConfig` (provider GitHub, sessão JWT
-  stateless, allowlist single-user). **Inerte**: nada o importa em runtime.
+  stateless, allowlist single-user via callback `signIn`, `trustHost: true`
+  para funcionar em qualquer domínio sem `AUTH_URL` fixo).
+- `src/lib/auth/index.ts` — única instância `NextAuth(authConfig)`, exporta
+  `{ handlers, auth, signIn, signOut }`. **Todo o resto do app reutiliza este
+  módulo** — nunca instancia `NextAuth()` de novo.
 
-Fluxo previsto (ativado na Fase 1B):
+Duas camadas de proteção para `/admin/*` (defesa em profundidade,
+recomendação oficial do Next.js — "Proxy should not be your only line of
+defense"), ambas reutilizando o mesmo `auth()`:
+
+1. `src/proxy.ts` — checagem otimista (lê o JWT do cookie) via `matcher:
+   ["/admin/:path*"]`, excluindo `/admin/login` explicitamente.
+2. `src/app/admin/layout.tsx` — checagem redundante no Server Component,
+   para proteger mesmo em acesso direto que eventualmente não passe pelo
+   proxy. Sabe pular `/admin/login` através do header `x-bc-pathname`
+   propagado pelo proxy (um layout não recebe o pathname da rota diretamente).
+
+Fluxo:
 
 ```
-/admin/* → middleware → sem sessão → /admin/login → GitHub OAuth
-         → login na allowlist → sessão JWT → /admin liberado
+/admin/* → proxy (otimista) → sem sessão → /admin/login → GitHub OAuth
+         → login fora da allowlist → sessão nunca criada, acesso negado
+         → login na allowlist → sessão JWT → layout confirma → /admin liberado
 ```
+
+> Nota: desde o Next.js 16, `middleware.ts` está deprecado em favor de
+> `proxy.ts` (mesma API de `matcher`, agora em runtime Node.js por padrão).
+> Por isso o arquivo se chama `src/proxy.ts`, não `middleware.ts`.
 
 ---
 
@@ -71,13 +99,17 @@ Fluxo previsto (ativado na Fase 1B):
 | Fase | Escopo | Ativa proteção? |
 |---|---|---|
 | **1A** | `.env.example`, `src/lib/env.ts`, `src/lib/auth/{types,config}.ts`, docs, dependência `next-auth` | Não — fundação inerte |
-| **1B** | `middleware.ts`, `/admin/login`, rota `/api/auth/[...nextauth]`, proteção de `/admin` | Sim |
+| **1B** | `src/lib/auth/index.ts`, `src/proxy.ts`, `/admin/login`, rota `/api/auth/[...nextauth]`, defesa em profundidade em `admin/layout.tsx` | Sim |
 | **2** | Telas de CRUD do admin consumindo `src/lib/services/` atrás do gate | — |
 | **3** | Site público passando a ler do Supabase (substituindo `src/data/mock/`) | — |
 
-### Estado atual: Fase 1A concluída
+### Estado atual: Fase 1B concluída
 
-- Fundação de autenticação criada, porém **inativa**.
-- `/admin` continua acessível sem login (proteção só na Fase 1B).
-- Nenhuma alteração em páginas públicas, SEO, formulários, layout, serviços,
-  client do Supabase ou migrations.
+- Autenticação **ativa**: `/admin/*` exige login GitHub com o username em
+  `ADMIN_GITHUB_LOGIN` (allowlist de 1 usuário).
+- Duas camadas de proteção (proxy + layout), reutilizando o mesmo `auth()`.
+- Dois OAuth Apps do GitHub (dev/prod) — mesmas variáveis de ambiente, sem
+  alteração de código entre ambientes.
+- Nenhuma alteração em páginas públicas, SEO, formulários, serviços, client
+  do Supabase ou migrations. O layout público raiz (`src/app/layout.tsx`)
+  continua envolvendo `/admin` com `Header`/`Footer` — fica para a Fase 2.

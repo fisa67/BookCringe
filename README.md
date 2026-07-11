@@ -14,7 +14,7 @@ Plataforma literária brasileira. Vídeos, resenhas, estatísticas, clube de lei
 - **Geist** (fonte principal)
 - **Supabase** (backend do CMS)
 - **Resend** (e-mails transacionais dos formulários)
-- **Auth.js v5** (fundação de autenticação do admin — ainda não ativa, ver [docs/cms.md](docs/cms.md))
+- **Auth.js v5** (autenticação do admin via GitHub OAuth — ver [docs/cms.md](docs/cms.md))
 
 ---
 
@@ -42,7 +42,7 @@ Acesse em [http://localhost:3000](http://localhost:3000).
 
 Copie `.env.example` para `.env.local` e preencha os valores. O `.env.local`
 é ignorado pelo Git. As variáveis cobrem três áreas: e-mail (Resend), backend
-(Supabase) e autenticação do admin (GitHub OAuth — reservada para a Fase 1B).
+(Supabase) e autenticação do admin (GitHub OAuth, ativa desde a Fase 1B).
 
 ```bash
 cp .env.example .env.local
@@ -54,11 +54,17 @@ cp .env.example .env.local
 
 ```
 src/
+├── proxy.ts                # Proteção otimista de /admin/* (Auth.js) — Fase 1B
+│
 ├── app/                    # Rotas (Next.js App Router)
 │   ├── page.tsx            # Home
 │   ├── sobre/ biblioteca/ clube-de-leitura/ estatisticas/ trabalhe-comigo/ contato/
-│   ├── admin/              # Painel administrativo (CMS) — em construção
-│   └── api/                # contact, bookclub, complete-reading
+│   ├── admin/              # Painel administrativo (CMS) — protegido por login
+│   │   ├── login/          # Página de login (GitHub OAuth)
+│   │   └── layout.tsx      # Defesa em profundidade (auth()) + shell do admin
+│   └── api/
+│       ├── auth/[...nextauth]/  # Rota do Auth.js (GitHub OAuth)
+│       └── contact/ bookclub/ complete-reading/
 │
 ├── components/
 │   ├── layout/             # Header, Footer
@@ -70,7 +76,7 @@ src/
 │   └── bookclub/
 │
 └── lib/
-    ├── auth/               # Fundação de autenticação do admin (config + types) — inativa
+    ├── auth/               # Autenticação do admin: index.ts (NextAuth), config.ts, types.ts
     ├── services/           # Serviços do CMS (Supabase)
     ├── supabase/           # Client do Supabase
     ├── types/ validations/ email/
@@ -84,13 +90,15 @@ src/
 
 ## CMS & Admin
 
-O painel administrativo (`/admin`) e a integração com Supabase estão em
-construção. O detalhamento de setup, do modelo de autenticação (GitHub OAuth)
-e do faseamento (1A → 1B → 2 → 3) está em [docs/cms.md](docs/cms.md).
+O painel administrativo (`/admin`) exige login com GitHub (apenas o usuário
+em `ADMIN_GITHUB_LOGIN` tem acesso) e a integração com Supabase está em
+construção. O detalhamento de setup, do modelo de autenticação (GitHub OAuth,
+dois OAuth Apps — dev/prod) e do faseamento (1A → 1B → 2 → 3) está em
+[docs/cms.md](docs/cms.md).
 
-> **Estado atual:** a Fase 1A entrega apenas a fundação de autenticação
-> (configuração, tipos, variáveis e documentação). A autenticação **não está
-> ativa** — o `/admin` ainda não é protegido. A ativação ocorre na Fase 1B.
+> **Estado atual:** a Fase 1B ativou a autenticação. `/admin/*` é protegido
+> em duas camadas (`src/proxy.ts` + defesa em profundidade em
+> `src/app/admin/layout.tsx`), ambas reutilizando o mesmo `auth()` central.
 
 ---
 
@@ -120,5 +128,5 @@ Extraída diretamente da logo oficial. Tokens em `src/app/globals.css`:
 - [ ] Área para editoras / formulário de envio de livros
 - [ ] Mídia Kit para download
 - [ ] Dashboard de leitura em tempo real
-- [ ] Autenticação do admin (GitHub OAuth) — fundação pronta (Fase 1A), ativação na Fase 1B
+- [x] Autenticação do admin (GitHub OAuth) — ativa desde a Fase 1B
 - [ ] Autenticação (área de membros do clube)

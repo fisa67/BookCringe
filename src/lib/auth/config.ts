@@ -4,16 +4,19 @@ import GitHub from "next-auth/providers/github";
 import "./types";
 
 /**
- * Configuração de autenticação do admin (Fase 1A — fundação).
+ * Configuração de autenticação do admin (Fase 1B — ativa).
  *
- * Este módulo apenas descreve a configuração do Auth.js (padrão de "split
- * config"). Ele é INERTE: nada o importa em runtime ainda. A ativação
- * (NextAuth(authConfig), rota /api/auth, middleware e /admin/login) acontece
- * na Fase 1B.
+ * Este módulo descreve a configuração do Auth.js (padrão de "split config"),
+ * consumida por `src/lib/auth/index.ts` (única instância `NextAuth(authConfig)`),
+ * pela rota `/api/auth/[...nextauth]`, pelo `src/proxy.ts` e pela defesa em
+ * profundidade em `src/app/admin/layout.tsx`.
  *
  * Modelo single-user: apenas o login do GitHub listado em ADMIN_GITHUB_LOGIN
- * é autorizado. As credenciais AUTH_GITHUB_ID / AUTH_GITHUB_SECRET / AUTH_SECRET
- * são lidas automaticamente pelo Auth.js a partir do ambiente.
+ * é autorizado (allowlist verificada uma única vez, no callback `signIn`).
+ * As credenciais AUTH_GITHUB_ID / AUTH_GITHUB_SECRET / AUTH_SECRET são lidas
+ * automaticamente pelo Auth.js a partir do ambiente — o mesmo código serve
+ * desenvolvimento (OAuth App local) e produção (OAuth App de produção), pois
+ * o valor das variáveis muda por ambiente, não o código.
  */
 
 function getAllowedLogin(): string | undefined {
@@ -27,6 +30,9 @@ export const authConfig = {
   pages: {
     signIn: "/admin/login",
   },
+  // Necessário para funcionar em qualquer host (localhost em dev,
+  // bookcringe.com.br em produção) sem depender de AUTH_URL fixo.
+  trustHost: true,
   callbacks: {
     signIn({ profile }) {
       const allowed = getAllowedLogin();
