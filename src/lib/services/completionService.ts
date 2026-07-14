@@ -4,6 +4,7 @@ import { getSettings } from "@/lib/services/settingsService";
 import { getReadingByBook, saveReading } from "@/lib/services/bookReadingService";
 import { getStatisticsByYear, createOrUpdateStatistics } from "@/lib/services/statsService";
 import { buildAmazonAffiliateUrl } from "@/lib/services/affiliateService";
+import { parseHhMmSsToSeconds } from "@/lib/utils/time";
 
 export interface FinalizeReadingParams {
   bookId: string;
@@ -13,6 +14,13 @@ export interface FinalizeReadingParams {
   favorite?: boolean;
   wouldRecommend?: boolean;
   year?: number;
+  /**
+   * Tempo total de leitura informado manualmente (vindo do Bookly), no
+   * formato `HH:MM:SS`. Convertido para segundos antes de persistir em
+   * `reading_time_seconds`. Se ausente ou em formato inválido, o valor já
+   * salvo na leitura existente é preservado (nunca é apagado por omissão).
+   */
+  readingTime?: string;
 }
 
 export interface FinalizeReadingResult {
@@ -35,6 +43,18 @@ export async function finalizeBookReading(
   const finishedAt = params.finishedAt ?? new Date().toISOString().slice(0, 10);
   const targetYear = params.year ?? new Date(finishedAt).getUTCFullYear();
 
+  // `parseHhMmSsToSeconds` devolve `null` para ausente/inválido — nesse caso
+  // caímos para o valor já persistido (nunca zeramos o tempo de leitura só
+  // porque uma chamada de finalize não o informou). Convertido para
+  // `string` para casar com `CmsBookReadingRecord.reading_time_seconds`
+  // (bigint serializado como string pelo Supabase-JS) — o Postgres aceita
+  // string numérica na escrita de uma coluna bigint sem problema.
+  const parsedReadingTimeSeconds = parseHhMmSsToSeconds(params.readingTime);
+  const readingTimeSeconds =
+    parsedReadingTimeSeconds !== null
+      ? String(parsedReadingTimeSeconds)
+      : existingReading?.reading_time_seconds ?? undefined;
+
   const readingPayload = {
     book_id: params.bookId,
     rating: params.rating,
@@ -45,6 +65,7 @@ export async function finalizeBookReading(
     format: book.format,
     favorite: params.favorite ?? false,
     would_recommend: params.wouldRecommend ?? false,
+    reading_time_seconds: readingTimeSeconds,
     metadata: existingReading?.metadata ?? {},
   };
 

@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { getCurrentCalendar, getFeaturedBook } from "@/lib/bookclub";
-import { bookclubCalendars } from "@/data/bookclub";
+import { getPublicBookClubCalendars } from "@/lib/adapters/bookclubPublicAdapter";
 import { featuredBook } from "@/data/featuredBook";
 import { BookCover } from "@/components/book/BookCover";
 import { BookCTA } from "@/components/book/BookCTA";
 
-export function ClubCTA() {
-  const currentCalendar = getCurrentCalendar(bookclubCalendars);
+export async function ClubCTA() {
+  const calendars = await getPublicBookClubCalendars();
+  const currentCalendar = getCurrentCalendar(calendars);
   const currentBooks = currentCalendar?.books ?? [];
   const book = getFeaturedBook({ override: featuredBook, books: currentBooks });
 

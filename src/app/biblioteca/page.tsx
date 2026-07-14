@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { PageHero } from "@/components/ui/PageHero";
-import { mockRecentBooks } from "@/data/mock/stats";
+import { getPublicLibraryBooks } from "@/lib/adapters/libraryPublicAdapter";
 import { LibraryShelf } from "@/components/library/LibraryShelf";
 
 export const metadata: Metadata = {
@@ -9,7 +9,14 @@ export const metadata: Metadata = {
     "Todos os livros lidos pelo BookCringe — com notas, resenhas e dados. Filtrados por gênero, autor e país.",
 };
 
-export default function BibliotecaPage() {
+// Biblioteca lê o catálogo do Supabase via getPublicLibraryBooks — mesma
+// estratégia de revalidate de src/app/page.tsx, src/app/clube-de-leitura/page.tsx
+// e src/app/estatisticas/page.tsx.
+export const revalidate = 3600;
+
+export default async function BibliotecaPage() {
+  const books = await getPublicLibraryBooks();
+
   return (
     <>
       <PageHero
@@ -18,7 +25,7 @@ export default function BibliotecaPage() {
         description="Uma coleção de leituras com notas, resenhas e reflexões. Em construção contínua."
       />
 
-      <LibraryShelf books={mockRecentBooks} />
+      <LibraryShelf books={books} />
     </>
   );
 }

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { bookclubCalendars } from "@/data/bookclub";
+import { getPublicBookClubCalendars } from "@/lib/adapters/bookclubPublicAdapter";
 import { BookClubHero } from "@/components/bookclub/BookClubHero";
 import { ReadingBanner } from "@/components/bookclub/ReadingBanner";
 import { BookTimeline } from "@/components/bookclub/BookTimeline";
@@ -19,10 +19,16 @@ export const metadata: Metadata = {
   },
 };
 
+// Conteúdo editorial (calendário do Clube de Leitura): não precisa ser
+// tempo-real, mas edições feitas no admin devem chegar ao público sem
+// exigir um novo deploy. Revalida a cada hora.
+export const revalidate = 3600;
+
 const FORM_ID = "inscricao";
 
-export default function ClubeDeLeituraPage() {
-  const currentReading = getCurrentReading(bookclubCalendars);
+export default async function ClubeDeLeituraPage() {
+  const calendars = await getPublicBookClubCalendars();
+  const currentReading = getCurrentReading(calendars);
   const currentYear = new Date().getFullYear();
 
   return (

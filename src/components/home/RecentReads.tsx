@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { mockRecentBooks } from "@/data/mock/stats";
+import { getPublicRecentBooks } from "@/lib/adapters/readingStatsPublicAdapter";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -21,7 +21,9 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-export function RecentReads() {
+export async function RecentReads() {
+  const recentBooks = await getPublicRecentBooks(4);
+
   return (
     <section className="py-20 px-6">
       <div className="max-w-6xl mx-auto">
@@ -39,7 +41,7 @@ export function RecentReads() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 stagger">
-          {mockRecentBooks.map((book, i) => (
+          {recentBooks.map((book, i) => (
             <div key={book.id} className="animate-fade-up" style={{ animationDelay: `${i * 60}ms` }}>
               <BookCard
                 book={book}

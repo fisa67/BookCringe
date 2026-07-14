@@ -1,4 +1,9 @@
-import type { ReadingStats, DetailedBook, ClubSession } from "@/lib/types";
+import type { ReadingStats, DetailedBook } from "@/lib/types";
+import type {
+  GenreBreakdownItem,
+  CountryBreakdownItem,
+  MonthlyBreakdownItem,
+} from "@/lib/adapters/readingStatsAggregators";
 
 export const mockStats: ReadingStats = {
   booksRead: 47,
@@ -11,6 +16,46 @@ export const mockStats: ReadingStats = {
   annualGoal: 52,
   annualProgress: 47,
 };
+
+/**
+ * Fallback estático para os gráficos detalhados de Estatísticas
+ * (`getPublicReadingStatsDetailed`). Valores idênticos aos hoje hardcoded
+ * em `src/app/estatisticas/page.tsx` (genreData/countryData/monthlyData) —
+ * mantidos aqui apenas como fallback do adapter; a página ainda não os
+ * consome (Fase 5 fará essa troca).
+ */
+export const mockGenreBreakdown: GenreBreakdownItem[] = [
+  { genre: "Ficção", count: 18 },
+  { genre: "Clássicos", count: 9 },
+  { genre: "Romance Contemporâneo", count: 8 },
+  { genre: "Fantasia", count: 5 },
+  { genre: "Ficção Brasileira", count: 4 },
+  { genre: "Drama", count: 3 },
+];
+
+export const mockCountryBreakdown: CountryBreakdownItem[] = [
+  { country: "Brasil", count: 9 },
+  { country: "EUA", count: 8 },
+  { country: "Reino Unido", count: 7 },
+  { country: "França", count: 5 },
+  { country: "Alemanha", count: 4 },
+  { country: "Outros", count: 14 },
+];
+
+export const mockMonthlyBreakdown: MonthlyBreakdownItem[] = [
+  { month: "Jan", books: 4 },
+  { month: "Fev", books: 3 },
+  { month: "Mar", books: 5 },
+  { month: "Abr", books: 4 },
+  { month: "Mai", books: 6 },
+  { month: "Jun", books: 3 },
+  { month: "Jul", books: 4 },
+  { month: "Ago", books: 5 },
+  { month: "Set", books: 3 },
+  { month: "Out", books: 4 },
+  { month: "Nov", books: 4 },
+  { month: "Dez", books: 2 },
+];
 
 export const mockRecentBooks: DetailedBook[] = [
   {

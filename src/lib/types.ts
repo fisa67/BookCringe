@@ -50,20 +50,6 @@ export interface ReadingStats {
 }
 
 // ─────────────────────────────────────────────
-// Kept for backwards-compat — will be removed when
-// ClubSessions migrate fully to bookclub2026.ts data
-// ─────────────────────────────────────────────
-
-export interface ClubSession {
-  id: string;
-  book: Pick<Book, "title" | "author" | "cover">;
-  date: string;
-  theme?: string;
-  description?: string;
-  isUpcoming: boolean;
-}
-
-// ─────────────────────────────────────────────
 // Navigation & contact
 // ─────────────────────────────────────────────
 

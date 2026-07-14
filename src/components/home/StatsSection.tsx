@@ -1,25 +1,27 @@
 import { SectionHeader } from "@/components/ui/SectionHeader";
-import { mockStats } from "@/data/mock/stats";
+import { getPublicReadingStats } from "@/lib/adapters/readingStatsPublicAdapter";
 import { formatNumber, formatRating } from "@/lib/utils";
 
-const stats = [
-  { label: "Livros lidos", value: formatNumber(mockStats.booksRead), unit: "livros" },
-  { label: "Páginas lidas", value: formatNumber(mockStats.pagesRead), unit: "páginas" },
-  { label: "Horas de leitura", value: formatNumber(mockStats.hoursRead), unit: "horas" },
-  { label: "Nota média", value: formatRating(mockStats.avgRating), unit: "/ 5" },
-  { label: "Autores", value: formatNumber(mockStats.authorsRead), unit: "autores" },
-  { label: "Países", value: formatNumber(mockStats.countriesRead), unit: "países" },
-  { label: "Gêneros", value: formatNumber(mockStats.genresRead), unit: "gêneros" },
-  {
-    label: "Meta anual",
-    value: `${mockStats.annualProgress}/${mockStats.annualGoal}`,
-    unit: "livros",
-    isGoal: true,
-    progress: Math.round((mockStats.annualProgress / mockStats.annualGoal) * 100),
-  },
-];
+export async function StatsSection() {
+  const readingStats = await getPublicReadingStats();
 
-export function StatsSection() {
+  const stats = [
+    { label: "Livros lidos", value: formatNumber(readingStats.booksRead), unit: "livros" },
+    { label: "Páginas lidas", value: formatNumber(readingStats.pagesRead), unit: "páginas" },
+    { label: "Horas de leitura", value: formatNumber(readingStats.hoursRead), unit: "horas" },
+    { label: "Nota média", value: formatRating(readingStats.avgRating), unit: "/ 5" },
+    { label: "Autores", value: formatNumber(readingStats.authorsRead), unit: "autores" },
+    { label: "Países", value: formatNumber(readingStats.countriesRead), unit: "países" },
+    { label: "Gêneros", value: formatNumber(readingStats.genresRead), unit: "gêneros" },
+    {
+      label: "Meta anual",
+      value: `${readingStats.annualProgress}/${readingStats.annualGoal}`,
+      unit: "livros",
+      isGoal: true,
+      progress: Math.round((readingStats.annualProgress / readingStats.annualGoal) * 100),
+    },
+  ];
+
   return (
     <section className="py-20 px-6 bg-[var(--bc-surface)]">
       <div className="max-w-6xl mx-auto">

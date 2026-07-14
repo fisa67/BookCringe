@@ -22,17 +22,17 @@ import type {
 } from "@/lib/types/cms";
 
 /**
- * Fase 1 da migração pública do Clube de Leitura (somente leitura).
+ * Fase 2 da migração pública do Clube de Leitura (somente leitura).
  *
  * Este adapter lê do Supabase reutilizando os services já existentes do CMS
  * (`clubService`, `bookService`, `contentService`, `bookReadingService`) e
- * devolve os dados exatamente no mesmo formato de entrada consumido hoje
- * pela página pública — `BookClubCalendarDefinition[]`, o mesmo tipo de
- * `bookclubCalendars` (`src/data/bookclub`). Isso permite que, quando a
- * página trocar o import estático por `getPublicBookClubCalendars()`, toda a
- * lógica existente (`getCurrentReading`, `normalizeBookClubCalendar`,
- * `getStatusForMonth`, componentes visuais, SEO) continue funcionando sem
- * nenhuma alteração — este módulo ainda NÃO é importado pela página.
+ * devolve os dados exatamente no mesmo formato de entrada consumido pela
+ * página pública — `BookClubCalendarDefinition[]`, o mesmo tipo de
+ * `bookclubCalendars` (`src/data/bookclub`). Isso permite que
+ * `getPublicBookClubCalendars()` substitua o import estático sem exigir
+ * nenhuma alteração em `getCurrentReading`, `normalizeBookClubCalendar`,
+ * `getStatusForMonth`, componentes visuais ou SEO. Consumido hoje por
+ * `src/app/clube-de-leitura/page.tsx` e `src/components/home/ClubCTA.tsx`.
  *
  * Fallback: a comparação e a troca acontecem por ano. Se o Supabase não
  * tiver o ano, não tiver nenhum mês/livro, ou os dados não passarem em
@@ -127,8 +127,6 @@ async function fetchBookClubCalendarsFromSupabase(): Promise<BookClubCalendarDef
  * Retorna os calendários do Clube de Leitura no formato público
  * (`BookClubCalendarDefinition[]`), priorizando os dados do Supabase e
  * caindo para o estático (`bookclubCalendars`) ano a ano quando necessário.
- *
- * Ainda não é chamada pela página pública — pronta para a próxima fase.
  */
 export async function getPublicBookClubCalendars(): Promise<readonly BookClubCalendarDefinition[]> {
   let supabaseCalendars: BookClubCalendarDefinition[];

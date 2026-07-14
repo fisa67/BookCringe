@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { PageHero } from "@/components/ui/PageHero";
-import { mockStats, mockRecentBooks } from "@/data/mock/stats";
+import { getPublicReadingStatsDetailed } from "@/lib/adapters/readingStatsPublicAdapter";
 import { formatNumber, formatRating } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -9,45 +9,25 @@ export const metadata: Metadata = {
     "Dashboard completo de leitura — livros, páginas, horas, países, gêneros e metas. Dados do Bookly.",
 };
 
-const genreData = [
-  { genre: "Ficção", count: 18 },
-  { genre: "Clássicos", count: 9 },
-  { genre: "Romance Contemporâneo", count: 8 },
-  { genre: "Fantasia", count: 5 },
-  { genre: "Ficção Brasileira", count: 4 },
-  { genre: "Drama", count: 3 },
-];
+// Estatísticas lê dados do Supabase via getPublicReadingStatsDetailed —
+// mesma estratégia de revalidate de src/app/page.tsx e
+// src/app/clube-de-leitura/page.tsx.
+export const revalidate = 3600;
 
-const countryData = [
-  { country: "Brasil", count: 9 },
-  { country: "EUA", count: 8 },
-  { country: "Reino Unido", count: 7 },
-  { country: "França", count: 5 },
-  { country: "Alemanha", count: 4 },
-  { country: "Outros", count: 14 },
-];
+export default async function EstatisticasPage() {
+  const year = new Date().getFullYear();
+  const { stats, genreBreakdown, countryBreakdown, monthlyBreakdown } =
+    await getPublicReadingStatsDetailed(year);
 
-const monthlyData = [
-  { month: "Jan", books: 4 },
-  { month: "Fev", books: 3 },
-  { month: "Mar", books: 5 },
-  { month: "Abr", books: 4 },
-  { month: "Mai", books: 6 },
-  { month: "Jun", books: 3 },
-  { month: "Jul", books: 4 },
-  { month: "Ago", books: 5 },
-  { month: "Set", books: 3 },
-  { month: "Out", books: 4 },
-  { month: "Nov", books: 4 },
-  { month: "Dez", books: 2 },
-];
+  const goalPercent = Math.round((stats.annualProgress / stats.annualGoal) * 100);
 
-const maxMonthly = Math.max(...monthlyData.map((d) => d.books));
-
-export default function EstatisticasPage() {
-  const goalPercent = Math.round(
-    (mockStats.annualProgress / mockStats.annualGoal) * 100
-  );
+  // computeMonthlyBreakdown sempre devolve 12 posições, mas genre/country
+  // breakdown podem vir vazios (ex.: livros sem gênero/país cadastrado) —
+  // diferente dos arrays mock fixos que substituem, que nunca eram vazios.
+  // O `|| 1`/`?? 1` evita NaN/Infinity nas barras nesse cenário de borda.
+  const maxMonthly = Math.max(1, ...monthlyBreakdown.map((d) => d.books));
+  const topGenreCount = genreBreakdown[0]?.count ?? 1;
+  const topCountryCount = countryBreakdown[0]?.count ?? 1;
 
   return (
     <>
@@ -62,10 +42,10 @@ export default function EstatisticasPage() {
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
-              { label: "Livros lidos", value: formatNumber(mockStats.booksRead), unit: "livros" },
-              { label: "Páginas", value: formatNumber(mockStats.pagesRead), unit: "páginas" },
-              { label: "Horas de leitura", value: formatNumber(mockStats.hoursRead), unit: "horas" },
-              { label: "Nota média", value: formatRating(mockStats.avgRating), unit: "de 5" },
+              { label: "Livros lidos", value: formatNumber(stats.booksRead), unit: "livros" },
+              { label: "Páginas", value: formatNumber(stats.pagesRead), unit: "páginas" },
+              { label: "Horas de leitura", value: formatNumber(stats.hoursRead), unit: "horas" },
+              { label: "Nota média", value: formatRating(stats.avgRating), unit: "de 5" },
             ].map((kpi) => (
               <div
                 key={kpi.label}
@@ -91,10 +71,10 @@ export default function EstatisticasPage() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-xs text-[var(--bc-muted)] uppercase tracking-wide font-medium mb-1">
-                  Meta anual 2024
+                  Meta anual {year}
                 </p>
                 <p className="text-2xl font-bold text-[var(--bc-ink)]">
-                  {mockStats.annualProgress} de {mockStats.annualGoal} livros
+                  {stats.annualProgress} de {stats.annualGoal} livros
                 </p>
               </div>
               <p className="text-4xl font-bold text-[var(--bc-red)]">{goalPercent}%</p>
@@ -106,7 +86,7 @@ export default function EstatisticasPage() {
               />
             </div>
             <p className="text-xs text-[var(--bc-muted)] mt-2">
-              Faltam {mockStats.annualGoal - mockStats.annualProgress} livros para bater a meta
+              Faltam {stats.annualGoal - stats.annualProgress} livros para bater a meta
             </p>
           </div>
         </div>
@@ -116,11 +96,11 @@ export default function EstatisticasPage() {
       <section className="py-12 px-6">
         <div className="max-w-6xl mx-auto">
           <p className="text-xs font-semibold uppercase tracking-widest text-[var(--bc-muted)] mb-6">
-            Livros por mês — 2024
+            Livros por mês — {year}
           </p>
           <div className="rounded-xl border border-[var(--bc-border)] bg-white p-6">
             <div className="flex items-end gap-2 h-36">
-              {monthlyData.map((d) => (
+              {monthlyBreakdown.map((d) => (
                 <div key={d.month} className="flex-1 flex flex-col items-center gap-1">
                   <span className="text-xs text-[var(--bc-muted)] font-medium">{d.books}</span>
                   <div
@@ -144,7 +124,7 @@ export default function EstatisticasPage() {
               Por gênero
             </p>
             <div className="flex flex-col gap-3">
-              {genreData.map((g) => (
+              {genreBreakdown.map((g) => (
                 <div key={g.genre}>
                   <div className="flex justify-between mb-1">
                     <span className="text-sm text-[var(--bc-ink)]">{g.genre}</span>
@@ -154,7 +134,7 @@ export default function EstatisticasPage() {
                     <div
                       className="h-full rounded-full bg-[var(--bc-ink)]"
                       style={{
-                        width: `${(g.count / genreData[0].count) * 100}%`,
+                        width: `${(g.count / topGenreCount) * 100}%`,
                       }}
                     />
                   </div>
@@ -169,7 +149,7 @@ export default function EstatisticasPage() {
               Por país de origem
             </p>
             <div className="flex flex-col gap-3">
-              {countryData.map((c) => (
+              {countryBreakdown.map((c) => (
                 <div key={c.country}>
                   <div className="flex justify-between mb-1">
                     <span className="text-sm text-[var(--bc-ink)]">{c.country}</span>
@@ -179,7 +159,7 @@ export default function EstatisticasPage() {
                     <div
                       className="h-full rounded-full bg-[var(--bc-red)]"
                       style={{
-                        width: `${(c.count / countryData[0].count) * 100}%`,
+                        width: `${(c.count / topCountryCount) * 100}%`,
                       }}
                     />
                   </div>

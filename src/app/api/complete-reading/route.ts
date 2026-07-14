@@ -10,6 +10,13 @@ const requestSchema = z.object({
   favorite: z.boolean().optional(),
   wouldRecommend: z.boolean().optional(),
   year: z.number().int().optional(),
+  // Tempo total de leitura (vindo do Bookly), formato "HH:MM:SS" — "HH"
+  // sem limite de dígitos, "MM"/"SS" de 00 a 59. Convertido para segundos
+  // em `completionService.finalizeBookReading`.
+  readingTime: z
+    .string()
+    .regex(/^\d+:[0-5]\d:[0-5]\d$/, "readingTime deve estar no formato HH:MM:SS")
+    .optional(),
 });
 
 export async function POST(request: NextRequest) {

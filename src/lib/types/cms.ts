@@ -65,9 +65,21 @@ export interface CmsBookReadingRecord {
   format?: string;
   favorite: boolean;
   would_recommend: boolean;
+  /** Tempo total de leitura, em segundos. bigint no Postgres → serializado como string pelo Supabase-JS. */
+  reading_time_seconds?: string | null;
   metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
+}
+
+/**
+ * `book_readings` com o livro relacionado embutido (via
+ * `select("*, books(*)")` no Supabase-JS) — retorno de
+ * `getFinishedReadingsWithBooks`. A chave usa o nome da tabela (`books`),
+ * não o singular, pois é assim que o PostgREST nomeia o embed.
+ */
+export interface CmsFinishedReadingWithBook extends CmsBookReadingRecord {
+  books: CmsBookRecord;
 }
 
 export interface CmsContentRecord {
