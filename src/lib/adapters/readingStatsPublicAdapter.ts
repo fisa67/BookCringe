@@ -59,7 +59,6 @@ function buildReadingStats(
   const booksRead = readings.length;
 
   return {
-    // Sempre calculado a partir das leituras
     booksRead,
     pagesRead: computeTotalPagesRead(readings),
     hoursRead: computeTotalReadingHours(readings),
@@ -68,10 +67,9 @@ function buildReadingStats(
     genresRead: computeDistinctGenresCount(readings),
     countriesRead: computeDistinctCountriesCount(readings),
 
-    // Único dado persistido manualmente
-    annualGoal: statistics?.annual_goal ?? mockStats.annualGoal,
+    // único valor vindo da tabela
+    annualGoal: statistics?.annual_goal ?? 25,
 
-    // Também calculado
     annualProgress: booksRead,
   };
 }
