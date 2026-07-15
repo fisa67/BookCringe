@@ -56,16 +56,23 @@ function buildReadingStats(
   statistics: CmsStatisticsRecord | null,
   readings: readonly CmsFinishedReadingWithBook[]
 ): ReadingStats {
+  const booksRead = readings.length;
+
   return {
-    booksRead: statistics?.books_read ?? readings.length,
-    pagesRead: statistics?.pages_read ?? computeTotalPagesRead(readings),
+    // Sempre calculado a partir das leituras
+    booksRead,
+    pagesRead: computeTotalPagesRead(readings),
     hoursRead: computeTotalReadingHours(readings),
     avgRating: computeAverageRating(readings) ?? mockStats.avgRating,
     authorsRead: computeDistinctAuthorsCount(readings),
     genresRead: computeDistinctGenresCount(readings),
     countriesRead: computeDistinctCountriesCount(readings),
+
+    // Único dado persistido manualmente
     annualGoal: statistics?.annual_goal ?? mockStats.annualGoal,
-    annualProgress: statistics?.books_read ?? readings.length,
+
+    // Também calculado
+    annualProgress: booksRead,
   };
 }
 
