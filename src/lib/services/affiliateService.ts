@@ -27,3 +27,22 @@ export function buildAmazonAffiliateUrl(
 ): string | undefined {
   return buildAffiliateUrl(baseUrl, associateId ? { parameterName: "tag", id: associateId } : null);
 }
+
+/**
+ * Resolve a URL de compra pública de um livro: aplica a tag de afiliado
+ * quando há `associateId` configurado (`settings.amazon_associate_id`);
+ * cai para `baseUrl` cru quando não há.
+ *
+ * `buildAmazonAffiliateUrl` retorna `undefined` sempre que `associateId`
+ * está ausente — por design (não tem tag pra aplicar). Usado direto, isso
+ * apagaria o link de compra em qualquer livro enquanto o Associate ID não
+ * estiver configurado. Esta função é o ponto único que todo adapter público
+ * deve chamar para nunca esconder um link de compra válido só por falta de
+ * tag de afiliado.
+ */
+export function resolveAmazonPurchaseUrl(
+  baseUrl?: string | null,
+  associateId?: string | null
+): string | undefined {
+  return buildAmazonAffiliateUrl(baseUrl, associateId) ?? baseUrl ?? undefined;
+}

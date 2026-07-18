@@ -1,6 +1,7 @@
 import { mockRecentBooks } from "@/data/mock/stats";
 import type { DetailedBook } from "@/lib/types";
 import { getFinishedReadingsWithBooks } from "@/lib/services/bookReadingService";
+import { getSettings } from "@/lib/services/settingsService";
 import { mapToDetailedBooks } from "@/lib/adapters/readingStatsAggregators";
 
 /**
@@ -30,13 +31,13 @@ import { mapToDetailedBooks } from "@/lib/adapters/readingStatsAggregators";
  */
 export async function getPublicLibraryBooks(): Promise<DetailedBook[]> {
   try {
-    const readings = await getFinishedReadingsWithBooks({});
+    const [readings, settings] = await Promise.all([getFinishedReadingsWithBooks({}), getSettings()]);
 
     if (!readings || readings.length === 0) {
       return mockRecentBooks;
     }
 
-    return mapToDetailedBooks(readings);
+    return mapToDetailedBooks(readings, undefined, settings?.amazon_associate_id);
   } catch (error) {
     console.error(
       "[libraryPublicAdapter] Falha ao buscar catálogo do Supabase, usando fallback estático.",

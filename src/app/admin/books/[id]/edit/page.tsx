@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getBookById } from "@/lib/services/bookService";
+import { getReadingByBook } from "@/lib/services/bookReadingService";
 import { BookForm } from "@/components/admin/books/BookForm";
-import { updateBookAction } from "@/app/admin/books/actions";
+import { ReadingForm } from "@/components/admin/books/ReadingForm";
+import { updateBookAction, saveReadingAction } from "@/app/admin/books/actions";
 
 export const metadata: Metadata = {
   title: "Editar livro — Admin BookCringe",
@@ -10,17 +12,19 @@ export const metadata: Metadata = {
 
 interface EditBookPageProps {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; readingError?: string }>;
 }
 
 export default async function EditBookPage({ params, searchParams }: EditBookPageProps) {
   const { id } = await params;
-  const { error } = await searchParams;
+  const { error, readingError } = await searchParams;
   const book = await getBookById(id);
 
   if (!book) {
     notFound();
   }
+
+  const reading = await getReadingByBook(id);
 
   return (
     <div className="space-y-6">
@@ -36,6 +40,17 @@ export default async function EditBookPage({ params, searchParams }: EditBookPag
           book={book}
           submitLabel="Salvar alterações"
           errorMessage={error}
+        />
+      </div>
+
+      <div className="rounded-3xl border border-slate-800 bg-slate-950/80 p-6">
+        <p className="text-sm uppercase tracking-[0.24em] text-slate-400">Dados de leitura</p>
+        <h2 className="mt-2 mb-6 text-xl font-semibold text-white">Nota, resenha e favoritos</h2>
+        <ReadingForm
+          action={saveReadingAction.bind(null, book.id)}
+          reading={reading}
+          submitLabel="Salvar leitura"
+          errorMessage={readingError}
         />
       </div>
     </div>

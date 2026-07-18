@@ -9,6 +9,7 @@ import type { ReadingStats, DetailedBook } from "@/lib/types";
 import type { CmsFinishedReadingWithBook, CmsStatisticsRecord } from "@/lib/types/cms";
 import { getFinishedReadingsWithBooks } from "@/lib/services/bookReadingService";
 import { getStatisticsByYear } from "@/lib/services/statsService";
+import { getSettings } from "@/lib/services/settingsService";
 import {
   computeAverageRating,
   computeDistinctAuthorsCount,
@@ -56,21 +57,16 @@ function buildReadingStats(
   statistics: CmsStatisticsRecord | null,
   readings: readonly CmsFinishedReadingWithBook[]
 ): ReadingStats {
-  const booksRead = readings.length;
-
   return {
-    booksRead,
-    pagesRead: computeTotalPagesRead(readings),
+    booksRead: statistics?.books_read ?? readings.length,
+    pagesRead: statistics?.pages_read ?? computeTotalPagesRead(readings),
     hoursRead: computeTotalReadingHours(readings),
     avgRating: computeAverageRating(readings) ?? mockStats.avgRating,
     authorsRead: computeDistinctAuthorsCount(readings),
     genresRead: computeDistinctGenresCount(readings),
     countriesRead: computeDistinctCountriesCount(readings),
-
-    // único valor vindo da tabela
-    annualGoal: statistics?.annual_goal ?? 25,
-
-    annualProgress: booksRead,
+    annualGoal: statistics?.annual_goal ?? mockStats.annualGoal,
+    annualProgress: statistics?.books_read ?? readings.length,
   };
 }
 
@@ -110,13 +106,16 @@ export async function getPublicReadingStats(
  */
 export async function getPublicRecentBooks(limit = 4): Promise<DetailedBook[]> {
   try {
-    const readings = await getFinishedReadingsWithBooks({ limit });
+    const [readings, settings] = await Promise.all([
+      getFinishedReadingsWithBooks({ limit }),
+      getSettings(),
+    ]);
 
     if (!readings || readings.length === 0) {
       return mockRecentBooks;
     }
 
-    return mapToDetailedBooks(readings, limit);
+    return mapToDetailedBooks(readings, limit, settings?.amazon_associate_id);
   } catch (error) {
     console.error(
       "[readingStatsPublicAdapter] Falha ao buscar livros recentes do Supabase, usando fallback estático.",

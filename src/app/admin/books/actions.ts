@@ -3,10 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ZodError } from "zod";
-import { createBook, deleteBook, updateBook } from "@/lib/services/bookService";
+import { createBook, deleteBook, getBookById, updateBook } from "@/lib/services/bookService";
+import { getReadingByBook, saveReading } from "@/lib/services/bookReadingService";
 import { bookFormDataToInput, bookFormSchema } from "@/lib/validations/book";
+import { readingFormDataToInput, readingFormSchema } from "@/lib/validations/reading";
 import { formatValidationErrors } from "@/lib/validations/forms";
 import { slugify } from "@/lib/utils";
+import { parseHhMmSsToSeconds } from "@/lib/utils/time";
 
 /**
  * Server Actions do módulo Biblioteca — única porta de escrita usada pela UI
@@ -70,4 +73,63 @@ export async function deleteBookAction(id: string): Promise<void> {
   revalidatePath("/admin/books");
   revalidatePath("/admin");
   redirect("/admin/books");
+}
+
+/**
+ * Grava os dados de leitura (nota, favorito, recomendaria, resenha, tempo de
+ * leitura) a partir do card "Dados de leitura" em `/admin/books/[id]/edit`.
+ * Reaproveita `saveReading` (upsert por `book_id`, já usado por
+ * `completionService.finalizeBookReading`) — não é uma via de escrita nova,
+ * apenas um segundo chamador. `/api/complete-reading` continua funcionando
+ * sem qualquer alteração de contrato.
+ *
+ * Campos fora do escopo desta tela (status, started_at/finished_at, format,
+ * metadata) são preservados da leitura existente; ao criar a primeira
+ * leitura de um livro (ainda sem registro), assumem defaults sensatos
+ * (status "finished", finished_at hoje, format do livro).
+ */
+export async function saveReadingAction(bookId: string, formData: FormData): Promise<void> {
+  const parsed = readingFormSchema.safeParse(readingFormDataToInput(formData));
+
+  if (!parsed.success) {
+    redirect(
+      `/admin/books/${bookId}/edit?readingError=${encodeURIComponent(firstErrorMessage(parsed.error))}`
+    );
+  }
+
+  const [existingReading, book] = await Promise.all([getReadingByBook(bookId), getBookById(bookId)]);
+
+  // `parseHhMmSsToSeconds` devolve `null` para ausente/inválido — nesse caso
+  // caímos para o valor já persistido, nunca zerando o tempo de leitura só
+  // porque o campo ficou em branco nesta edição.
+  const parsedReadingTimeSeconds = parseHhMmSsToSeconds(parsed.data.reading_time);
+  const readingTimeSeconds =
+    parsedReadingTimeSeconds !== null
+      ? String(parsedReadingTimeSeconds)
+      : existingReading?.reading_time_seconds ?? undefined;
+
+  const saved = await saveReading({
+    book_id: bookId,
+    rating: parsed.data.rating,
+    review: parsed.data.review,
+    favorite: parsed.data.favorite,
+    would_recommend: parsed.data.would_recommend,
+    reading_time_seconds: readingTimeSeconds,
+    started_at: existingReading?.started_at,
+    finished_at: existingReading?.finished_at ?? new Date().toISOString().slice(0, 10),
+    status: existingReading?.status ?? "finished",
+    format: existingReading?.format ?? book?.format,
+    metadata: existingReading?.metadata ?? {},
+  });
+
+  if (!saved) {
+    redirect(
+      `/admin/books/${bookId}/edit?readingError=${encodeURIComponent("Não foi possível salvar os dados de leitura. Verifique os dados e tente novamente.")}`
+    );
+  }
+
+  revalidatePath("/admin/books");
+  revalidatePath(`/admin/books/${bookId}/edit`);
+  revalidatePath("/estatisticas");
+  redirect(`/admin/books/${bookId}/edit`);
 }

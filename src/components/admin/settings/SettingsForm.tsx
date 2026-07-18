@@ -184,6 +184,43 @@ export function SettingsForm({ action, settings, years, monthOptions, errorMessa
 
       <section className="space-y-4">
         <SectionTitle
+          title="Amazon Associates"
+          description="Associate ID (tag) usado para gerar automaticamente links de afiliado nos livros com URL da Amazon cadastrada. Enquanto vazio, os links continuam apontando para a URL da Amazon sem tag."
+        />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <label htmlFor="amazon_associate_id" className={adminLabelClass}>
+              Associate ID
+            </label>
+            <input
+              id="amazon_associate_id"
+              name="amazon_associate_id"
+              type="text"
+              placeholder="ex.: bookcringe09-20"
+              maxLength={50}
+              defaultValue={settings.amazon_associate_id}
+              className={adminInputClass}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="amazon_url" className={adminLabelClass}>
+              URL da loja Amazon
+            </label>
+            <input
+              id="amazon_url"
+              name="amazon_url"
+              type="url"
+              placeholder="https://www.amazon.com.br/..."
+              defaultValue={settings.amazon_url}
+              className={adminInputClass}
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <SectionTitle
           title="Textos globais"
           description="Textos de apoio para o Hero da Home e conteúdo institucional geral."
         />

@@ -1,5 +1,6 @@
 import type { CmsFinishedReadingWithBook } from "@/lib/types/cms";
 import type { DetailedBook } from "@/lib/types";
+import { resolveAmazonPurchaseUrl } from "@/lib/services/affiliateService";
 
 /**
  * Funções puras de agregação sobre leituras finalizadas (com o livro
@@ -184,8 +185,18 @@ export function computeMonthlyBreakdown(
 /**
  * Mapeia leituras finalizadas para o formato público `DetailedBook[]`,
  * já ordenadas por `finished_at` desc (garantido pela query do service).
+ *
+ * `associateId` (settings.amazon_associate_id) é opcional e, quando
+ * ausente, preserva o comportamento anterior (URL crua de `amazon_url`) —
+ * `resolveAmazonPurchaseUrl` já cai para a URL crua nesse caso. Passe o
+ * Associate ID sempre que a chamada tiver acesso a `settings` para os
+ * links já saírem com a tag de afiliado.
  */
-export function mapToDetailedBooks(readings: readonly Reading[], limit?: number): DetailedBook[] {
+export function mapToDetailedBooks(
+  readings: readonly Reading[],
+  limit?: number,
+  associateId?: string | null
+): DetailedBook[] {
   const sliced = typeof limit === "number" ? readings.slice(0, limit) : readings;
 
   return sliced.map((r) => ({
@@ -200,6 +211,6 @@ export function mapToDetailedBooks(readings: readonly Reading[], limit?: number)
     readAt: r.finished_at,
     status: "finished",
     cover: r.books.cover_path ?? undefined,
-    amazonUrl: r.books.amazon_url ?? undefined,
+    amazonUrl: resolveAmazonPurchaseUrl(r.books.amazon_url, associateId),
   }));
 }

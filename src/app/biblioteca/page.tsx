@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { PageHero } from "@/components/ui/PageHero";
 import { getPublicLibraryBooks } from "@/lib/adapters/libraryPublicAdapter";
 import { LibraryShelf } from "@/components/library/LibraryShelf";
+import { AffiliateDisclosure } from "@/components/book/AffiliateDisclosure";
 
 export const metadata: Metadata = {
   title: "Biblioteca",
@@ -26,6 +27,12 @@ export default async function BibliotecaPage() {
       />
 
       <LibraryShelf books={books} />
+
+      <div className="px-6 pb-12">
+        <div className="max-w-6xl mx-auto">
+          <AffiliateDisclosure />
+        </div>
+      </div>
     </>
   );
 }

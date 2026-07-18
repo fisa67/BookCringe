@@ -14,6 +14,8 @@ import {
   getBookClubMonths,
   getBookClubYears,
 } from "@/lib/services/clubService";
+import { getSettings } from "@/lib/services/settingsService";
+import { resolveAmazonPurchaseUrl } from "@/lib/services/affiliateService";
 import type {
   CmsBookClubMonthBookRecord,
   CmsBookClubMonthRecord,
@@ -61,7 +63,10 @@ async function buildContentFields(
   return contentKey === "instagram" ? { content, instagram: chosen.url } : { content };
 }
 
-async function buildMonthEntry(link: CmsBookClubMonthBookRecord): Promise<BookClubMonthEntry | null> {
+async function buildMonthEntry(
+  link: CmsBookClubMonthBookRecord,
+  associateId?: string | null
+): Promise<BookClubMonthEntry | null> {
   const book = await getBookById(link.book_id);
   if (!book) {
     console.error(`[bookclubPublicAdapter] Livro ${link.book_id} não encontrado (month_book ${link.id}).`);
@@ -77,21 +82,22 @@ async function buildMonthEntry(link: CmsBookClubMonthBookRecord): Promise<BookCl
     title: book.title,
     author: book.author,
     cover: book.cover_path ?? undefined,
-    amazonUrl: book.amazon_url ?? undefined,
+    amazonUrl: resolveAmazonPurchaseUrl(book.amazon_url, associateId),
     rating: typeof reading?.rating === "number" ? reading.rating : undefined,
     ...contentFields,
   };
 }
 
 async function buildMonthDefinition(
-  monthRecord: CmsBookClubMonthRecord
+  monthRecord: CmsBookClubMonthRecord,
+  associateId?: string | null
 ): Promise<BookClubMonthDefinition | null> {
   const links = await getBookClubMonthBooks(monthRecord.id);
   if (!links || links.length === 0) return null;
 
   // `position` ascendente define a ordem de exibição; o menor valor é o destaque.
   const sortedLinks = [...links].sort((a, b) => a.position - b.position);
-  const entries = await Promise.all(sortedLinks.map(buildMonthEntry));
+  const entries = await Promise.all(sortedLinks.map((link) => buildMonthEntry(link, associateId)));
   const books = entries.filter((entry): entry is BookClubMonthEntry => entry !== null);
   if (books.length === 0) return null;
 
@@ -103,12 +109,15 @@ async function buildMonthDefinition(
 }
 
 async function buildCalendarDefinition(
-  yearRecord: CmsBookClubYearRecord
+  yearRecord: CmsBookClubYearRecord,
+  associateId?: string | null
 ): Promise<BookClubCalendarDefinition | null> {
   const monthRecords = await getBookClubMonths(yearRecord.id);
   if (!monthRecords || monthRecords.length === 0) return null;
 
-  const months = await Promise.all(monthRecords.map(buildMonthDefinition));
+  const months = await Promise.all(
+    monthRecords.map((month) => buildMonthDefinition(month, associateId))
+  );
   const validMonths = months.filter((month): month is BookClubMonthDefinition => month !== null);
   if (validMonths.length === 0) return null;
 
@@ -116,10 +125,11 @@ async function buildCalendarDefinition(
 }
 
 async function fetchBookClubCalendarsFromSupabase(): Promise<BookClubCalendarDefinition[]> {
-  const years = await getBookClubYears();
+  const [years, settings] = await Promise.all([getBookClubYears(), getSettings()]);
   if (!years || years.length === 0) return [];
 
-  const calendars = await Promise.all(years.map(buildCalendarDefinition));
+  const associateId = settings?.amazon_associate_id;
+  const calendars = await Promise.all(years.map((year) => buildCalendarDefinition(year, associateId)));
   return calendars.filter((calendar): calendar is BookClubCalendarDefinition => calendar !== null);
 }
 

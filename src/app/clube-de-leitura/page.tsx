@@ -5,6 +5,7 @@ import { ReadingBanner } from "@/components/bookclub/ReadingBanner";
 import { BookTimeline } from "@/components/bookclub/BookTimeline";
 import { BookClubCTA } from "@/components/bookclub/BookClubCTA";
 import { BookClubForm } from "@/components/bookclub/BookClubForm";
+import { AffiliateDisclosure } from "@/components/book/AffiliateDisclosure";
 import { getCurrentReading } from "@/lib/bookclub";
 
 export const metadata: Metadata = {
@@ -43,6 +44,12 @@ export default async function ClubeDeLeituraPage() {
 
           {/* ── Full-year timeline */}
           <BookTimeline books={currentReading.calendar.books} year={currentReading.calendar.year} />
+
+          <div className="px-6 pb-4">
+            <div className="max-w-6xl mx-auto">
+              <AffiliateDisclosure />
+            </div>
+          </div>
         </>
       ) : (
         <section className="py-20 px-6">

@@ -4,6 +4,7 @@ import { StatsSection } from "@/components/home/StatsSection";
 import { AboutSection } from "@/components/home/AboutSection";
 import { RecentReads } from "@/components/home/RecentReads";
 import { ClubCTA } from "@/components/home/ClubCTA";
+import { AffiliateDisclosure } from "@/components/book/AffiliateDisclosure";
 import { SITE_NAME, SITE_SLOGAN, SITE_DESCRIPTION } from "@/lib/constants";
 
 export const metadata: Metadata = {
@@ -24,6 +25,12 @@ export default function HomePage() {
       <StatsSection />
       <RecentReads />
       <ClubCTA />
+
+      <div className="px-6 pb-16">
+        <div className="max-w-6xl mx-auto">
+          <AffiliateDisclosure />
+        </div>
+      </div>
     </>
   );
 }

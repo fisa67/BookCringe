@@ -71,14 +71,6 @@ export default async function AdminSettingsPage({ searchParams }: AdminSettingsP
                 <dt className="text-xs uppercase tracking-[0.24em] text-slate-400">Meta anual</dt>
                 <dd className="mt-1 text-sm text-slate-200">{settings.annual_goal}</dd>
               </div>
-              <div>
-                <dt className="text-xs uppercase tracking-[0.24em] text-slate-400">Amazon Associate ID</dt>
-                <dd className="mt-1 text-sm text-slate-200">{settings.amazon_associate_id ?? "Não configurado"}</dd>
-              </div>
-              <div>
-                <dt className="text-xs uppercase tracking-[0.24em] text-slate-400">Amazon URL base</dt>
-                <dd className="mt-1 text-sm text-slate-200">{settings.amazon_url ?? "Não configurado"}</dd>
-              </div>
             </dl>
           </div>
         </>

@@ -10,6 +10,7 @@ export const SITE_TWITTER = "@bookcringe";
 export const NAV_LINKS = [
   { label: "Sobre", href: "/sobre" },
   { label: "Biblioteca", href: "/biblioteca" },
+  { label: "Recomendações", href: "/recomendacoes" },
   { label: "Clube de Leitura", href: "/clube-de-leitura" },
   { label: "Estatísticas", href: "/estatisticas" },
   { label: "Trabalhe Comigo", href: "/trabalhe-comigo" },
