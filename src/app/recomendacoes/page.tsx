@@ -21,8 +21,8 @@ export default async function RecomendacoesPage() {
     <>
       <PageHero
         eyebrow="Recomendações"
-        title="Os livros que eu recomendo de verdade."
-        description="Favoritos, indicações e as notas mais altas da Biblioteca — uma curadoria, não a lista completa."
+        title="Nem todo livro merece uma recomendação."
+        description="Aqui entram apenas as leituras que passaram pelo meu filtro mais importante: livros que eu gostaria que mais pessoas conhecessem."
       />
 
       <section className="py-12 px-6">
