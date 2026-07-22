@@ -2,6 +2,7 @@ import type { DetailedBook } from "@/lib/types";
 import { getFinishedReadingsWithBooks } from "@/lib/services/bookReadingService";
 import { getSettings } from "@/lib/services/settingsService";
 import { resolveAmazonPurchaseUrl } from "@/lib/services/affiliateService";
+import { getPublicContentSummaryByBook } from "@/lib/adapters/contentPublicAdapter";
 
 /**
  * Adapter público de `/recomendacoes` — vitrine curada, subconjunto de
@@ -27,7 +28,11 @@ function readingPriority(book: { favorite: boolean; wouldRecommend: boolean }): 
 export async function getPublicRecommendedBooks(): Promise<
   Array<DetailedBook & { favorite: boolean; wouldRecommend: boolean }>
 > {
-  const [readings, settings] = await Promise.all([getFinishedReadingsWithBooks({}), getSettings()]);
+  const [readings, settings, contentSummaries] = await Promise.all([
+    getFinishedReadingsWithBooks({}),
+    getSettings(),
+    getPublicContentSummaryByBook(),
+  ]);
 
   if (!readings) return [];
 
@@ -42,6 +47,7 @@ export async function getPublicRecommendedBooks(): Promise<
     )
     .map((reading) => ({
       id: reading.books.id,
+      slug: reading.books.slug,
       title: reading.books.title,
       author: reading.books.author,
       rating: reading.rating,
@@ -56,6 +62,8 @@ export async function getPublicRecommendedBooks(): Promise<
       review: reading.review,
       favorite: reading.favorite,
       wouldRecommend: reading.would_recommend,
+      contentCount: contentSummaries.get(reading.books.id)?.count,
+      hasVideoContent: contentSummaries.get(reading.books.id)?.hasVideo,
     }))
     // Prioridade de curadoria: favoritos primeiro, depois recomendados,
     // depois os que só entraram pelo fallback de nota. Dentro de cada

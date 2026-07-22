@@ -68,6 +68,24 @@ export function ContentForm({
             </select>
           </div>
 
+          <div className="space-y-2 sm:col-span-2">
+            <label htmlFor="title" className={adminLabelClass}>
+              Título
+            </label>
+            <input
+              id="title"
+              name="title"
+              type="text"
+              maxLength={200}
+              placeholder='Ex.: "Reel de recomendação", "Carrossel de frases"'
+              defaultValue={content?.title}
+              className={adminInputClass}
+            />
+            <p className="text-xs text-slate-500">
+              Opcional — se vazio, os cards públicos usam o título do livro.
+            </p>
+          </div>
+
           <div className="space-y-2">
             <label htmlFor="platform" className={adminLabelClass}>
               Plataforma *

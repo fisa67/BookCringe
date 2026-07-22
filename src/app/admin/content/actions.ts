@@ -28,6 +28,7 @@ export async function createContentAction(formData: FormData): Promise<void> {
 
   const created = await createContent({
     book_id: parsed.data.book_id,
+    title: parsed.data.title,
     platform: parsed.data.platform,
     content_type: parsed.data.content_type,
     url: parsed.data.url,
@@ -58,6 +59,7 @@ export async function updateContentAction(id: string, formData: FormData): Promi
   const updated = await updateContent({
     id,
     book_id: parsed.data.book_id,
+    title: parsed.data.title,
     platform: parsed.data.platform,
     content_type: parsed.data.content_type,
     url: parsed.data.url,

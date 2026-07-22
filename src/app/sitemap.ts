@@ -1,7 +1,18 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/constants";
+import { getBooks } from "@/lib/services/bookService";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const books = await getBooks();
+  const bookEntries: MetadataRoute.Sitemap = (books ?? [])
+    .filter((book) => Boolean(book.slug))
+    .map((book) => ({
+      url: `${SITE_URL}/livro/${book.slug}`,
+      lastModified: book.updated_at ? new Date(book.updated_at) : new Date(),
+      changeFrequency: "monthly",
+      priority: 0.6,
+    }));
+
   return [
     {
       url: SITE_URL,
@@ -27,6 +38,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly",
       priority: 0.85,
     },
+    {
+      url: `${SITE_URL}/conteudos`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    ...bookEntries,
     {
       url: `${SITE_URL}/clube-de-leitura`,
       lastModified: new Date(),

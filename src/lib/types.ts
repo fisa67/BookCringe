@@ -14,6 +14,12 @@ export type Book = {
   /** Amazon affiliate link — renders the "Comprar na Amazon" button when present */
   amazonUrl?: string;
   status?: "reading" | "finished" | "future" | "comingSoon";
+  /** Book detail page slug (`/livro/[slug]`) — when present, the cover/title link there. */
+  slug?: string;
+  /** Quantidade de conteúdos públicos (reels/shorts/vídeos/carrosséis/reviews) já publicados para este livro. */
+  contentCount?: number;
+  /** true quando há ao menos 1 conteúdo do tipo reel/short/youtube/vídeo — dispara o CTA "▶ Assistir vídeo". */
+  hasVideoContent?: boolean;
 };
 
 /**

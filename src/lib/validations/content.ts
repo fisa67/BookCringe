@@ -17,9 +17,20 @@ export const CONTENT_PLATFORMS = [
   "spotify",
   "podcast",
   "blog",
+  "website",
 ] as const;
 
-export const CONTENT_TYPES = ["reel", "short", "video", "podcast", "article", "other"] as const;
+export const CONTENT_TYPES = [
+  "reel",
+  "short",
+  "video",
+  "podcast",
+  "article",
+  "other",
+  "youtube",
+  "carousel",
+  "review",
+] as const;
 
 function emptyToUndefined(value: unknown) {
   return typeof value === "string" && value.trim() === "" ? undefined : value;
@@ -34,6 +45,7 @@ function optionalText(max: number, label: string) {
 
 export const contentFormSchema = z.object({
   book_id: z.string().trim().min(1, "Selecione um livro").uuid("Livro inválido"),
+  title: optionalText(200, "Título"),
   platform: z.enum(CONTENT_PLATFORMS, {
     errorMap: () => ({ message: "Selecione uma plataforma válida" }),
   }),
@@ -58,6 +70,7 @@ export type ContentFormInput = z.infer<typeof contentFormSchema>;
 export function contentFormDataToInput(formData: FormData): Record<string, unknown> {
   return {
     book_id: formData.get("book_id"),
+    title: formData.get("title"),
     platform: formData.get("platform"),
     content_type: formData.get("content_type"),
     url: formData.get("url"),

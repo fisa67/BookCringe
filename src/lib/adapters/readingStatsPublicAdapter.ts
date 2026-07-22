@@ -25,6 +25,7 @@ import {
   type CountryBreakdownItem,
   type MonthlyBreakdownItem,
 } from "@/lib/adapters/readingStatsAggregators";
+import { getPublicContentSummaryByBook } from "@/lib/adapters/contentPublicAdapter";
 
 /**
  * Fase 1 da migração pública de Estatísticas (somente leitura).
@@ -106,16 +107,17 @@ export async function getPublicReadingStats(
  */
 export async function getPublicRecentBooks(limit = 4): Promise<DetailedBook[]> {
   try {
-    const [readings, settings] = await Promise.all([
+    const [readings, settings, contentSummaries] = await Promise.all([
       getFinishedReadingsWithBooks({ limit }),
       getSettings(),
+      getPublicContentSummaryByBook(),
     ]);
 
     if (!readings || readings.length === 0) {
       return mockRecentBooks;
     }
 
-    return mapToDetailedBooks(readings, limit, settings?.amazon_associate_id);
+    return mapToDetailedBooks(readings, limit, settings?.amazon_associate_id, contentSummaries);
   } catch (error) {
     console.error(
       "[readingStatsPublicAdapter] Falha ao buscar livros recentes do Supabase, usando fallback estático.",

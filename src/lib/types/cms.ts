@@ -4,9 +4,19 @@ export type CmsContentPlatform =
   | "youtube"
   | "spotify"
   | "podcast"
-  | "blog";
+  | "blog"
+  | "website";
 
-export type CmsContentType = "reel" | "short" | "video" | "podcast" | "article" | "other";
+export type CmsContentType =
+  | "reel"
+  | "short"
+  | "video"
+  | "podcast"
+  | "article"
+  | "other"
+  | "youtube"
+  | "carousel"
+  | "review";
 
 export interface CmsBookRecord {
   id: string;
@@ -85,6 +95,7 @@ export interface CmsFinishedReadingWithBook extends CmsBookReadingRecord {
 export interface CmsContentRecord {
   id: string;
   book_id: string;
+  title?: string;
   platform: CmsContentPlatform;
   content_type: CmsContentType;
   url: string;

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 // Deterministic tint based on title initial — avoids relying on random values
@@ -51,6 +52,8 @@ export interface BookCoverProps {
   cover?: string;
   /** When present, wraps the cover in an affiliate link */
   amazonUrl?: string;
+  /** Internal link (e.g. `/livro/[slug]`) — takes priority over `amazonUrl` when both are present */
+  href?: string;
   /** Controls the rendered image size (passed to next/image) */
   width?: number;
   height?: number;
@@ -62,6 +65,7 @@ export function BookCover({
   title,
   cover,
   amazonUrl,
+  href,
   width = 200,
   height = 280,
   className,
@@ -85,6 +89,18 @@ export function BookCover({
       {imageEl}
     </div>
   );
+
+  if (href) {
+    return (
+      <Link
+        href={href}
+        aria-label={`Ver detalhes de "${title}"`}
+        className="block hover:opacity-90 transition-opacity duration-150 focus-visible:ring-2 focus-visible:ring-[var(--bc-red)] focus-visible:rounded-lg"
+      >
+        {wrapper}
+      </Link>
+    );
+  }
 
   if (amazonUrl) {
     return (

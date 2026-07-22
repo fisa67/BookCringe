@@ -67,6 +67,26 @@ export async function getBookById(id: string): Promise<CmsBookRecord | null> {
   return data;
 }
 
+/**
+ * Busca por `slug` — base da página pública `/livro/[slug]`
+ * (`bookDetailPublicAdapter`). `maybeSingle` (não `single`): slug
+ * inexistente é um caminho esperado (404), não um erro.
+ */
+export async function getBookBySlug(slug: string): Promise<CmsBookRecord | null> {
+  const { data, error } = await supabaseAdminClient
+    .from(TABLE)
+    .select("*")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[bookService] getBookBySlug error", error);
+    return null;
+  }
+
+  return data;
+}
+
 export async function createBook(payload: CmsBookCreate): Promise<CmsBookRecord | null> {
   const { data, error } = await supabaseAdminClient
     .from(TABLE)

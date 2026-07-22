@@ -48,8 +48,11 @@ export function Header() {
           </span>
         </Link>
 
-        {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-1">
+        {/* Desktop Nav — lg (não md): com 8 itens (Sobre, Biblioteca, Recomendações,
+            Conteúdos, Clube de Leitura, Estatísticas, Trabalhe Comigo, Contato) +
+            logo, não cabe confortavelmente em telas médias (tablet) sem apertar ou
+            quebrar linha. Abaixo de lg, usa o menu mobile (hambúrguer). */}
+        <nav className="hidden lg:flex items-center gap-1">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
@@ -70,7 +73,7 @@ export function Header() {
         <button
           onClick={() => setIsMobileOpen((v) => !v)}
           aria-label={isMobileOpen ? "Fechar menu" : "Abrir menu"}
-          className="md:hidden p-2 rounded-md text-[var(--bc-ink)] hover:bg-[var(--bc-surface)] transition-colors"
+          className="lg:hidden p-2 rounded-md text-[var(--bc-ink)] hover:bg-[var(--bc-surface)] transition-colors"
         >
           <span className="sr-only">{isMobileOpen ? "Fechar" : "Menu"}</span>
           <div className="w-5 flex flex-col gap-1.5">
@@ -99,7 +102,7 @@ export function Header() {
       {/* Mobile menu */}
       <div
         className={cn(
-          "md:hidden overflow-hidden transition-all duration-300 bg-[var(--bc-cream)] border-b border-[var(--bc-border)]",
+          "lg:hidden overflow-hidden transition-all duration-300 bg-[var(--bc-cream)] border-b border-[var(--bc-border)]",
           isMobileOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0"
         )}
       >

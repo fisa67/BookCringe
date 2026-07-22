@@ -119,6 +119,12 @@ export default async function AdminBooksPage({ searchParams }: AdminBooksPagePro
                   >
                     Editar
                   </Link>
+                  <Link
+                    href={`/admin/content?bookId=${book.id}`}
+                    className="rounded-md border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-100 transition hover:border-slate-500 hover:text-white"
+                  >
+                    Conteúdos
+                  </Link>
                   <DeleteBookButton
                     action={deleteBookAction.bind(null, book.id)}
                     bookTitle={book.title}

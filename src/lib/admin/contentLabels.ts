@@ -12,6 +12,7 @@ export const PLATFORM_LABELS: Record<CmsContentPlatform, string> = {
   spotify: "Spotify",
   podcast: "Podcast",
   blog: "Blog",
+  website: "Site",
 };
 
 export const CONTENT_TYPE_LABELS: Record<CmsContentType, string> = {
@@ -21,6 +22,9 @@ export const CONTENT_TYPE_LABELS: Record<CmsContentType, string> = {
   podcast: "Podcast",
   article: "Artigo",
   other: "Outro",
+  youtube: "Vídeo (YouTube)",
+  carousel: "Carrossel",
+  review: "Review",
 };
 
 export type ContentStatus = "draft" | "scheduled" | "published";

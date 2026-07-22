@@ -3,6 +3,7 @@ import type { DetailedBook } from "@/lib/types";
 import { getFinishedReadingsWithBooks } from "@/lib/services/bookReadingService";
 import { getSettings } from "@/lib/services/settingsService";
 import { mapToDetailedBooks } from "@/lib/adapters/readingStatsAggregators";
+import { getPublicContentSummaryByBook } from "@/lib/adapters/contentPublicAdapter";
 
 /**
  * Fase 6.1 da migração pública da Biblioteca (somente leitura).
@@ -31,13 +32,17 @@ import { mapToDetailedBooks } from "@/lib/adapters/readingStatsAggregators";
  */
 export async function getPublicLibraryBooks(): Promise<DetailedBook[]> {
   try {
-    const [readings, settings] = await Promise.all([getFinishedReadingsWithBooks({}), getSettings()]);
+    const [readings, settings, contentSummaries] = await Promise.all([
+      getFinishedReadingsWithBooks({}),
+      getSettings(),
+      getPublicContentSummaryByBook(),
+    ]);
 
     if (!readings || readings.length === 0) {
       return mockRecentBooks;
     }
 
-    return mapToDetailedBooks(readings, undefined, settings?.amazon_associate_id);
+    return mapToDetailedBooks(readings, undefined, settings?.amazon_associate_id, contentSummaries);
   } catch (error) {
     console.error(
       "[libraryPublicAdapter] Falha ao buscar catálogo do Supabase, usando fallback estático.",

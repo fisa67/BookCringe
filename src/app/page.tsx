@@ -3,6 +3,7 @@ import { Hero } from "@/components/home/Hero";
 import { StatsSection } from "@/components/home/StatsSection";
 import { AboutSection } from "@/components/home/AboutSection";
 import { RecentReads } from "@/components/home/RecentReads";
+import { RecentContents } from "@/components/home/RecentContents";
 import { ClubCTA } from "@/components/home/ClubCTA";
 import { AffiliateDisclosure } from "@/components/book/AffiliateDisclosure";
 import { SITE_NAME, SITE_SLOGAN, SITE_DESCRIPTION } from "@/lib/constants";
@@ -24,6 +25,7 @@ export default function HomePage() {
       <AboutSection />
       <StatsSection />
       <RecentReads />
+      <RecentContents />
       <ClubCTA />
 
       <div className="px-6 pb-16">

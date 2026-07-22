@@ -34,6 +34,7 @@ const STATUS_BADGE_CLASS: Record<ContentStatus, string> = {
 interface AdminContentPageProps {
   searchParams: Promise<{
     book?: string;
+    bookId?: string;
     link?: string;
     platform?: string;
     type?: string;
@@ -52,6 +53,7 @@ function formatDate(value?: string): string | undefined {
 export default async function AdminContentPage({ searchParams }: AdminContentPageProps) {
   const params = await searchParams;
   const bookSearch = params.book?.trim();
+  const bookId = params.bookId?.trim();
   const linkSearch = params.link?.trim();
   const platform = CONTENT_PLATFORMS.find((value) => value === params.platform) as
     | CmsContentPlatform
@@ -60,13 +62,17 @@ export default async function AdminContentPage({ searchParams }: AdminContentPag
   const status = (["draft", "scheduled", "published"] as const).find((value) => value === params.status);
   const sort = (["recent", "oldest", "featured"] as const).find((value) => value === params.sort) ?? "recent";
 
-  const hasFilters = Boolean(bookSearch || linkSearch || platform || contentType || status);
+  const hasFilters = Boolean(bookSearch || bookId || linkSearch || platform || contentType || status);
 
   const books = await getBooks();
   const booksById = new Map((books ?? []).map((book) => [book.id, book]));
+  const bookOptions = [...(books ?? [])].sort((a, b) => a.title.localeCompare(b.title, "pt-BR"));
 
+  // Filtro exato por livro (`bookId`, via select) tem prioridade sobre a
+  // busca livre por título/autor (`book`, via texto) — os dois convivem na
+  // UI, mas não faz sentido combinar as duas condições na mesma query.
   let bookIds: string[] | undefined;
-  if (bookSearch) {
+  if (!bookId && bookSearch) {
     const needle = bookSearch.toLowerCase();
     bookIds = (books ?? [])
       .filter(
@@ -75,10 +81,11 @@ export default async function AdminContentPage({ searchParams }: AdminContentPag
       .map((book) => book.id);
   }
 
-  const skipQuery = bookSearch !== undefined && bookSearch !== "" && bookIds?.length === 0;
+  const skipQuery = !bookId && bookSearch !== undefined && bookSearch !== "" && bookIds?.length === 0;
   const contents = skipQuery
     ? []
     : await getContents({
+        bookId: bookId || undefined,
         bookIds,
         platform,
         contentType,
@@ -110,11 +117,19 @@ export default async function AdminContentPage({ searchParams }: AdminContentPag
         </div>
 
         <form className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" action="/admin/content">
+          <select name="bookId" defaultValue={bookId ?? ""} className={adminInputClass}>
+            <option value="">Filtrar por livro (exato)...</option>
+            {bookOptions.map((book) => (
+              <option key={book.id} value={book.id}>
+                {book.title} — {book.author}
+              </option>
+            ))}
+          </select>
           <input
             type="text"
             name="book"
             defaultValue={bookSearch}
-            placeholder="Buscar por livro (título ou autor)..."
+            placeholder="...ou buscar por título/autor"
             className={adminInputClass}
           />
           <input
@@ -217,7 +232,8 @@ export default async function AdminContentPage({ searchParams }: AdminContentPag
                   </div>
 
                   <p className="mt-2 truncate text-base font-semibold text-white">
-                    {book ? `${book.title} — ${book.author}` : "Livro não encontrado"}
+                    {content.title ? `${content.title} — ` : ""}
+                    {book ? `${book.title} (${book.author})` : "Livro não encontrado"}
                   </p>
 
                   <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-slate-400">

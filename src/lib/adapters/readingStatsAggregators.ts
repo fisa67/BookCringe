@@ -1,6 +1,7 @@
 import type { CmsFinishedReadingWithBook } from "@/lib/types/cms";
 import type { DetailedBook } from "@/lib/types";
 import { resolveAmazonPurchaseUrl } from "@/lib/services/affiliateService";
+import type { ContentSummary } from "@/lib/adapters/contentPublicAdapter";
 
 /**
  * Funções puras de agregação sobre leituras finalizadas (com o livro
@@ -191,26 +192,38 @@ export function computeMonthlyBreakdown(
  * `resolveAmazonPurchaseUrl` já cai para a URL crua nesse caso. Passe o
  * Associate ID sempre que a chamada tiver acesso a `settings` para os
  * links já saírem com a tag de afiliado.
+ *
+ * `contentSummaries` (opcional) é o mapa `bookId -> { count, hasVideo }` de
+ * `contentPublicAdapter.getPublicContentSummaryByBook` — quando ausente,
+ * `contentCount`/`hasVideoContent` ficam `undefined` e os badges de
+ * conteúdo (`BookCard`) simplesmente não aparecem, sem quebrar nada.
  */
 export function mapToDetailedBooks(
   readings: readonly Reading[],
   limit?: number,
-  associateId?: string | null
+  associateId?: string | null,
+  contentSummaries?: Map<string, ContentSummary>
 ): DetailedBook[] {
   const sliced = typeof limit === "number" ? readings.slice(0, limit) : readings;
 
-  return sliced.map((r) => ({
-    id: r.books.id,
-    title: r.books.title,
-    author: r.books.author,
-    rating: r.rating,
-    pages: r.books.page_count,
-    year: r.books.publication_year,
-    genre: r.books.genres,
-    country: r.books.country,
-    readAt: r.finished_at,
-    status: "finished",
-    cover: r.books.cover_path ?? undefined,
-    amazonUrl: resolveAmazonPurchaseUrl(r.books.amazon_url, associateId),
-  }));
+  return sliced.map((r) => {
+    const summary = contentSummaries?.get(r.books.id);
+    return {
+      id: r.books.id,
+      slug: r.books.slug,
+      title: r.books.title,
+      author: r.books.author,
+      rating: r.rating,
+      pages: r.books.page_count,
+      year: r.books.publication_year,
+      genre: r.books.genres,
+      country: r.books.country,
+      readAt: r.finished_at,
+      status: "finished",
+      cover: r.books.cover_path ?? undefined,
+      amazonUrl: resolveAmazonPurchaseUrl(r.books.amazon_url, associateId),
+      contentCount: summary?.count,
+      hasVideoContent: summary?.hasVideo,
+    };
+  });
 }
