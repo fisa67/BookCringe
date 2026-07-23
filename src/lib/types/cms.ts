@@ -75,6 +75,10 @@ export interface CmsBookReadingRecord {
   format?: string;
   favorite: boolean;
   would_recommend: boolean;
+  /** "Por que recomendo este livro" — exibido publicamente só quando favorite ou would_recommend também são true. */
+  recommendation_reason?: string;
+  /** Destaque "Recomendação do mês" em `/recomendacoes`. No máximo 1 `true` no site inteiro (índice único parcial no banco). */
+  is_recommendation_of_month: boolean;
   /** Tempo total de leitura, em segundos. bigint no Postgres → serializado como string pelo Supabase-JS. */
   reading_time_seconds?: string | null;
   metadata: Record<string, unknown>;

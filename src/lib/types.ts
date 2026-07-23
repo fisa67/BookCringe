@@ -20,6 +20,8 @@ export type Book = {
   contentCount?: number;
   /** true quando há ao menos 1 conteúdo do tipo reel/short/youtube/vídeo — dispara o CTA "▶ Assistir vídeo". */
   hasVideoContent?: boolean;
+  /** "Por que recomendo este livro" — só deve ser exibido quando o livro é parte da curadoria (favorite/wouldRecommend). */
+  recommendationReason?: string;
 };
 
 /**

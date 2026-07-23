@@ -3,6 +3,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { AdminNav } from "@/components/admin/layout/AdminNav";
 
 export const metadata: Metadata = {
   title: "Admin BookCringe",
@@ -39,8 +40,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="border-b border-slate-800 bg-slate-900/95 px-6 py-4 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
+      <div className="border-b border-slate-800 bg-slate-900/95 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
           <div>
             <p className="text-sm text-slate-400">Administração</p>
             <h1 className="text-2xl font-semibold">BookCringe CMS</h1>
@@ -52,6 +53,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             Ver site público
           </Link>
         </div>
+        <AdminNav />
       </div>
       <main className="mx-auto max-w-6xl px-6 py-8">{children}</main>
     </div>

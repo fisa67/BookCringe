@@ -65,6 +65,12 @@ export async function finalizeBookReading(
     format: book.format,
     favorite: params.favorite ?? false,
     would_recommend: params.wouldRecommend ?? false,
+    // Camada editorial (Curadoria BookCringe) — fora do escopo deste
+    // endpoint (finalização automática via Bookly), sempre preservada da
+    // leitura existente para nunca ser apagada por uma chamada que não sabe
+    // desses campos.
+    recommendation_reason: existingReading?.recommendation_reason,
+    is_recommendation_of_month: existingReading?.is_recommendation_of_month ?? false,
     reading_time_seconds: readingTimeSeconds,
     metadata: existingReading?.metadata ?? {},
   };

@@ -11,10 +11,11 @@ interface ReadingFormProps {
 
 /**
  * Formulário de dados de leitura (nota, favorito, recomendaria, resenha,
- * tempo de leitura) — segundo card de `/admin/books/[id]/edit`, independente
- * de `BookForm`. Server Component, sem estado no cliente: `defaultValue`/
- * `defaultChecked` refletem a leitura existente (se houver) e o submit
- * nativo do `<form>` aciona a Server Action `saveReadingAction`.
+ * tempo de leitura, motivo da recomendação, recomendação do mês) — segundo
+ * card de `/admin/books/[id]/edit`, independente de `BookForm`. Server
+ * Component, sem estado no cliente: `defaultValue`/`defaultChecked`
+ * refletem a leitura existente (se houver) e o submit nativo do `<form>`
+ * aciona a Server Action `saveReadingAction`.
  *
  * Sem `reading` (livro que ainda não foi lido), o formulário começa vazio —
  * `saveReadingAction`/`saveReading` criam a leitura na primeira gravação.
@@ -111,6 +112,51 @@ export function ReadingForm({ action, reading, submitLabel, errorMessage }: Read
             defaultValue={reading?.review}
             className={inputClass}
           />
+        </div>
+      </div>
+
+      <div className="space-y-4 border-t border-slate-800 pt-6">
+        <div>
+          <p className="text-sm uppercase tracking-[0.2em] text-slate-400">Curadoria BookCringe</p>
+          <p className="mt-1 text-xs text-slate-500">
+            Só aparecem no site quando o livro é Favorito ou Recomendaria.
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="recommendation_reason" className={labelClass}>
+            Por que recomendo? (opcional)
+          </label>
+          <textarea
+            id="recommendation_reason"
+            name="recommendation_reason"
+            rows={3}
+            maxLength={2000}
+            placeholder="Ex.: Porque muda a forma como você olha para..."
+            defaultValue={reading?.recommendation_reason}
+            className={inputClass}
+          />
+          <p className="text-xs text-slate-500">
+            Exibido na página do livro como &ldquo;⭐ Livro da Curadoria BookCringe&rdquo;.
+          </p>
+        </div>
+
+        <div className="flex items-start gap-2">
+          <input
+            id="is_recommendation_of_month"
+            name="is_recommendation_of_month"
+            type="checkbox"
+            value="true"
+            defaultChecked={reading?.is_recommendation_of_month ?? false}
+            className="mt-0.5 h-4 w-4 rounded border-slate-700 bg-slate-950 text-slate-100 focus:ring-slate-500"
+          />
+          <label htmlFor="is_recommendation_of_month" className="text-sm text-slate-300">
+            ✅ Recomendação do mês
+            <span className="mt-0.5 block text-xs text-slate-500">
+              Apenas um livro fica ativo por vez — marcar este desmarca automaticamente o anterior.
+              Exige Favorito ou Recomendaria marcado.
+            </span>
+          </label>
         </div>
       </div>
 

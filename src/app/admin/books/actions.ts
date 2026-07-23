@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ZodError } from "zod";
 import { createBook, deleteBook, getBookById, updateBook } from "@/lib/services/bookService";
-import { getReadingByBook, saveReading } from "@/lib/services/bookReadingService";
+import {
+  getReadingByBook,
+  saveReading,
+  clearRecommendationOfMonthExcept,
+} from "@/lib/services/bookReadingService";
 import { bookFormDataToInput, bookFormSchema } from "@/lib/validations/book";
 import { readingFormDataToInput, readingFormSchema } from "@/lib/validations/reading";
 import { formatValidationErrors } from "@/lib/validations/forms";
@@ -77,11 +81,12 @@ export async function deleteBookAction(id: string): Promise<void> {
 
 /**
  * Grava os dados de leitura (nota, favorito, recomendaria, resenha, tempo de
- * leitura) a partir do card "Dados de leitura" em `/admin/books/[id]/edit`.
- * Reaproveita `saveReading` (upsert por `book_id`, já usado por
- * `completionService.finalizeBookReading`) — não é uma via de escrita nova,
- * apenas um segundo chamador. `/api/complete-reading` continua funcionando
- * sem qualquer alteração de contrato.
+ * leitura, motivo da recomendação, recomendação do mês) a partir do card
+ * "Dados de leitura" em `/admin/books/[id]/edit`. Reaproveita `saveReading`
+ * (upsert por `book_id`, já usado por `completionService.
+ * finalizeBookReading`) — não é uma via de escrita nova, apenas um segundo
+ * chamador. `/api/complete-reading` continua funcionando sem qualquer
+ * alteração de contrato.
  *
  * Campos fora do escopo desta tela (status, started_at/finished_at, format,
  * metadata) são preservados da leitura existente; ao criar a primeira
@@ -108,12 +113,21 @@ export async function saveReadingAction(bookId: string, formData: FormData): Pro
       ? String(parsedReadingTimeSeconds)
       : existingReading?.reading_time_seconds ?? undefined;
 
+  // Precisa rodar ANTES do upsert: desmarca qualquer outro livro que esteja
+  // com "Recomendação do mês" ativa para este aqui poder assumir o posto sem
+  // colidir com o índice único parcial (no máximo 1 `true` por vez).
+  if (parsed.data.is_recommendation_of_month) {
+    await clearRecommendationOfMonthExcept(bookId);
+  }
+
   const saved = await saveReading({
     book_id: bookId,
     rating: parsed.data.rating,
     review: parsed.data.review,
     favorite: parsed.data.favorite,
     would_recommend: parsed.data.would_recommend,
+    recommendation_reason: parsed.data.recommendation_reason,
+    is_recommendation_of_month: parsed.data.is_recommendation_of_month,
     reading_time_seconds: readingTimeSeconds,
     started_at: existingReading?.started_at,
     finished_at: existingReading?.finished_at ?? new Date().toISOString().slice(0, 10),
@@ -131,5 +145,10 @@ export async function saveReadingAction(bookId: string, formData: FormData): Pro
   revalidatePath("/admin/books");
   revalidatePath(`/admin/books/${bookId}/edit`);
   revalidatePath("/estatisticas");
+  revalidatePath("/biblioteca");
+  revalidatePath("/recomendacoes");
+  if (book?.slug) {
+    revalidatePath(`/livro/${book.slug}`);
+  }
   redirect(`/admin/books/${bookId}/edit`);
 }

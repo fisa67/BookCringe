@@ -121,6 +121,20 @@ export default async function BookPage({ params }: BookPageProps) {
               <p className="text-[var(--bc-ink)] leading-relaxed max-w-2xl">{book.review}</p>
             )}
 
+            {/* Só exibido quando o livro é parte da Curadoria BookCringe
+                (favorite ou wouldRecommend) — mesmo critério de /recomendacoes. */}
+            {(book.favorite || book.wouldRecommend) && book.recommendationReason && (
+              <div className="max-w-2xl rounded-xl border border-[var(--bc-border)] bg-[var(--bc-surface)] p-5">
+                <p className="text-sm font-semibold text-[var(--bc-red)]">
+                  ⭐ Livro da Curadoria BookCringe
+                </p>
+                <p className="mt-3 text-sm font-semibold text-[var(--bc-ink)]">Por que recomendo?</p>
+                <p className="mt-1 text-[var(--bc-ink)] leading-relaxed">
+                  {book.recommendationReason}
+                </p>
+              </div>
+            )}
+
             {book.amazonUrl && (
               <div className="pt-1">
                 <BookCTA amazonUrl={book.amazonUrl} size="md" />

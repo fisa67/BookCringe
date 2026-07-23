@@ -46,6 +46,7 @@ export async function getPublicBookDetail(slug: string): Promise<PublicBookDetai
     review: reading?.review,
     favorite: reading?.favorite ?? false,
     wouldRecommend: reading?.would_recommend ?? false,
+    recommendationReason: reading?.recommendation_reason,
     contentCount: contents.length,
     hasVideoContent: contents.some((content) => isVideoContentType(content.content_type)),
     contents,

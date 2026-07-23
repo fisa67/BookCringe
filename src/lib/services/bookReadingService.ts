@@ -60,6 +60,48 @@ export async function getFinishedReadingsWithBooks(
   return data as unknown as CmsFinishedReadingWithBook[];
 }
 
+/**
+ * Leitura atualmente marcada como "Recomendação do mês" (no máximo 1 no
+ * site inteiro — ver índice único parcial na migration
+ * `20260723_book_readings_editorial.sql`), com o livro embutido. `null`
+ * quando nenhuma está marcada — a UI (`/recomendacoes`) simplesmente não
+ * mostra o destaque nesse caso.
+ */
+export async function getRecommendationOfMonth(): Promise<CmsFinishedReadingWithBook | null> {
+  const { data, error } = await supabaseAdminClient
+    .from(TABLE)
+    .select("*, books(*)")
+    .eq("is_recommendation_of_month", true)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[bookReadingService] getRecommendationOfMonth error", error);
+    return null;
+  }
+
+  return data as unknown as CmsFinishedReadingWithBook | null;
+}
+
+/**
+ * Desmarca "Recomendação do mês" de qualquer leitura que não seja `bookId`.
+ * Chamada ANTES de salvar a leitura que está sendo promovida — nessa ordem,
+ * quando o upsert seguinte marcar `is_recommendation_of_month = true`, no
+ * máximo 1 linha estará com `true` no momento do commit, nunca colidindo
+ * com o índice único parcial (a constraint é verificada ao final de cada
+ * statement, não é postergável).
+ */
+export async function clearRecommendationOfMonthExcept(bookId: string): Promise<void> {
+  const { error } = await supabaseAdminClient
+    .from(TABLE)
+    .update({ is_recommendation_of_month: false })
+    .eq("is_recommendation_of_month", true)
+    .neq("book_id", bookId);
+
+  if (error) {
+    console.error("[bookReadingService] clearRecommendationOfMonthExcept error", error);
+  }
+}
+
 export async function getReadingByBook(bookId: string): Promise<CmsBookReadingRecord | null> {
   const { data, error } = await supabaseAdminClient
     .from(TABLE)
