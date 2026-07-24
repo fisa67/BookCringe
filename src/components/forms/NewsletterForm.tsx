@@ -21,7 +21,7 @@ interface NewsletterFormProps {
  * Action — Server Actions neste projeto são só para o admin), mas mantido
  * self-contained aqui por ser um formulário de um único campo.
  */
-export function NewsletterForm({ source, className, buttonLabel = "Quero participar" }: NewsletterFormProps) {
+export function NewsletterForm({ source, className, buttonLabel = "buttonLabel = "Entrar no Crew" }: NewsletterFormProps) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<SubmitStatus>("idle");
   const [message, setMessage] = useState("");
@@ -46,7 +46,7 @@ export function NewsletterForm({ source, className, buttonLabel = "Quero partici
       }
 
       setStatus("success");
-      setMessage(data.message ?? "✅ Você entrou para o Clube dos Leitores BookCringe.");
+      setMessage(data.message ?? "🎉 Bem-vindo ao Crew Literário do BookCringe!");
       setEmail("");
     } catch {
       setStatus("error");

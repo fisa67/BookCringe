@@ -44,6 +44,6 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({
-    message: "✅ Você entrou para o Clube dos Leitores BookCringe.",
+    message: "✅ Você entrou para o Crew Literário do BookCringe.",
   });
 }

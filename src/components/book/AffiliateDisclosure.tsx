@@ -12,8 +12,7 @@ export interface AffiliateDisclosureProps {
 export function AffiliateDisclosure({ className }: AffiliateDisclosureProps) {
   return (
     <p className={cn("text-center text-xs leading-relaxed text-[var(--bc-muted)]", className)}>
-      📚 Gostou da indicação? Comprando por este link, você apoia o BookCringe e ajuda este projeto a
-      continuar crescendo — sem pagar nada a mais por isso.
+      📚 Gostou das indicações? Comprando por qualquer um destes links, você apoia o BookCringe e ajuda este projeto a continuar crescendo, sem pagar nada a mais por isso.
     </p>
   );
 }
