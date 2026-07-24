@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/Badge";
 import { BookCard } from "@/components/book/BookCard";
 import { AffiliateDisclosure } from "@/components/book/AffiliateDisclosure";
 import { getPublicRecommendedBooks } from "@/lib/adapters/recommendationsPublicAdapter";
+import { NewsletterCTA } from "@/components/forms/NewsletterCTA";
 
 export const metadata: Metadata = {
   title: "Recomendações",
