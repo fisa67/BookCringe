@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { ContentCard } from "@/components/content/ContentCard";
-import { CONTENT_FILTERS, type ContentFilterKey } from "@/lib/content";
+import { CONTENT_FILTERS, CONTENT_CATEGORY_FILTERS, type ContentFilterKey, type ContentCategoryFilterKey } from "@/lib/content";
 import type { PublicContentWithBook } from "@/lib/adapters/contentPublicAdapter";
 
 interface ContentsExplorerProps {
@@ -15,24 +15,30 @@ interface ContentsExplorerProps {
  * Filtro client-side de `/conteudos` — mesmo padrão de `LibraryShelf`
  * (filtro em memória com `useState`, sem navegação/query params). Recebe
  * todos os conteúdos publicados já carregados no servidor.
+ *
+ * Dois filtros combináveis (AND): tipo (`CONTENT_FILTERS`, ex.: Reels,
+ * Shorts) e categoria (`CONTENT_CATEGORY_FILTERS`, ex.: Livros, Leitura,
+ * Produtividade) — mais o filtro por livro específico (select).
  */
 export function ContentsExplorer({ contents, books }: ContentsExplorerProps) {
   const [filter, setFilter] = useState<ContentFilterKey>("all");
+  const [category, setCategory] = useState<ContentCategoryFilterKey>("all");
   const [bookId, setBookId] = useState<string>("");
 
   const filtered = useMemo(() => {
     const activeFilter = CONTENT_FILTERS.find((item) => item.key === filter);
     return contents
       .filter((content) => !activeFilter?.types || activeFilter.types.includes(content.content_type))
+      .filter((content) => category === "all" || content.content_category === category)
       .filter((content) => !bookId || content.book_id === bookId);
-  }, [contents, filter, bookId]);
+  }, [contents, filter, category, bookId]);
 
   return (
     <>
-      <section className="py-6 px-6 border-b border-[var(--bc-border)]">
+      <section className="py-6 px-6 border-b border-[var(--bc-border)] space-y-3">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex flex-wrap gap-2 items-center">
-            <span className="text-xs text-[var(--bc-muted)] mr-1 font-medium">Filtrar:</span>
+            <span className="text-xs text-[var(--bc-muted)] mr-1 font-medium">Tipo:</span>
             {CONTENT_FILTERS.map((item) => (
               <Badge
                 key={item.key}
@@ -59,6 +65,22 @@ export function ContentsExplorer({ contents, books }: ContentsExplorerProps) {
               </option>
             ))}
           </select>
+        </div>
+
+        <div className="max-w-6xl mx-auto flex flex-wrap gap-2 items-center">
+          <span className="text-xs text-[var(--bc-muted)] mr-1 font-medium">Categoria:</span>
+          {CONTENT_CATEGORY_FILTERS.map((item) => (
+            <Badge
+              key={item.key}
+              variant={category === item.key ? "red" : "muted"}
+              className="cursor-pointer hover:border-[var(--bc-ink)] transition-colors"
+              role="button"
+              aria-pressed={category === item.key}
+              onClick={() => setCategory(item.key)}
+            >
+              {item.label}
+            </Badge>
+          ))}
         </div>
       </section>
 

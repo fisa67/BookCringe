@@ -1,4 +1,5 @@
 import type {
+  CmsContentCategory,
   CmsContentPlatform,
   CmsContentRecord,
   CmsContentType,
@@ -28,6 +29,7 @@ export interface GetContentsFilters {
   bookIds?: string[];
   platform?: CmsContentPlatform;
   contentType?: CmsContentType;
+  contentCategory?: CmsContentCategory;
   /** Busca parcial, case-insensitive, no link (`url`). */
   search?: string;
   sort?: GetContentsSort;
@@ -55,6 +57,10 @@ export async function getContents(filters: GetContentsFilters = {}): Promise<Cms
 
   if (filters.contentType) {
     query = query.eq("content_type", filters.contentType);
+  }
+
+  if (filters.contentCategory) {
+    query = query.eq("content_category", filters.contentCategory);
   }
 
   if (filters.search) {

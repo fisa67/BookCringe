@@ -96,12 +96,28 @@ export interface CmsFinishedReadingWithBook extends CmsBookReadingRecord {
   books: CmsBookRecord;
 }
 
+/**
+ * Categoria editorial do conteúdo (`contents.content_category`). `"book"`
+ * exige `book_id` (conteúdo sobre um livro específico); as demais são
+ * conteúdo geral, sem livro associado — ver migration
+ * `20260724_contents_general.sql`.
+ */
+export type CmsContentCategory =
+  | "book"
+  | "reading"
+  | "productivity"
+  | "community"
+  | "opinion"
+  | "other";
+
 export interface CmsContentRecord {
   id: string;
-  book_id: string;
+  /** Opcional desde a Fase 2 do módulo Conteúdo — `null` para conteúdo geral (sem livro associado). */
+  book_id: string | null;
   title?: string;
   platform: CmsContentPlatform;
   content_type: CmsContentType;
+  content_category: CmsContentCategory;
   url: string;
   is_featured: boolean;
   published_at?: string;
@@ -176,6 +192,20 @@ export interface CmsSettingsRecord {
   metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
+}
+
+/**
+ * Origem da inscrição no "Clube dos Leitores BookCringe" — as 4 páginas
+ * públicas com formulário de captação nesta fase (ver
+ * `20260724_newsletter_subscribers.sql`).
+ */
+export type NewsletterSource = "home" | "recommendations" | "book" | "contents";
+
+export interface CmsNewsletterSubscriberRecord {
+  id: string;
+  email: string;
+  source: NewsletterSource;
+  created_at: string;
 }
 
 export interface CmsServiceResult<T> {

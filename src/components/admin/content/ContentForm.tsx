@@ -3,6 +3,7 @@ import type { CmsBookRecord, CmsContentRecord } from "@/lib/types/cms";
 import { adminInputClass, adminLabelClass } from "@/components/admin/formStyles";
 import { CONTENT_PLATFORMS, CONTENT_TYPES } from "@/lib/validations/content";
 import { CONTENT_TYPE_LABELS, PLATFORM_LABELS } from "@/lib/admin/contentLabels";
+import { ContentAssociationFields } from "@/components/admin/content/ContentAssociationFields";
 
 interface ContentFormProps {
   action: (formData: FormData) => void | Promise<void>;
@@ -18,6 +19,10 @@ interface ContentFormProps {
  * `MonthBookForm`: um único componente para os dois modos, Server Action via
  * `action`. `books` vem de `bookService.getBooks()` — leitura para popular o
  * seletor, a escrita do conteúdo em si passa só por `contentService`.
+ *
+ * A associação livro/geral e a categoria ficam em `ContentAssociationFields`
+ * (ilha client) — desde a Fase 2 do módulo Conteúdo, o formulário pode ser
+ * salvo mesmo sem nenhum livro cadastrado (conteúdo geral).
  */
 export function ContentForm({
   action,
@@ -38,35 +43,8 @@ export function ContentForm({
         </p>
       ) : null}
 
-      {books.length === 0 ? (
-        <p className="text-sm text-slate-400">
-          Nenhum livro cadastrado ainda. Cadastre um livro na{" "}
-          <Link href="/admin/books" className="underline hover:text-slate-200">
-            Biblioteca
-          </Link>{" "}
-          antes de adicionar um conteúdo.
-        </p>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2 sm:col-span-2">
-            <label htmlFor="book_id" className={adminLabelClass}>
-              Livro *
-            </label>
-            <select
-              id="book_id"
-              name="book_id"
-              required
-              defaultValue={content?.book_id ?? ""}
-              className={adminInputClass}
-            >
-              <option value="">Selecione um livro...</option>
-              {books.map((book) => (
-                <option key={book.id} value={book.id}>
-                  {book.title} — {book.author}
-                </option>
-              ))}
-            </select>
-          </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+          <ContentAssociationFields books={books} content={content} />
 
           <div className="space-y-2 sm:col-span-2">
             <label htmlFor="title" className={adminLabelClass}>
@@ -190,18 +168,15 @@ export function ContentForm({
               Conteúdo em destaque
             </label>
           </div>
-        </div>
-      )}
+      </div>
 
       <div className="flex items-center gap-3 pt-2">
-        {books.length > 0 ? (
-          <button
-            type="submit"
-            className="rounded-md border border-slate-700 bg-slate-800 px-5 py-2.5 text-sm font-medium text-slate-100 transition hover:border-slate-500 hover:text-white"
-          >
-            {submitLabel}
-          </button>
-        ) : null}
+        <button
+          type="submit"
+          className="rounded-md border border-slate-700 bg-slate-800 px-5 py-2.5 text-sm font-medium text-slate-100 transition hover:border-slate-500 hover:text-white"
+        >
+          {submitLabel}
+        </button>
         <Link href={cancelHref} className="text-sm text-slate-400 transition hover:text-slate-200">
           Cancelar
         </Link>

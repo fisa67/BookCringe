@@ -1,23 +1,29 @@
 import { getContents } from "@/lib/services/contentService";
 import { getBooks } from "@/lib/services/bookService";
 import { isContentPublished, isVideoContentType, CONTENT_FILTERS, type ContentFilterKey } from "@/lib/content";
-import type { CmsContentRecord, CmsBookRecord } from "@/lib/types/cms";
+import type { CmsContentCategory, CmsContentRecord, CmsBookRecord } from "@/lib/types/cms";
 
 /**
- * Adapter público do módulo de Conteúdos (Fase 1 — reels/shorts/vídeos/
- * carrosséis/reviews vinculados a livros). Reaproveita `contentService`
+ * Adapter público do módulo de Conteúdos. Reaproveita `contentService`
  * (mesma tabela `contents` usada pelo admin) e `bookService.getBooks()`
  * para o embed de livro (título/autor/slug) — nenhuma tabela nova, nenhum
  * SQL novo, filtragem "publicado" (ver `isContentPublished`) sempre em
  * memória, igual às demais páginas públicas deste projeto.
  *
+ * Desde a Fase 2 (`content_category`), `book_id` é opcional — conteúdo
+ * geral (`content_category !== "book"`) não tem `book` embutido. `book`
+ * só falta quando o conteúdo tem `book_id` mas o livro não foi encontrado
+ * (órfão real, ex.: livro removido) — nesse caso o conteúdo é descartado,
+ * igual ao comportamento anterior.
+ *
  * Consumido por: seção "Conteúdos sobre este livro" (`/livro/[slug]`),
- * "Últimos conteúdos" (Home), `/conteudos`, e pelos badges de contagem em
- * Biblioteca/Recomendações/Home (`getPublicContentSummaryByBook`).
+ * "Últimos conteúdos" e "Últimas reflexões" (Home), `/conteudos`, e pelos
+ * badges de contagem em Biblioteca/Recomendações/Home
+ * (`getPublicContentSummaryByBook`).
  */
 
 export interface PublicContentWithBook extends CmsContentRecord {
-  book: Pick<CmsBookRecord, "id" | "title" | "author" | "slug">;
+  book?: Pick<CmsBookRecord, "id" | "title" | "author" | "slug">;
 }
 
 async function fetchPublishedContentsWithBooks(): Promise<PublicContentWithBook[]> {
@@ -29,6 +35,13 @@ async function fetchPublishedContentsWithBooks(): Promise<PublicContentWithBook[
   const withBooks: PublicContentWithBook[] = [];
   for (const content of contents) {
     if (!isContentPublished(content.published_at)) continue;
+
+    if (!content.book_id) {
+      // Conteúdo geral — sem livro associado, exibido normalmente.
+      withBooks.push(content);
+      continue;
+    }
+
     const book = booksById.get(content.book_id);
     if (!book) continue; // conteúdo órfão (livro removido) — não exibido publicamente
     withBooks.push({
@@ -72,6 +85,7 @@ export async function getPublicContentSummaryByBook(): Promise<Map<string, Conte
   const summaries = new Map<string, ContentSummary>();
 
   for (const content of all) {
+    if (!content.book_id) continue; // conteúdo geral não tem livro para agregar o badge
     const current = summaries.get(content.book_id) ?? { count: 0, hasVideo: false };
     summaries.set(content.book_id, {
       count: current.count + 1,
@@ -118,6 +132,7 @@ export async function getPublicContentBookOptions(): Promise<
   const byId = new Map<string, { id: string; title: string; author: string }>();
 
   for (const content of all) {
+    if (!content.book_id || !content.book) continue; // conteúdo geral não entra no filtro "por livro"
     if (!byId.has(content.book_id)) {
       byId.set(content.book_id, {
         id: content.book.id,
@@ -133,6 +148,8 @@ export async function getPublicContentBookOptions(): Promise<
 export interface PublicContentFilters {
   filter?: ContentFilterKey;
   bookId?: string;
+  /** Filtro por `content_category` — combinável com `filter` (tipo) e `bookId` (AND). */
+  category?: CmsContentCategory;
 }
 
 /** Todos os conteúdos publicados, com os filtros da página `/conteudos`. */
@@ -146,5 +163,18 @@ export async function getPublicContents(
   return all
     .filter((content) => !allowedTypes || allowedTypes.includes(content.content_type))
     .filter((content) => !filters.bookId || content.book_id === filters.bookId)
+    .filter((content) => !filters.category || content.content_category === filters.category)
     .sort((a, b) => (b.published_at ?? "").localeCompare(a.published_at ?? ""));
+}
+
+/**
+ * Conteúdos gerais publicados (sem livro associado), mais recentes
+ * primeiro — usado pela seção "Últimas reflexões" da Home.
+ */
+export async function getPublicGeneralContents(limit = 6): Promise<PublicContentWithBook[]> {
+  const all = await fetchPublishedContentsWithBooks();
+  return all
+    .filter((content) => !content.book_id)
+    .sort((a, b) => (b.published_at ?? "").localeCompare(a.published_at ?? ""))
+    .slice(0, limit);
 }

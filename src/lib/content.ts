@@ -1,4 +1,4 @@
-import type { CmsContentPlatform, CmsContentType } from "@/lib/types/cms";
+import type { CmsContentCategory, CmsContentPlatform, CmsContentType } from "@/lib/types/cms";
 
 /**
  * Domínio público de "conteúdos" (reels, shorts, vídeos, carrosséis,
@@ -82,6 +82,45 @@ export const CONTENT_FILTERS: Array<{ key: ContentFilterKey; label: string; type
   { key: "youtube", label: "YouTube", types: ["youtube", "video"] },
   { key: "review", label: "Reviews", types: ["review", "article"] },
   { key: "carousel", label: "Carrosséis", types: ["carousel"] },
+];
+
+/**
+ * Labels PT-BR de `content_category` (Fase 2 do módulo Conteúdo — conteúdo
+ * geral, sem livro associado) para uso em componentes públicos.
+ */
+export const CONTENT_CATEGORY_LABELS_PUBLIC: Record<CmsContentCategory, string> = {
+  book: "Livro",
+  reading: "Leitura",
+  productivity: "Produtividade",
+  community: "Comunidade",
+  opinion: "Opinião",
+  other: "Geral",
+};
+
+/** Emoji por categoria — usado no badge que substitui a capa/nome do livro quando não há livro associado. */
+export const CONTENT_CATEGORY_EMOJI: Record<CmsContentCategory, string> = {
+  book: "📚",
+  reading: "📖",
+  productivity: "⚡",
+  community: "👥",
+  opinion: "💬",
+  other: "🔖",
+};
+
+/**
+ * Filtro por `content_category` em `/conteudos` — combinável com
+ * `CONTENT_FILTERS` (tipo). "Livros" agrupa apenas `content_category ===
+ * "book"`; as demais opções espelham as categorias gerais pedidas.
+ */
+export type ContentCategoryFilterKey = "all" | "book" | "reading" | "productivity" | "community" | "opinion";
+
+export const CONTENT_CATEGORY_FILTERS: Array<{ key: ContentCategoryFilterKey; label: string }> = [
+  { key: "all", label: "Todos" },
+  { key: "book", label: "Livros" },
+  { key: "reading", label: "Leitura" },
+  { key: "productivity", label: "Produtividade" },
+  { key: "community", label: "Comunidade" },
+  { key: "opinion", label: "Opinião" },
 ];
 
 export interface ContentTypeSummaryItem {

@@ -1,4 +1,4 @@
-import type { CmsContentPlatform, CmsContentType } from "@/lib/types/cms";
+import type { CmsContentCategory, CmsContentPlatform, CmsContentType } from "@/lib/types/cms";
 
 /**
  * Labels PT-BR para as duas categorias de conteúdo já existentes no schema
@@ -25,6 +25,20 @@ export const CONTENT_TYPE_LABELS: Record<CmsContentType, string> = {
   youtube: "Vídeo (YouTube)",
   carousel: "Carrossel",
   review: "Review",
+};
+
+/**
+ * Categoria editorial (`content_category`) — `"book"` é o conteúdo
+ * tradicional (sobre um livro); as demais são "Conteúdo geral" (sem livro
+ * associado), introduzido na Fase 2 do módulo Conteúdo.
+ */
+export const CONTENT_CATEGORY_LABELS: Record<CmsContentCategory, string> = {
+  book: "Sobre um livro",
+  reading: "Leitura",
+  productivity: "Produtividade",
+  community: "Comunidade",
+  opinion: "Opinião",
+  other: "Outro",
 };
 
 export type ContentStatus = "draft" | "scheduled" | "published";

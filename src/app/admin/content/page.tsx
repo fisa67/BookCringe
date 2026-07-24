@@ -2,15 +2,16 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { getContents, type GetContentsSort } from "@/lib/services/contentService";
 import { getBooks } from "@/lib/services/bookService";
-import type { CmsContentPlatform, CmsContentType } from "@/lib/types/cms";
+import type { CmsContentCategory, CmsContentPlatform, CmsContentType } from "@/lib/types/cms";
 import {
+  CONTENT_CATEGORY_LABELS,
   CONTENT_STATUS_LABELS,
   CONTENT_TYPE_LABELS,
   PLATFORM_LABELS,
   getContentStatus,
   type ContentStatus,
 } from "@/lib/admin/contentLabels";
-import { CONTENT_PLATFORMS, CONTENT_TYPES } from "@/lib/validations/content";
+import { CONTENT_CATEGORIES, CONTENT_PLATFORMS, CONTENT_TYPES } from "@/lib/validations/content";
 import { adminInputClass } from "@/components/admin/formStyles";
 import { ConfirmSubmitButton } from "@/components/admin/ConfirmSubmitButton";
 import { deleteContentAction } from "@/app/admin/content/actions";
@@ -38,6 +39,7 @@ interface AdminContentPageProps {
     link?: string;
     platform?: string;
     type?: string;
+    category?: string;
     status?: string;
     sort?: string;
   }>;
@@ -59,10 +61,15 @@ export default async function AdminContentPage({ searchParams }: AdminContentPag
     | CmsContentPlatform
     | undefined;
   const contentType = CONTENT_TYPES.find((value) => value === params.type) as CmsContentType | undefined;
+  const contentCategory = CONTENT_CATEGORIES.find((value) => value === params.category) as
+    | CmsContentCategory
+    | undefined;
   const status = (["draft", "scheduled", "published"] as const).find((value) => value === params.status);
   const sort = (["recent", "oldest", "featured"] as const).find((value) => value === params.sort) ?? "recent";
 
-  const hasFilters = Boolean(bookSearch || bookId || linkSearch || platform || contentType || status);
+  const hasFilters = Boolean(
+    bookSearch || bookId || linkSearch || platform || contentType || contentCategory || status
+  );
 
   const books = await getBooks();
   const booksById = new Map((books ?? []).map((book) => [book.id, book]));
@@ -89,6 +96,7 @@ export default async function AdminContentPage({ searchParams }: AdminContentPag
         bookIds,
         platform,
         contentType,
+        contentCategory,
         search: linkSearch,
         sort,
       });
@@ -155,6 +163,14 @@ export default async function AdminContentPage({ searchParams }: AdminContentPag
               </option>
             ))}
           </select>
+          <select name="category" defaultValue={contentCategory ?? ""} className={adminInputClass}>
+            <option value="">Todas as categorias</option>
+            {CONTENT_CATEGORIES.map((value) => (
+              <option key={value} value={value}>
+                {CONTENT_CATEGORY_LABELS[value]}
+              </option>
+            ))}
+          </select>
           <select name="status" defaultValue={status ?? ""} className={adminInputClass}>
             <option value="">Todos os status</option>
             {Object.entries(CONTENT_STATUS_LABELS).map(([value, label]) => (
@@ -202,7 +218,8 @@ export default async function AdminContentPage({ searchParams }: AdminContentPag
       ) : (
         <ul className="space-y-3">
           {visibleContents.map((content) => {
-            const book = booksById.get(content.book_id);
+            const book = content.book_id ? booksById.get(content.book_id) : undefined;
+            const isGeneral = content.content_category !== "book";
             const contentStatus = getContentStatus(content.published_at);
             const publishedLabel = formatDate(content.published_at);
 
@@ -219,6 +236,11 @@ export default async function AdminContentPage({ searchParams }: AdminContentPag
                     <span className="rounded-full border border-slate-700 bg-slate-900 px-2.5 py-0.5 text-xs font-medium text-slate-300">
                       {CONTENT_TYPE_LABELS[content.content_type]}
                     </span>
+                    {isGeneral ? (
+                      <span className="rounded-full border border-sky-900/60 bg-sky-950/40 px-2.5 py-0.5 text-xs font-medium text-sky-300">
+                        {CONTENT_CATEGORY_LABELS[content.content_category]}
+                      </span>
+                    ) : null}
                     <span
                       className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS[contentStatus]}`}
                     >
@@ -233,7 +255,13 @@ export default async function AdminContentPage({ searchParams }: AdminContentPag
 
                   <p className="mt-2 truncate text-base font-semibold text-white">
                     {content.title ? `${content.title} — ` : ""}
-                    {book ? `${book.title} (${book.author})` : "Livro não encontrado"}
+                    {isGeneral
+                      ? content.title
+                        ? "Conteúdo geral"
+                        : "Conteúdo geral (sem título)"
+                      : book
+                        ? `${book.title} (${book.author})`
+                        : "Livro não encontrado"}
                   </p>
 
                   <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-slate-400">

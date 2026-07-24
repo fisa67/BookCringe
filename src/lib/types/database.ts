@@ -9,6 +9,7 @@ import type {
   CmsBookClubMonthBookRecord,
   CmsStatisticsRecord,
   CmsSettingsRecord,
+  CmsNewsletterSubscriberRecord,
 } from "@/lib/types/cms";
 
 /**
@@ -74,6 +75,11 @@ export interface Database {
         CmsSettingsRecord,
         NewRow<CmsSettingsRecord>,
         Partial<CmsSettingsRecord>
+      >;
+      newsletter_subscribers: TableShape<
+        CmsNewsletterSubscriberRecord,
+        NewRow<CmsNewsletterSubscriberRecord>,
+        Partial<CmsNewsletterSubscriberRecord>
       >;
     };
     Views: { [_ in never]: never };

@@ -7,6 +7,7 @@ import { Rating } from "@/components/bookclub/Rating";
 import { Badge } from "@/components/ui/Badge";
 import { BookContentsSection } from "@/components/content/BookContentsSection";
 import { AffiliateDisclosure } from "@/components/book/AffiliateDisclosure";
+import { NewsletterCTA } from "@/components/forms/NewsletterCTA";
 import { formatRating } from "@/lib/utils";
 import { SITE_NAME, SITE_URL } from "@/lib/constants";
 
@@ -132,6 +133,21 @@ export default async function BookPage({ params }: BookPageProps) {
                 <p className="mt-1 text-[var(--bc-ink)] leading-relaxed">
                   {book.recommendationReason}
                 </p>
+              </div>
+            )}
+
+            {/* CTA do "Clube dos Leitores" — apenas em livros da Curadoria
+                BookCringe (mesmo critério acima), independente de haver
+                texto de `recommendationReason`. */}
+            {(book.favorite || book.wouldRecommend) && (
+              <div className="max-w-2xl rounded-xl border border-[var(--bc-border)] bg-[var(--bc-surface)] p-5">
+                <NewsletterCTA
+                  source="book"
+                  title="Gostou desta recomendação?"
+                  description="Receba outras leituras escolhidas a dedo."
+                  compact
+                  align="left"
+                />
               </div>
             )}
 

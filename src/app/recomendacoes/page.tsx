@@ -5,6 +5,7 @@ import { BookCard } from "@/components/book/BookCard";
 import { CuratedStats } from "@/components/book/CuratedStats";
 import { MonthlyRecommendation } from "@/components/book/MonthlyRecommendation";
 import { AffiliateDisclosure } from "@/components/book/AffiliateDisclosure";
+import { NewsletterCTA } from "@/components/forms/NewsletterCTA";
 import {
   getPublicRecommendedBooks,
   getPublicRecommendationOfMonth,
@@ -104,6 +105,14 @@ export default async function RecomendacoesPage() {
             </div>
           )}
         </div>
+      </section>
+
+      <section className="py-16 px-6 bg-[var(--bc-surface)] border-t border-[var(--bc-border)]">
+        <NewsletterCTA
+          source="recommendations"
+          title="Gostou da curadoria?"
+          description="Entre para o Clube dos Leitores BookCringe e receba novas recomendações diretamente no seu e-mail."
+        />
       </section>
     </>
   );

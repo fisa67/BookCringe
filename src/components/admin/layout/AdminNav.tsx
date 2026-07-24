@@ -21,6 +21,7 @@ const ADMIN_NAV_ITEMS = [
   { href: "/admin/content", label: "Conteúdos" },
   { href: "/admin/bookclub", label: "Clube do Livro" },
   { href: "/admin/stats", label: "Histórico" },
+  { href: "/admin/subscribers", label: "Assinantes" },
 ] as const;
 
 function isNavItemActive(pathname: string, href: string): boolean {

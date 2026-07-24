@@ -1,7 +1,13 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { ContentThumbnail } from "@/components/content/ContentThumbnail";
-import { CONTENT_TYPE_LABELS_PUBLIC, PLATFORM_LABELS_PUBLIC, CONTENT_TYPE_EMOJI } from "@/lib/content";
+import {
+  CONTENT_TYPE_LABELS_PUBLIC,
+  PLATFORM_LABELS_PUBLIC,
+  CONTENT_TYPE_EMOJI,
+  CONTENT_CATEGORY_LABELS_PUBLIC,
+  CONTENT_CATEGORY_EMOJI,
+} from "@/lib/content";
 import type { PublicContentWithBook } from "@/lib/adapters/contentPublicAdapter";
 
 function formatPublishedDate(publishedAt?: string): string | undefined {
@@ -23,7 +29,7 @@ interface ContentCardProps {
  * este livro"), `/conteudos` e na Home ("Últimos conteúdos").
  */
 export function ContentCard({ content, showBook = false }: ContentCardProps) {
-  const title = content.title || content.book.title;
+  const title = content.title || content.book?.title || CONTENT_CATEGORY_LABELS_PUBLIC[content.content_category];
   const publishedLabel = formatPublishedDate(content.published_at);
 
   return (
@@ -45,14 +51,20 @@ export function ContentCard({ content, showBook = false }: ContentCardProps) {
 
         <h3 className="font-bold text-sm text-[var(--bc-ink)] leading-tight line-clamp-2">{title}</h3>
 
-        {showBook && (
-          <Link
-            href={`/livro/${content.book.slug}`}
-            className="text-xs text-[var(--bc-muted)] hover:text-[var(--bc-red)] hover:underline line-clamp-1"
-          >
-            {content.book.title} — {content.book.author}
-          </Link>
-        )}
+        {showBook &&
+          (content.book ? (
+            <Link
+              href={`/livro/${content.book.slug}`}
+              className="text-xs text-[var(--bc-muted)] hover:text-[var(--bc-red)] hover:underline line-clamp-1"
+            >
+              {content.book.title} — {content.book.author}
+            </Link>
+          ) : (
+            <span className="text-xs text-[var(--bc-muted)] line-clamp-1">
+              {CONTENT_CATEGORY_EMOJI[content.content_category]}{" "}
+              {CONTENT_CATEGORY_LABELS_PUBLIC[content.content_category]}
+            </span>
+          ))}
 
         {publishedLabel && <p className="text-xs text-[var(--bc-muted)]">{publishedLabel}</p>}
 

@@ -7,12 +7,14 @@ import {
   getBookClubMonthsCount,
   getBookClubYearsCount,
 } from "@/lib/services/clubService";
+import { getSubscribersCount } from "@/lib/services/subscriberService";
 
 const SHORTCUTS = [
   { href: "/admin/books", label: "Biblioteca" },
   { href: "/admin/bookclub", label: "Clube de Leitura" },
   { href: "/admin/content", label: "Conteúdo" },
   { href: "/admin/stats", label: "Estatísticas" },
+  { href: "/admin/subscribers", label: "Assinantes" },
   { href: "/admin/settings", label: "Configurações" },
 ];
 
@@ -28,6 +30,7 @@ export default async function AdminPage() {
     statisticsCount,
     clubYearsCount,
     clubMonthsCount,
+    subscribersCount,
   ] = await Promise.all([
     getBooksCount(),
     getReadingsCount(),
@@ -35,6 +38,7 @@ export default async function AdminPage() {
     getStatisticsCount(),
     getBookClubYearsCount(),
     getBookClubMonthsCount(),
+    getSubscribersCount(),
   ]);
 
   const stats = [
@@ -44,6 +48,7 @@ export default async function AdminPage() {
     { label: "Estatísticas", value: statisticsCount },
     { label: "Anos do clube", value: clubYearsCount },
     { label: "Meses do clube", value: clubMonthsCount },
+    { label: "Assinantes", value: subscribersCount },
   ];
 
   return (
