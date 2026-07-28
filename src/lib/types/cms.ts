@@ -211,13 +211,22 @@ export interface CmsNewsletterSubscriberRecord {
   email: string;
   source: NewsletterSource;
   /**
-   * Preenchido quando o e-mail é confirmado (double opt-in) — `null`/ausente
-   * até a Fase 3A ter uma integração de envio de verdade (Resend/Brevo/
-   * Mailchimp). Opcional (como `rating?`/`reading_time_seconds?` em
+   * Preenchido por `confirmSubscriberByToken` quando o double opt-in é
+   * concluído (Fase 3C) — `null`/ausente enquanto a confirmação está
+   * pendente. Opcional (como `rating?`/`reading_time_seconds?` em
    * `CmsBookReadingRecord`) porque tem default `null` no banco — não
    * precisa ser informado no insert (`createSubscriber`).
    */
   confirmed_at?: string | null;
+  /**
+   * Token de confirmação pendente (double opt-in, Fase 3C) — `null` quando
+   * não há confirmação em aberto (inscrito já confirmado, com o token já
+   * limpo). Nunca deve ser exposto fora do backend (ex.: exportação CSV do
+   * admin) — é um segredo enquanto válido.
+   */
+  confirmation_token?: string | null;
+  /** Data/hora do último envio (ou reenvio) do e-mail de confirmação. */
+  confirmation_sent_at?: string | null;
   created_at: string;
 }
 

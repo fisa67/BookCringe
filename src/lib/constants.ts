@@ -2,7 +2,16 @@ export const SITE_NAME = "BookCringe";
 export const SITE_SLOGAN = "Cringe por fora, cult por dentro.";
 export const SITE_DESCRIPTION =
   "BookCringe é uma marca brasileira de conteúdo literário que incentiva a leitura através de vídeos, resenhas, estatísticas, listas e clube de leitura.";
-export const SITE_URL = "https://bookcringe.com.br";
+/**
+ * Base para SEO (metadataBase, sitemap, robots, canonical) e para todo link
+ * absoluto gerado no servidor (e-mails transacionais: confirmação/boas-vindas/
+ * campanhas do Crew Literário). Lida de `SITE_URL` (opcional) para poder
+ * apontar para `http://localhost:3000` em dev ou para a URL de preview em
+ * ambientes de staging, sem precisar alterar código — em produção, deixe a
+ * variável ausente/vazia para usar o domínio oficial abaixo como padrão. Ver
+ * `docs/email-setup.md`.
+ */
+export const SITE_URL = process.env.SITE_URL?.replace(/\/+$/, "") || "https://bookcringe.com.br";
 export const SITE_AUTHOR = "BookCringe";
 export const SITE_LOCALE = "pt_BR";
 export const SITE_TWITTER = "@bookcringe";

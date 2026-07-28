@@ -2,29 +2,34 @@ import { SITE_NAME, SITE_URL } from "@/lib/constants";
 import { getFromEmail } from "@/lib/env";
 import { escapeHtml, getResendClient } from "@/lib/email/resend";
 import { getPublicRecommendationOfMonth } from "@/lib/adapters/recommendationsPublicAdapter";
-import type { CreateSubscriberResult } from "@/lib/services/subscriberService";
+import type { ConfirmSubscriberResult } from "@/lib/services/subscriberService";
 
 /**
- * Serviço isolado do e-mail de boas-vindas do Crew Literário — único lugar
- * que dispara esse e-mail (chamado por `/api/newsletter/route.ts` depois
- * de `createSubscriber`). Mesmo padrão de `campaignEmailService.ts`
- * (Resend + `getFromEmail` + `escapeHtml`), mas nunca deve impedir o
- * cadastro: qualquer erro aqui — inclusive `getResendClient`/`getFromEmail`
- * lançando por env mal configurada — é sempre capturado e devolvido como
- * `{ ok: false, error }`, nunca propagado.
+ * Serviço isolado do e-mail de boas-vindas do Crew Literário — desde a
+ * Fase 3C (double opt-in), só é disparado depois que um assinante vira
+ * confirmado: na página `/crew-literario/confirmar` (via
+ * `confirmSubscriberByToken`) ou na confirmação manual do admin em
+ * `/admin/subscribers` (via `confirmSubscriberManually`) — nunca mais em
+ * `/api/newsletter/route.ts`, que agora só envia o e-mail de confirmação via
+ * `confirmationEmailService`. Mesmo padrão de
+ * `campaignEmailService.ts` (Resend + `getFromEmail` + `escapeHtml`), mas
+ * nunca deve impedir a confirmação: qualquer erro aqui — inclusive
+ * `getResendClient`/`getFromEmail` lançando por env mal configurada — é
+ * sempre capturado e devolvido como `{ ok: false, error }`, nunca
+ * propagado.
  */
 
 export const WELCOME_EMAIL_SUBJECT = "📚 Bem-vindo ao Crew Literário";
 
 /**
  * Decide se o e-mail de boas-vindas deve ser enviado para o resultado de
- * `createSubscriber` — só para cadastros realmente novos
- * (`alreadySubscribed: false`), nunca de novo para quem já é do Crew.
- * Extraída como função pura (em vez de inline no route) para ser testável
- * sem precisar montar uma `Request`/`Response` do Next.js.
+ * `confirmSubscriberByToken` — só na transição real pendente → confirmado
+ * (`alreadyConfirmed: false`), nunca de novo se o link de confirmação já
+ * tiver sido usado antes. Extraída como função pura (em vez de inline na
+ * página) para ser testável sem precisar montar a página inteira.
  */
-export function shouldSendWelcomeEmail(result: CreateSubscriberResult): boolean {
-  return result.ok && !result.alreadySubscribed;
+export function shouldSendWelcomeEmail(result: ConfirmSubscriberResult): boolean {
+  return result.ok && !result.alreadyConfirmed;
 }
 
 interface WelcomeEmailLink {

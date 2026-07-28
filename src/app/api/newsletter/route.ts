@@ -1,13 +1,18 @@
 import { NextResponse } from "next/server";
 import { newsletterSubscribeSchema } from "@/lib/validations/newsletter";
 import { createSubscriber } from "@/lib/services/subscriberService";
-import { sendWelcomeEmail, shouldSendWelcomeEmail } from "@/lib/services/welcomeEmailService";
+import { sendConfirmationEmail } from "@/lib/services/confirmationEmailService";
 
 /**
  * Endpoint público do formulário "Crew Literário"
  * (`NewsletterForm`, Home/Recomendações/Livro/Conteúdos/Crew Literário). Mesmo padrão de
  * `/api/contact/route.ts`: client component + `fetch`, sem Server Action
  * (Server Actions neste projeto são usadas só no admin).
+ *
+ * Fase 3C (double opt-in): este endpoint NUNCA envia o e-mail de
+ * boas-vindas — só o e-mail de confirmação. O welcome e-mail só é
+ * disparado depois, em `/crew-literario/confirmar`, quando o token é
+ * validado com sucesso.
  */
 export async function POST(request: Request) {
   let body: unknown;
@@ -44,19 +49,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: result.error }, { status: 500 });
   }
 
-  // E-mail de boas-vindas só para cadastro genuinamente novo — nunca de
-  // novo para quem já é do Crew (`shouldSendWelcomeEmail`). Nunca bloqueia
-  // nem falha o cadastro: `sendWelcomeEmail` sempre resolve, mesmo em
-  // erro, e o subscriber já foi salvo com sucesso acima.
-  if (shouldSendWelcomeEmail(result)) {
-    const welcomeResult = await sendWelcomeEmail(parsed.data.email);
+  if (result.subscriberStatus === "confirmed") {
+    return NextResponse.json({
+      message: "✅ Você já faz parte do Crew Literário — nenhuma ação necessária.",
+    });
+  }
 
-    if (!welcomeResult.ok) {
-      console.error("[api/newsletter] falha ao enviar e-mail de boas-vindas", welcomeResult.error);
-    }
+  // "new" ou "pending": sempre há `confirmationToken` (ver createSubscriber).
+  // Nunca bloqueia nem falha o cadastro: `sendConfirmationEmail` sempre
+  // resolve, mesmo em erro, e o subscriber já foi salvo (ou já tinha o
+  // token renovado) com sucesso acima.
+  const confirmationResult = await sendConfirmationEmail(parsed.data.email, result.confirmationToken);
+
+  if (!confirmationResult.ok) {
+    console.error("[api/newsletter] falha ao enviar e-mail de confirmação", confirmationResult.error);
   }
 
   return NextResponse.json({
-    message: "✅ Você entrou para o Crew Literário do BookCringe.",
+    message:
+      "📬 Quase lá! Enviamos um e-mail de confirmação — clique no link para entrar no Crew Literário.",
   });
 }

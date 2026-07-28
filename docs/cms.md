@@ -27,8 +27,9 @@ cp .env.example .env.local
 
 | Variável | Área | Descrição |
 |---|---|---|
-| `RESEND_API_KEY` | E-mail | Chave da Resend (formulários públicos) |
-| `CONTACT_EMAIL` | E-mail | Remetente/destino dos formulários |
+| `SITE_URL` | Site | Opcional — base para links absolutos (e-mails, SEO). Padrão `https://bookcringe.com.br` se ausente. Ver [docs/email-setup.md](email-setup.md) |
+| `RESEND_API_KEY` | E-mail | Chave da Resend (formulários públicos + Crew Literário) |
+| `CONTACT_EMAIL` | E-mail | Remetente/destino dos formulários e do Crew Literário — ver [docs/email-setup.md](email-setup.md) |
 | `SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_URL` | Supabase | URL do projeto |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase | Chave anônima (client) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase | Chave service role (**secreta**, só no servidor) |
@@ -38,6 +39,8 @@ cp .env.example .env.local
 | `ADMIN_GITHUB_LOGIN` | Auth | Username do GitHub autorizado (allowlist de 1) |
 
 As variáveis de `Auth` são exigidas a partir da Fase 1B (autenticação ativa).
+Para o passo a passo completo de ativação do Resend em produção (domínio,
+DNS, checklist), ver [docs/email-setup.md](email-setup.md).
 
 ### GitHub OAuth Apps (dois, um por ambiente)
 

@@ -13,7 +13,7 @@ Plataforma literária brasileira. Vídeos, resenhas, estatísticas, clube de lei
 - **Tailwind CSS v4**
 - **Geist** (fonte principal)
 - **Supabase** (backend do CMS)
-- **Resend** (e-mails transacionais dos formulários)
+- **Resend** (e-mails transacionais dos formulários e do Crew Literário — ver [docs/email-setup.md](docs/email-setup.md))
 - **Auth.js v5** (autenticação do admin via GitHub OAuth — ver [docs/cms.md](docs/cms.md))
 
 ---
@@ -41,12 +41,16 @@ Acesse em [http://localhost:3000](http://localhost:3000).
 ## Variáveis de ambiente
 
 Copie `.env.example` para `.env.local` e preencha os valores. O `.env.local`
-é ignorado pelo Git. As variáveis cobrem três áreas: e-mail (Resend), backend
-(Supabase) e autenticação do admin (GitHub OAuth, ativa desde a Fase 1B).
+é ignorado pelo Git. As variáveis cobrem quatro áreas: site/SEO (`SITE_URL`),
+e-mail (Resend), backend (Supabase) e autenticação do admin (GitHub OAuth,
+ativa desde a Fase 1B).
 
 ```bash
 cp .env.example .env.local
 ```
+
+Para ativar o envio de e-mail em produção (domínio, DNS, checklist e testes
+do fluxo do Crew Literário), ver [docs/email-setup.md](docs/email-setup.md).
 
 ---
 

@@ -50,7 +50,10 @@ export function NewsletterForm({ source, className, buttonLabel = "Entrar no Cre
       }
 
       setStatus("success");
-      setMessage(data.message ?? "📚 Pronto! Agora você faz parte do Crew Literário. Boas leituras! ❤️");
+      setMessage(
+        data.message ??
+          "📬 Quase lá! Confira seu e-mail para confirmar sua entrada no Crew Literário."
+      );
       setEmail("");
     } catch {
       setStatus("error");

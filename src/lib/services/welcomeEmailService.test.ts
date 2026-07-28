@@ -5,15 +5,15 @@ import { sendWelcomeEmail, shouldSendWelcomeEmail, WELCOME_EMAIL_SUBJECT } from 
 
 /**
  * Testes básicos de robustez do e-mail de boas-vindas — cobrem:
- *   1. `shouldSendWelcomeEmail` só autoriza envio para cadastro genuinamente
- *      novo (regra "não enviar de novo para quem já é do Crew").
+ *   1. `shouldSendWelcomeEmail` só autoriza envio na transição real
+ *      pendente → confirmado (regra "não reenviar se o link já foi usado").
  *   2. `sendWelcomeEmail` monta assunto/links corretos, incluindo o link
  *      dinâmico de "Recomendação do mês" quando disponível.
  *   3. `sendWelcomeEmail` NUNCA lança — erro do Resend (retornado), erro ao
  *      resolver a recomendação do mês, ou exceção (env ausente, rede etc.)
  *      sempre viram `{ ok: false, error }` (ou `ok: true` sem o 4º link,
- *      no caso da recomendação), para que `/api/newsletter` nunca falhe o
- *      cadastro por causa disso.
+ *      no caso da recomendação), para que `/crew-literario/confirmar` nunca
+ *      falhe a confirmação por causa disso.
  */
 
 const sendMock = vi.fn();
@@ -38,16 +38,20 @@ vi.mock("@/lib/adapters/recommendationsPublicAdapter", () => ({
 }));
 
 describe("shouldSendWelcomeEmail", () => {
-  it("retorna true para cadastro novo", () => {
-    expect(shouldSendWelcomeEmail({ ok: true, alreadySubscribed: false })).toBe(true);
+  it("retorna true para uma confirmação genuinamente nova", () => {
+    expect(shouldSendWelcomeEmail({ ok: true, email: "leitor@example.com", alreadyConfirmed: false })).toBe(
+      true
+    );
   });
 
-  it("retorna false para quem já é inscrito (evita reenvio)", () => {
-    expect(shouldSendWelcomeEmail({ ok: true, alreadySubscribed: true })).toBe(false);
+  it("retorna false quando o token já tinha sido usado antes (evita reenvio)", () => {
+    expect(shouldSendWelcomeEmail({ ok: true, email: "leitor@example.com", alreadyConfirmed: true })).toBe(
+      false
+    );
   });
 
-  it("retorna false quando o cadastro falhou", () => {
-    expect(shouldSendWelcomeEmail({ ok: false, error: "erro ao salvar" })).toBe(false);
+  it("retorna false quando a confirmação falhou", () => {
+    expect(shouldSendWelcomeEmail({ ok: false, error: "token inválido" })).toBe(false);
   });
 });
 
