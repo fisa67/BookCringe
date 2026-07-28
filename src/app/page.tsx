@@ -7,7 +7,6 @@ import { RecentContents } from "@/components/home/RecentContents";
 import { LatestReflections } from "@/components/home/LatestReflections";
 import { ClubCTA } from "@/components/home/ClubCTA";
 import { NewsletterSection } from "@/components/home/NewsletterSection";
-import { AffiliateDisclosure } from "@/components/book/AffiliateDisclosure";
 import { SITE_NAME, SITE_SLOGAN, SITE_DESCRIPTION } from "@/lib/constants";
 
 export const metadata: Metadata = {
@@ -31,12 +30,6 @@ export default function HomePage() {
       <LatestReflections />
       <ClubCTA />
       <NewsletterSection />
-
-      <div className="px-6 pb-16">
-        <div className="max-w-6xl mx-auto">
-          <AffiliateDisclosure />
-        </div>
-      </div>
     </>
   );
 }
