@@ -94,7 +94,7 @@ export function computeTotalReadingHours(readings: readonly Reading[], precision
   return Math.round((totalSeconds / 3600) * factor) / factor;
 }
 
-/** Soma de `books.page_count` das leituras (para cross-check com statistics.pages_read). */
+/** Soma de `books.page_count` das leituras finalizadas — fonte de verdade de páginas lidas em `/estatisticas`. */
 export function computeTotalPagesRead(readings: readonly Reading[]): number {
   return readings.reduce((acc, r) => acc + (r.books.page_count ?? 0), 0);
 }

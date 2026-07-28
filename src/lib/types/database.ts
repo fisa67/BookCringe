@@ -10,6 +10,7 @@ import type {
   CmsStatisticsRecord,
   CmsSettingsRecord,
   CmsNewsletterSubscriberRecord,
+  CmsNewsletterCampaignRecord,
 } from "@/lib/types/cms";
 
 /**
@@ -80,6 +81,11 @@ export interface Database {
         CmsNewsletterSubscriberRecord,
         NewRow<CmsNewsletterSubscriberRecord>,
         Partial<CmsNewsletterSubscriberRecord>
+      >;
+      newsletter_campaigns: TableShape<
+        CmsNewsletterCampaignRecord,
+        NewRow<CmsNewsletterCampaignRecord>,
+        Partial<CmsNewsletterCampaignRecord>
       >;
     };
     Views: { [_ in never]: never };

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import {
   getSubscribers,
   getSubscribersCountBySource,
+  getSubscribersConfirmationCounts,
   type GetSubscribersSort,
 } from "@/lib/services/subscriberService";
 import { NEWSLETTER_SOURCES } from "@/lib/validations/newsletter";
@@ -36,9 +37,10 @@ export default async function AdminSubscribersPage({ searchParams }: AdminSubscr
   const sort = (["recent", "oldest"] as const).find((value) => value === params.sort) ?? "recent";
   const hasFilters = Boolean(search || source);
 
-  const [subscribers, countsBySource] = await Promise.all([
+  const [subscribers, countsBySource, confirmationCounts] = await Promise.all([
     getSubscribers({ search, source, sort }),
     getSubscribersCountBySource(),
+    getSubscribersConfirmationCounts(),
   ]);
 
   const totalCount = countsBySource?.reduce((sum, item) => sum + item.count, 0) ?? null;
@@ -52,20 +54,40 @@ export default async function AdminSubscribersPage({ searchParams }: AdminSubscr
   return (
     <div className="space-y-6">
       <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-8 shadow-lg shadow-slate-950/30">
-        <p className="text-sm uppercase tracking-[0.24em] text-slate-400">Clube dos Leitores</p>
+        <p className="text-sm uppercase tracking-[0.24em] text-slate-400">Crew Literário</p>
         <h1 className="mt-3 text-3xl font-semibold text-white">Assinantes</h1>
         <p className="mt-4 max-w-2xl text-slate-300">
-          Base de e-mails captada nas páginas públicas do site. Sem integração de envio nesta fase — apenas
-          captura e gerenciamento.
+          Base de e-mails captada nas páginas públicas do site. Para criar e enviar newsletters para os
+          inscritos confirmados, use{" "}
+          <Link href="/admin/newsletters" className="underline hover:text-white">
+            Newsletters
+          </Link>
+          .
         </p>
       </div>
 
-      {/* Analytics simples: total + contagem por origem */}
-      <section aria-label="Números do Clube dos Leitores" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      {/* Confirmação (double opt-in) — sempre 0 confirmados até uma
+          integração de envio (Resend/Brevo/Mailchimp) existir e preencher
+          `confirmed_at`; já preparado para quando isso acontecer. */}
+      <section aria-label="Status de confirmação" className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-3xl border border-slate-800 bg-slate-950/80 p-6">
           <p className="text-sm uppercase tracking-[0.2em] text-slate-400">Total de inscritos</p>
           <p className="mt-3 text-3xl font-semibold text-white">{totalCount ?? "—"}</p>
         </div>
+        <div className="rounded-3xl border border-slate-800 bg-slate-950/80 p-6">
+          <p className="text-sm uppercase tracking-[0.2em] text-slate-400">Confirmados</p>
+          <p className="mt-3 text-3xl font-semibold text-emerald-400">
+            {confirmationCounts?.confirmed ?? "—"}
+          </p>
+        </div>
+        <div className="rounded-3xl border border-slate-800 bg-slate-950/80 p-6">
+          <p className="text-sm uppercase tracking-[0.2em] text-slate-400">Não confirmados</p>
+          <p className="mt-3 text-3xl font-semibold text-white">{confirmationCounts?.unconfirmed ?? "—"}</p>
+        </div>
+      </section>
+
+      {/* Origem dos cadastros */}
+      <section aria-label="Origem dos cadastros" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {NEWSLETTER_SOURCES.map((value) => {
           const count = countsBySource?.find((item) => item.source === value)?.count ?? 0;
           return (
@@ -147,6 +169,15 @@ export default async function AdminSubscribersPage({ searchParams }: AdminSubscr
                   <span className="rounded-full border border-slate-700 bg-slate-900 px-2.5 py-0.5 text-xs font-medium text-slate-300">
                     {NEWSLETTER_SOURCE_LABELS[subscriber.source]}
                   </span>
+                  {subscriber.confirmed_at ? (
+                    <span className="rounded-full border border-emerald-900/60 bg-emerald-950/40 px-2.5 py-0.5 text-xs font-medium text-emerald-300">
+                      Confirmado
+                    </span>
+                  ) : (
+                    <span className="rounded-full border border-slate-700 bg-slate-900 px-2.5 py-0.5 text-xs font-medium text-slate-500">
+                      Não confirmado
+                    </span>
+                  )}
                   <span>{formatDateTime(subscriber.created_at)}</span>
                 </div>
               </div>

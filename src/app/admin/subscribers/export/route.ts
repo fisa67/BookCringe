@@ -5,7 +5,7 @@ import { NEWSLETTER_SOURCE_LABELS } from "@/lib/admin/subscriberLabels";
 import type { NewsletterSource } from "@/lib/types/cms";
 
 /**
- * Exportação CSV dos assinantes do "Clube dos Leitores BookCringe" —
+ * Exportação CSV dos assinantes do "Crew Literário" —
  * `/admin/subscribers`. Rota dentro de `/admin/*`, então já protegida pelo
  * mesmo proxy de sessão (`src/proxy.ts`, matcher `/admin/:path*`) usado
  * pelo resto do painel — nenhuma checagem de auth adicional necessária
@@ -28,11 +28,12 @@ export async function GET(request: Request) {
   const escapeCsvField = (value: string) => `"${value.replace(/"/g, '""')}"`;
 
   const rows = [
-    ["email", "origem", "data_cadastro"].join(","),
+    ["email", "origem", "confirmado", "data_cadastro"].join(","),
     ...subscribers.map((subscriber) =>
       [
         escapeCsvField(subscriber.email),
         escapeCsvField(NEWSLETTER_SOURCE_LABELS[subscriber.source]),
+        escapeCsvField(subscriber.confirmed_at ? "sim" : "não"),
         escapeCsvField(new Date(subscriber.created_at).toISOString()),
       ].join(",")
     ),

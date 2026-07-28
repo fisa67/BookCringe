@@ -157,16 +157,19 @@ export interface CmsBookClubMonthBookRecord {
   updated_at: string;
 }
 
+/**
+ * `books_read`/`pages_read`/`hours_read`/`authors_read`/`genres_read`/
+ * `countries_read` deixaram de ser mantidos pelo app (ver
+ * `completionService`) — `/estatisticas` recalcula tudo isso ao vivo a
+ * partir de `book_readings` (`readingStatsPublicAdapter`), única fonte de
+ * verdade para contadores de leitura. Este tipo reflete só as colunas que o
+ * app ainda gerencia; as demais colunas legadas continuam fisicamente na
+ * tabela (não foram dropadas), mas nenhum código deveria mais lê-las.
+ */
 export interface CmsStatisticsRecord {
   id: string;
   year: number;
   annual_goal: number;
-  books_read: number;
-  pages_read: number;
-  hours_read: number;
-  authors_read: number;
-  genres_read: number;
-  countries_read: number;
   metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
@@ -195,17 +198,51 @@ export interface CmsSettingsRecord {
 }
 
 /**
- * Origem da inscrição no "Clube dos Leitores BookCringe" — as 4 páginas
- * públicas com formulário de captação nesta fase (ver
- * `20260724_newsletter_subscribers.sql`).
+ * Origem da inscrição no "Crew Literário" (ex-"Clube dos Leitores
+ * BookCringe") — as 4 páginas com formulário embutido da Fase 2A
+ * (`home`, `recommendations`, `book`, `contents`) mais a landing page
+ * dedicada `/crew-literario` da Fase 3A (ver `20260724_newsletter_subscribers.sql`
+ * e `20260727_crew_literario.sql`).
  */
-export type NewsletterSource = "home" | "recommendations" | "book" | "contents";
+export type NewsletterSource = "home" | "recommendations" | "book" | "contents" | "crew_literario";
 
 export interface CmsNewsletterSubscriberRecord {
   id: string;
   email: string;
   source: NewsletterSource;
+  /**
+   * Preenchido quando o e-mail é confirmado (double opt-in) — `null`/ausente
+   * até a Fase 3A ter uma integração de envio de verdade (Resend/Brevo/
+   * Mailchimp). Opcional (como `rating?`/`reading_time_seconds?` em
+   * `CmsBookReadingRecord`) porque tem default `null` no banco — não
+   * precisa ser informado no insert (`createSubscriber`).
+   */
+  confirmed_at?: string | null;
   created_at: string;
+}
+
+/**
+ * Campanha de e-mail do Crew Literário (Fase 3B — ver
+ * `20260727_newsletter_campaigns.sql`). `scheduled` está reservado para uma
+ * futura Fase 3C (agendamento real); nenhum código escreve esse valor
+ * ainda — só `draft` (criação/edição) e `sent` (via `markCampaignAsSent`).
+ */
+export type NewsletterCampaignStatus = "draft" | "scheduled" | "sent";
+
+export interface CmsNewsletterCampaignRecord {
+  id: string;
+  /** Título interno — só aparece no admin, nunca no e-mail enviado. */
+  title: string;
+  /** Assunto do e-mail. */
+  subject: string;
+  /** Corpo do e-mail em texto simples (textarea, sem editor rico nesta fase). */
+  content: string;
+  status: NewsletterCampaignStatus;
+  /** Quantos inscritos confirmados receberam o envio em massa — 0 até o status virar `sent`. */
+  recipients_count: number;
+  sent_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface CmsServiceResult<T> {

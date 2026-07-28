@@ -136,7 +136,7 @@ export default async function BookPage({ params }: BookPageProps) {
               </div>
             )}
 
-            {/* CTA do "Clube dos Leitores" — apenas em livros da Curadoria
+            {/* CTA do "Crew Literário" — apenas em livros da Curadoria
                 BookCringe (mesmo critério acima), independente de haver
                 texto de `recommendationReason`. */}
             {(book.favorite || book.wouldRecommend) && (

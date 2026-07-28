@@ -24,6 +24,27 @@ export async function getReadingsCount(): Promise<number | null> {
 }
 
 /**
+ * Contagem (sem trazer as linhas) de leituras finalizadas no ano — usada em
+ * `/admin/stats` para o KPI de livros concluídos, mais barata do que buscar
+ * `getFinishedReadingsWithBooks({ year })` inteiro só para saber o total.
+ */
+export async function getFinishedReadingsCountByYear(year: number): Promise<number | null> {
+  const { count, error } = await supabaseAdminClient
+    .from(TABLE)
+    .select("*", { count: "exact", head: true })
+    .eq("status", "finished")
+    .gte("finished_at", `${year}-01-01`)
+    .lte("finished_at", `${year}-12-31`);
+
+  if (error) {
+    console.error("[bookReadingService] getFinishedReadingsCountByYear error", error);
+    return null;
+  }
+
+  return count;
+}
+
+/**
  * Leituras finalizadas (`status = 'finished'`) com o livro relacionado
  * embutido, ordenadas por `finished_at` desc — base para os agregadores
  * públicos de estatísticas (`readingStatsAggregators`, `readingStatsPublicAdapter`).

@@ -53,21 +53,30 @@ import { getPublicContentSummaryByBook } from "@/lib/adapters/contentPublicAdapt
  * Extraída para ser reaproveitada por `getPublicReadingStats` e
  * `getPublicReadingStatsDetailed` sem duplicar a lógica nem exigir uma
  * segunda consulta ao Supabase.
+ *
+ * `book_readings` é a ÚNICA fonte de verdade para livros lidos, páginas e
+ * progresso da meta — `statistics.books_read`/`pages_read` não existem
+ * mais no tipo (`CmsStatisticsRecord`) e não são mais mantidos pelo app
+ * (ver `completionService`), então nunca poderiam ser usados aqui sem
+ * ficar permanentemente desatualizados. `statistics` só contribui com
+ * `annual_goal` (meta definida em `/admin/stats`).
  */
 function buildReadingStats(
   statistics: CmsStatisticsRecord | null,
   readings: readonly CmsFinishedReadingWithBook[]
 ): ReadingStats {
+  const booksRead = readings.length;
+
   return {
-    booksRead: statistics?.books_read ?? readings.length,
-    pagesRead: statistics?.pages_read ?? computeTotalPagesRead(readings),
+    booksRead,
+    pagesRead: computeTotalPagesRead(readings),
     hoursRead: computeTotalReadingHours(readings),
     avgRating: computeAverageRating(readings) ?? mockStats.avgRating,
     authorsRead: computeDistinctAuthorsCount(readings),
     genresRead: computeDistinctGenresCount(readings),
     countriesRead: computeDistinctCountriesCount(readings),
     annualGoal: statistics?.annual_goal ?? mockStats.annualGoal,
-    annualProgress: statistics?.books_read ?? readings.length,
+    annualProgress: booksRead,
   };
 }
 

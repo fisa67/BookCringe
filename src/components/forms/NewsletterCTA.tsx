@@ -13,11 +13,11 @@ interface NewsletterCTAProps {
 }
 
 /**
- * Bloco de apresentação do "Clube dos Leitores BookCringe" — título +
+ * Bloco de apresentação do "Crew Literário" — título +
  * descrição + `NewsletterForm`. Reaproveitado em 4 páginas (Home,
  * Recomendações, Livro, Conteúdos), cada uma com sua própria copy e
  * `source`, mas o mesmo componente/estilo — evita 4 formulários
- * divergentes. Posicionamento deliberado: "Clube dos Leitores", nunca
+ * divergentes. Posicionamento deliberado: "Crew Literário", nunca
  * "newsletter" na copy (ver instruções do produto).
  */
 export function NewsletterCTA({

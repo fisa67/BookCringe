@@ -2,7 +2,7 @@ import type { CmsBookReadingRecord, CmsBookRecord, CmsStatisticsRecord } from "@
 import { getBookById } from "@/lib/services/bookService";
 import { getSettings } from "@/lib/services/settingsService";
 import { getReadingByBook, saveReading } from "@/lib/services/bookReadingService";
-import { getStatisticsByYear, createOrUpdateStatistics } from "@/lib/services/statsService";
+import { getStatisticsByYear } from "@/lib/services/statsService";
 import { buildAmazonAffiliateUrl } from "@/lib/services/affiliateService";
 import { parseHhMmSsToSeconds } from "@/lib/utils/time";
 
@@ -78,25 +78,14 @@ export async function finalizeBookReading(
   const reading = await saveReading(readingPayload);
   const settings = await getSettings();
 
-  let statistics: CmsStatisticsRecord | null = null;
-  if (existingReading?.status !== "finished") {
-    const currentStats = await getStatisticsByYear(targetYear);
-    const updatedStats = {
-      year: targetYear,
-      annual_goal: currentStats?.annual_goal ?? 52,
-      books_read: (currentStats?.books_read ?? 0) + 1,
-      pages_read: (currentStats?.pages_read ?? 0) + (book.page_count ?? 0),
-      hours_read: currentStats?.hours_read ?? 0,
-      authors_read: currentStats?.authors_read ?? 0,
-      genres_read: currentStats?.genres_read ?? 0,
-      countries_read: currentStats?.countries_read ?? 0,
-      metadata: currentStats?.metadata ?? {},
-    };
-
-    statistics = await createOrUpdateStatistics(updatedStats);
-  } else {
-    statistics = await getStatisticsByYear(targetYear);
-  }
+  // `statistics` não é mais incrementado aqui: `books_read`/`pages_read`
+  // (e demais contadores legados) deixaram de ser mantidos pelo app —
+  // `/estatisticas` calcula tudo ao vivo a partir de `book_readings`
+  // (`readingStatsPublicAdapter`), única fonte de verdade. A única coisa
+  // que resta em `statistics` é a meta anual (`annual_goal`, gerenciada em
+  // `/admin/stats`) — só lida aqui, nunca escrita, para devolver no
+  // response caso o chamador (Bookly) queira exibi-la.
+  const statistics: CmsStatisticsRecord | null = await getStatisticsByYear(targetYear);
 
   const affiliateUrl = buildAmazonAffiliateUrl(book.amazon_url, settings?.amazon_associate_id);
 

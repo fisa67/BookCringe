@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useId, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import type { NewsletterSource } from "@/lib/types/cms";
 
@@ -14,7 +14,7 @@ interface NewsletterFormProps {
 }
 
 /**
- * Peça atômica (client) do "Clube dos Leitores BookCringe" — input de
+ * Peça atômica (client) do "Crew Literário" — input de
  * e-mail + botão + feedback inline. Reaproveitada em `NewsletterCTA`
  * (Home, Recomendações, Livro, Conteúdos). Mesmo padrão de `ContatoForm`/
  * `useFormSubmit` (client + `fetch` para uma API Route, sem Server
@@ -25,6 +25,10 @@ export function NewsletterForm({ source, className, buttonLabel = "Entrar no Cre
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<SubmitStatus>("idle");
   const [message, setMessage] = useState("");
+  // `useId` (não só `source`) evita `id`/`htmlFor` duplicados quando a mesma
+  // `source` aparece 2x na mesma página (ex.: `/crew-literario`, com form no
+  // topo e reforçado no fim da página).
+  const emailFieldId = `newsletter-email-${source}-${useId()}`;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -64,11 +68,11 @@ export function NewsletterForm({ source, className, buttonLabel = "Entrar no Cre
 
   return (
     <form onSubmit={handleSubmit} className={`flex flex-col sm:flex-row gap-3 ${className ?? ""}`}>
-      <label htmlFor={`newsletter-email-${source}`} className="sr-only">
+      <label htmlFor={emailFieldId} className="sr-only">
         Seu melhor e-mail
       </label>
       <input
-        id={`newsletter-email-${source}`}
+        id={emailFieldId}
         type="email"
         name="email"
         required

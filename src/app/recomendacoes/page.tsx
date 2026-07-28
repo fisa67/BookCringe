@@ -5,6 +5,7 @@ import { BookCard } from "@/components/book/BookCard";
 import { AffiliateDisclosure } from "@/components/book/AffiliateDisclosure";
 import { getPublicRecommendedBooks } from "@/lib/adapters/recommendationsPublicAdapter";
 import { NewsletterCTA } from "@/components/forms/NewsletterCTA";
+import { CREW_LITERARIO_TITLE, CREW_LITERARIO_TAGLINE } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Recomendações",
@@ -58,8 +59,8 @@ export default async function RecomendacoesPage() {
               <div className="mt-16">
                 <NewsletterCTA
                   source="recommendations"
-                  title="Junte-se ao Crew Literário 📚"
-                  description="Um e-mail de vez em quando. Boas recomendações sempre."
+                  title={CREW_LITERARIO_TITLE}
+                  description={CREW_LITERARIO_TAGLINE}
                 />
               </div>
             </>

@@ -24,3 +24,21 @@ export const SOCIAL_LINKS = {
   tiktok: "https://tiktok.com/@bookcringe",
   spotify: "https://open.spotify.com/show/bookcringe",
 } as const;
+
+/**
+ * Copy única do "Crew Literário" (rebrand do "Clube dos Leitores
+ * BookCringe", Fase 3A) — reaproveitada pela landing page dedicada
+ * (`/crew-literario`) e pelo CTA da Home (`NewsletterSection`), para nunca
+ * divergir entre os dois pontos de entrada. Outras páginas com
+ * `NewsletterCTA` (Recomendações, Livro, Conteúdos) usam sua própria copy
+ * contextual, mas reaproveitam pelo menos `CREW_LITERARIO_TITLE`.
+ */
+export const CREW_LITERARIO_TITLE = "Junte-se ao Crew Literário 📚";
+export const CREW_LITERARIO_TAGLINE = "Um e-mail de vez em quando. Boas recomendações sempre.";
+export const CREW_LITERARIO_BENEFITS = [
+  "Recomendações de leitura",
+  "Curadoria BookCringe",
+  "Bastidores das leituras",
+  "Novos conteúdos",
+  "Livros do mês",
+] as const;

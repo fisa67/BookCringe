@@ -15,9 +15,9 @@ export const metadata: Metadata = {
   description: SITE_DESCRIPTION,
 };
 
-// StatsSection, RecentReads (Estatísticas) e ClubCTA (Clube de Leitura)
-// leem dados do Supabase — mesma estratégia de revalidate de
-// src/app/clube-de-leitura/page.tsx.
+// StatsSection, RecentReads (Estatísticas), ClubCTA (Clube de Leitura) e
+// NewsletterSection (prova social do Crew Literário) leem dados do
+// Supabase — mesma estratégia de revalidate de src/app/clube-de-leitura/page.tsx.
 export const revalidate = 3600;
 
 export default function HomePage() {
