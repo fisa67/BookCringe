@@ -5,6 +5,8 @@ interface NewsletterCTAProps {
   source: NewsletterSource;
   title: string;
   description: string;
+  benefits?: readonly string[];
+  buttonLabel?: string;
   /** Versão discreta (texto menor) — usada no CTA de fim de página em `/conteudos` e no card da página do livro. */
   compact?: boolean;
   /** "left" — usado no card inline da página do livro, que não é centralizado na página. */
@@ -24,6 +26,8 @@ export function NewsletterCTA({
   source,
   title,
   description,
+  benefits,
+  buttonLabel,
   compact = false,
   align = "center",
   className,
@@ -44,7 +48,23 @@ export function NewsletterCTA({
       <p className={compact ? "text-sm text-[var(--bc-muted)] mb-4" : "text-[var(--bc-muted)] leading-relaxed mb-6"}>
         {description}
       </p>
-      <NewsletterForm source={source} className={isCentered ? undefined : "sm:max-w-md"} />
+      {benefits && benefits.length > 0 ? (
+        <ul className="mb-6 space-y-2 text-left text-sm text-[var(--bc-ink)]">
+          {benefits.map((benefit) => (
+            <li key={benefit} className="flex items-start gap-2">
+              <span aria-hidden="true" className="font-bold text-[var(--bc-red)]">
+                ✓
+              </span>
+              <span>{benefit}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <NewsletterForm
+        source={source}
+        buttonLabel={buttonLabel}
+        className={isCentered ? undefined : "sm:max-w-md"}
+      />
     </div>
   );
 }

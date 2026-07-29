@@ -11,6 +11,7 @@ import type {
   CmsSettingsRecord,
   CmsNewsletterSubscriberRecord,
   CmsNewsletterCampaignRecord,
+  CmsMonthlyRecommendationRecord,
 } from "@/lib/types/cms";
 
 /**
@@ -86,6 +87,11 @@ export interface Database {
         CmsNewsletterCampaignRecord,
         NewRow<CmsNewsletterCampaignRecord>,
         Partial<CmsNewsletterCampaignRecord>
+      >;
+      monthly_recommendations: TableShape<
+        CmsMonthlyRecommendationRecord,
+        NewRow<CmsMonthlyRecommendationRecord>,
+        Partial<CmsMonthlyRecommendationRecord>
       >;
     };
     Views: { [_ in never]: never };

@@ -12,11 +12,13 @@ import {
   updateCampaign,
 } from "@/lib/services/campaignService";
 import { sendCampaignTest, sendCampaignToCrew } from "@/lib/services/campaignEmailService";
+import { uploadNewsletterImage } from "@/lib/services/newsletterImageService";
 import {
   newsletterCampaignFormDataToInput,
   newsletterCampaignFormSchema,
 } from "@/lib/validations/newsletterCampaign";
 import { formatValidationErrors } from "@/lib/validations/forms";
+import { sanitizeNewsletterContent } from "@/lib/newsletters/content";
 
 /**
  * Server Actions do módulo Newsletters — única porta de escrita usada pela
@@ -30,8 +32,26 @@ function firstErrorMessage(error: ZodError): string {
   return Object.values(formatValidationErrors(error))[0] ?? "Dados inválidos.";
 }
 
+function sanitizedCampaignFormDataToInput(formData: FormData): Record<string, unknown> {
+  const input = newsletterCampaignFormDataToInput(formData);
+  return {
+    ...input,
+    content: typeof input.content === "string" ? sanitizeNewsletterContent(input.content) : input.content,
+  };
+}
+
+export async function uploadNewsletterImageAction(formData: FormData) {
+  const file = formData.get("file");
+
+  if (!(file instanceof File)) {
+    return { ok: false as const, error: "Selecione uma imagem para enviar." };
+  }
+
+  return uploadNewsletterImage(file);
+}
+
 export async function createCampaignAction(formData: FormData): Promise<void> {
-  const parsed = newsletterCampaignFormSchema.safeParse(newsletterCampaignFormDataToInput(formData));
+  const parsed = newsletterCampaignFormSchema.safeParse(sanitizedCampaignFormDataToInput(formData));
 
   if (!parsed.success) {
     redirect(`/admin/newsletters/new?error=${encodeURIComponent(firstErrorMessage(parsed.error))}`);
@@ -65,7 +85,7 @@ export async function updateCampaignAction(id: string, formData: FormData): Prom
     );
   }
 
-  const parsed = newsletterCampaignFormSchema.safeParse(newsletterCampaignFormDataToInput(formData));
+  const parsed = newsletterCampaignFormSchema.safeParse(sanitizedCampaignFormDataToInput(formData));
 
   if (!parsed.success) {
     redirect(`/admin/newsletters/${id}/edit?error=${encodeURIComponent(firstErrorMessage(parsed.error))}`);

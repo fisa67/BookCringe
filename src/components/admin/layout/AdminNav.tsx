@@ -11,9 +11,8 @@ import { cn } from "@/lib/utils";
  * de criação/edição etc. automaticamente). Evita ter que voltar manualmente
  * para `/admin` para trocar de área.
  *
- * "Recomendações" e "Histórico de leitura" não têm página própria ainda —
- * por decisão explícita, "Histórico" aponta para `/admin/stats`
- * (relatórios de leitura) e "Recomendações" foi omitido do menu.
+ * "Histórico" aponta para `/admin/stats` (relatórios de leitura, não
+ * confundir com o histórico da Recomendação do mês, em "Recomendações").
  */
 const ADMIN_NAV_ITEMS = [
   { href: "/admin", label: "Dashboard" },
@@ -21,6 +20,7 @@ const ADMIN_NAV_ITEMS = [
   { href: "/admin/content", label: "Conteúdos" },
   { href: "/admin/bookclub", label: "Clube do Livro" },
   { href: "/admin/stats", label: "Histórico" },
+  { href: "/admin/recommendations", label: "Recomendações" },
   { href: "/admin/subscribers", label: "Assinantes" },
   { href: "/admin/newsletters", label: "Newsletters" },
 ] as const;

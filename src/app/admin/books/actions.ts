@@ -9,6 +9,7 @@ import {
   saveReading,
   clearRecommendationOfMonthExcept,
 } from "@/lib/services/bookReadingService";
+import { syncRecommendationHistory } from "@/lib/services/monthlyRecommendationService";
 import { bookFormDataToInput, bookFormSchema } from "@/lib/validations/book";
 import { readingFormDataToInput, readingFormSchema } from "@/lib/validations/reading";
 import { formatValidationErrors } from "@/lib/validations/forms";
@@ -142,8 +143,21 @@ export async function saveReadingAction(bookId: string, formData: FormData): Pro
     );
   }
 
+  // Depois do upsert (só agora `saved.id` existe de verdade, inclusive
+  // quando esta é a primeira leitura registrada do livro) — mantém o
+  // histórico editorial (`monthly_recommendations`) em sincronia com a
+  // transição de `is_recommendation_of_month`, sem afetar o destaque atual
+  // em si (já salvo acima, via `saveReading`).
+  await syncRecommendationHistory({
+    bookReadingId: saved.id,
+    bookId,
+    wasActive: existingReading?.is_recommendation_of_month ?? false,
+    isActive: parsed.data.is_recommendation_of_month,
+  });
+
   revalidatePath("/admin/books");
   revalidatePath(`/admin/books/${bookId}/edit`);
+  revalidatePath("/admin/recommendations");
   revalidatePath("/estatisticas");
   revalidatePath("/biblioteca");
   revalidatePath("/recomendacoes");

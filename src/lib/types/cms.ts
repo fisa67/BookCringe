@@ -97,6 +97,35 @@ export interface CmsFinishedReadingWithBook extends CmsBookReadingRecord {
 }
 
 /**
+ * Histórico editorial da "Recomendação do mês" (ver
+ * `20260729_monthly_recommendations.sql`) — cada linha é um período em que
+ * um livro ficou em destaque. `ended_at: null` = é a recomendação atual
+ * (no máximo 1 por vez, índice único parcial no banco). Não confundir com
+ * `book_readings.is_recommendation_of_month`, que continua sendo a única
+ * fonte de verdade para o destaque atual nas páginas públicas — esta
+ * tabela é só um log, mantido em sincronia por
+ * `monthlyRecommendationService.syncRecommendationHistory`.
+ */
+export interface CmsMonthlyRecommendationRecord {
+  id: string;
+  book_reading_id: string;
+  book_id: string;
+  started_at: string;
+  ended_at: string | null;
+  created_at: string;
+}
+
+/**
+ * `monthly_recommendations` com o livro relacionado embutido (via
+ * `select("*, books(*)")`) — retorno de
+ * `monthlyRecommendationService.getRecommendationHistory`, usado em
+ * `/admin/recommendations`.
+ */
+export interface CmsMonthlyRecommendationWithBook extends CmsMonthlyRecommendationRecord {
+  books: CmsBookRecord;
+}
+
+/**
  * Categoria editorial do conteúdo (`contents.content_category`). `"book"`
  * exige `book_id` (conteúdo sobre um livro específico); as demais são
  * conteúdo geral, sem livro associado — ver migration
@@ -244,7 +273,11 @@ export interface CmsNewsletterCampaignRecord {
   title: string;
   /** Assunto do e-mail. */
   subject: string;
-  /** Corpo do e-mail em texto simples (textarea, sem editor rico nesta fase). */
+  /**
+   * Corpo do e-mail. Campanhas novas/editadas guardam HTML sanitizado
+   * produzido pelo Rich Text; campanhas antigas podem continuar em texto
+   * puro e são convertidas sem perda ao abrir/renderizar.
+   */
   content: string;
   status: NewsletterCampaignStatus;
   /** Quantos inscritos confirmados receberam o envio em massa — 0 até o status virar `sent`. */

@@ -1,6 +1,10 @@
 import { SITE_NAME } from "@/lib/constants";
 import { getFromEmail, getServerEnv } from "@/lib/env";
 import { escapeHtml, getResendClient } from "@/lib/email/resend";
+import {
+  newsletterContentToPlainText,
+  renderNewsletterContentForEmail,
+} from "@/lib/newsletters/content";
 import { getConfirmedSubscriberEmails } from "@/lib/services/subscriberService";
 import type { CmsNewsletterCampaignRecord } from "@/lib/types/cms";
 
@@ -13,28 +17,30 @@ import type { CmsNewsletterCampaignRecord } from "@/lib/types/cms";
  * Sem automações, sequência de boas-vindas, agendamento real ou
  * segmentação avançada nesta fase — só teste (`sendCampaignTest`) e envio
  * único em massa (`sendCampaignToCrew`), sempre disparado manualmente por
- * uma Server Action do admin.
+ * uma Server Action do admin. O conteúdo Rich Text e os CTAs passam pelo
+ * mesmo renderer de HTML compatível com e-mail no preview e no envio.
  */
 
 /** Limite de itens por chamada de `resend.batch.send` — envio em massa é fatiado em lotes desse tamanho. */
 const BATCH_CHUNK_SIZE = 100;
 
-/** Exportado para a página de visualização (`/admin/newsletters/[id]`) renderizar exatamente o mesmo HTML que será enviado — serve de preview. */
+/** Exportado para o preview renderizar exatamente o mesmo HTML que será enviado. */
 export function buildCampaignHtml(content: string): string {
-  const paragraphs = escapeHtml(content)
-    .split(/\n{2,}/)
-    .map((paragraph) => `<p style="margin: 0 0 16px;">${paragraph.replace(/\n/g, "<br />")}</p>`)
-    .join("\n");
+  const renderedContent = renderNewsletterContentForEmail(content);
 
   return `
     <div style="font-family: sans-serif; font-size: 15px; line-height: 1.6; color: #1a1a1a; max-width: 560px; margin: 0 auto;">
-      ${paragraphs}
+      ${renderedContent}
       <hr style="margin: 32px 0; border: none; border-top: 1px solid #e5e5e5;" />
       <p style="font-size: 12px; color: #888;">
         Você está recebendo este e-mail porque faz parte do Crew Literário do ${escapeHtml(SITE_NAME)}.
       </p>
     </div>
   `.trim();
+}
+
+export function buildCampaignText(content: string): string {
+  return `${newsletterContentToPlainText(content)}\n\n---\nVocê está recebendo este e-mail porque faz parte do Crew Literário do ${SITE_NAME}.`;
 }
 
 function chunk<T>(items: readonly T[], size: number): T[][] {
@@ -67,7 +73,7 @@ export async function sendCampaignTest(campaign: CampaignEmailInput): Promise<Se
     to: CONTACT_EMAIL,
     subject: `[TESTE] ${campaign.subject}`,
     html: buildCampaignHtml(campaign.content),
-    text: campaign.content,
+    text: buildCampaignText(campaign.content),
   });
 
   if (error) {
@@ -132,7 +138,7 @@ export async function sendCampaignToCrew(campaign: CampaignEmailInput): Promise<
         to: email,
         subject: campaign.subject,
         html,
-        text: campaign.content,
+        text: buildCampaignText(campaign.content),
       }))
     );
 

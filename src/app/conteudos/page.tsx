@@ -3,7 +3,6 @@ import { PageHero } from "@/components/ui/PageHero";
 import { getPublicContents, getPublicContentBookOptions } from "@/lib/adapters/contentPublicAdapter";
 import { ContentsExplorer } from "@/components/content/ContentsExplorer";
 import { NewsletterCTA } from "@/components/forms/NewsletterCTA";
-import { CREW_LITERARIO_TITLE, CREW_LITERARIO_TAGLINE } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Conteúdos",
@@ -45,8 +44,8 @@ export default async function ConteudosPage() {
       <section className="py-12 px-6 border-t border-[var(--bc-border)]">
         <NewsletterCTA
           source="contents"
-          title={CREW_LITERARIO_TITLE}
-          description={CREW_LITERARIO_TAGLINE}
+          title="💭 Gostou desta reflexão?"
+          description="Receba novos conteúdos e recomendações no Crew Literário."
           compact
         />
       </section>

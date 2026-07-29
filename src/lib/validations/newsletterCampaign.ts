@@ -3,8 +3,9 @@ import { z } from "zod";
 /**
  * Validação do formulário de campanha (`/admin/newsletters/new` e
  * `/[id]/edit`) — mesmo padrão de `src/lib/validations/content.ts`.
- * `content` é texto simples (textarea, sem editor rico nesta fase — ver
- * `NewsletterCampaignForm`).
+ * `content` é o HTML sanitizado produzido pelo editor Rich Text; a validação
+ * de tags, atributos e protocolos acontece na Server Action antes da
+ * persistência.
  */
 export const newsletterCampaignFormSchema = z.object({
   title: z

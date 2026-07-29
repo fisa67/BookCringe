@@ -135,7 +135,8 @@ export default async function ViewNewsletterPage({ params, searchParams }: ViewN
 
       <div className="rounded-3xl border border-slate-800 bg-slate-950/80 p-6">
         <h2 className="text-sm uppercase tracking-[0.2em] text-slate-400">Preview do e-mail</h2>
-        {/* Conteúdo escapado por `buildCampaignHtml`, escrito só pelo admin autenticado. */}
+        {/* `buildCampaignHtml` sanitiza o Rich Text e aplica o mesmo HTML
+            compatível com e-mail usado pelo preview e pelos dois envios. */}
         <div
           className="mt-4 rounded-2xl border border-slate-800 bg-white p-6"
           dangerouslySetInnerHTML={{ __html: buildCampaignHtml(campaign.content) }}

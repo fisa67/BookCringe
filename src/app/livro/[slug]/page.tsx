@@ -136,24 +136,10 @@ export default async function BookPage({ params }: BookPageProps) {
               </div>
             )}
 
-            {/* CTA do "Crew Literário" — apenas em livros da Curadoria
-                BookCringe (mesmo critério acima), independente de haver
-                texto de `recommendationReason`. */}
-            {(book.favorite || book.wouldRecommend) && (
-              <div className="max-w-2xl rounded-xl border border-[var(--bc-border)] bg-[var(--bc-surface)] p-5">
-                <NewsletterCTA
-                  source="book"
-                  title="Gostou desta recomendação?"
-                  description="Receba outras leituras escolhidas a dedo."
-                  compact
-                  align="left"
-                />
-              </div>
-            )}
-
             {book.amazonUrl && (
-              <div className="pt-1">
+              <div className="space-y-3 pt-1">
                 <BookCTA amazonUrl={book.amazonUrl} size="md" />
+                <AffiliateDisclosure className="text-left" />
               </div>
             )}
           </div>
@@ -161,9 +147,26 @@ export default async function BookPage({ params }: BookPageProps) {
 
         <BookContentsSection contents={book.contents} />
 
-        {book.amazonUrl && (
-          <div className="pt-8">
-            <AffiliateDisclosure />
+        {/* O CTA do Crew vem depois da recomendação, da compra e dos
+            conteúdos relacionados: continua relevante, mas não compete com
+            o próximo passo comercial natural para quem acabou de ler a
+            indicação. */}
+        {(book.favorite || book.wouldRecommend) && (
+          <div className="mt-10 max-w-2xl mx-auto rounded-xl border border-[var(--bc-border)] bg-[var(--bc-surface)] p-5">
+            <NewsletterCTA
+              source="book"
+              title="📚 Gostou desta recomendação?"
+              description="Este é apenas um dos livros da Curadoria BookCringe. Entre para o Crew Literário e receba:"
+              benefits={[
+                "Recomendação do mês",
+                "Leituras escolhidas a dedo",
+                "Novos conteúdos",
+                "Bastidores das leituras",
+              ]}
+              buttonLabel="Entrar para o Crew Literário 📚"
+              compact
+              align="left"
+            />
           </div>
         )}
       </div>

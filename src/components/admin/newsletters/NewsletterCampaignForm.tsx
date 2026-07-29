@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { CmsNewsletterCampaignRecord } from "@/lib/types/cms";
 import { adminInputClass, adminLabelClass } from "@/components/admin/formStyles";
+import { NewsletterRichTextEditor } from "@/components/admin/newsletters/NewsletterRichTextEditor";
 
 interface NewsletterCampaignFormProps {
   action: (formData: FormData) => void | Promise<void>;
@@ -12,10 +13,10 @@ interface NewsletterCampaignFormProps {
 
 /**
  * Formulário de newsletter (criar/editar) — título interno, assunto e
- * conteúdo em texto simples. Mesmo padrão de `ContentForm`: um único
- * componente para os dois modos, Server Action via `action`. Sem editor
- * rico nem preview embutido nesta fase — o preview fica na página de
- * visualização (`/admin/newsletters/[id]`), depois de salvar.
+ * conteúdo Rich Text. Mesmo padrão de `ContentForm`: um único componente
+ * para os dois modos, Server Action via `action`. O editor continua dentro
+ * do formulário nativo; seu HTML fica em um input hidden chamado `content`,
+ * preservando o contrato das Server Actions existentes.
  */
 export function NewsletterCampaignForm({
   action,
@@ -69,23 +70,10 @@ export function NewsletterCampaignForm({
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="content" className={adminLabelClass}>
+        <label htmlFor="content-editor" className={adminLabelClass}>
           Conteúdo *
         </label>
-        <textarea
-          id="content"
-          name="content"
-          required
-          rows={16}
-          maxLength={20000}
-          placeholder="Escreva o conteúdo do e-mail em texto simples. Parágrafos separados por linha em branco viram parágrafos no e-mail."
-          defaultValue={campaign?.content}
-          className={adminInputClass}
-        />
-        <p className="text-xs text-slate-500">
-          Texto simples por enquanto (sem editor rico) — depois de salvar, use &quot;Visualizar&quot; para conferir
-          como o e-mail fica antes de enviar um teste.
-        </p>
+        <NewsletterRichTextEditor initialContent={campaign?.content} />
       </div>
 
       <div className="flex items-center gap-3 pt-2">
