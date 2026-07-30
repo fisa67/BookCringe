@@ -39,7 +39,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   await assertAdminSession();
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-slate-950 text-slate-100 pt-16">
       <div className="border-b border-slate-800 bg-slate-900/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
           <div>

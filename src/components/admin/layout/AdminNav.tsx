@@ -18,7 +18,7 @@ const ADMIN_NAV_ITEMS = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/books", label: "Livros" },
   { href: "/admin/content", label: "Conteúdos" },
-  { href: "/admin/bookclub", label: "Clube do Livro" },
+  { href: "/admin/bookclub", label: "Clube" },
   { href: "/admin/stats", label: "Histórico" },
   { href: "/admin/recommendations", label: "Recomendações" },
   { href: "/admin/subscribers", label: "Assinantes" },
