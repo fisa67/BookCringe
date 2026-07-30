@@ -306,20 +306,13 @@ export type ConfirmSubscriberResult =
 /**
  * Confirma um inscrito a partir do token recebido em
  * `/crew-literario/confirmar?token=...`: valida o token, preenche
- * `confirmed_at` e limpa `confirmation_token`.
+ * `confirmed_at` e preserva o `confirmation_token` para que acessos
+ * repetidos ao mesmo link sejam reconhecidos como "já confirmado".
  *
- * Idempotente por construção: se o registro encontrado pelo token já
- * estiver com `confirmed_at` preenchido (corrida rara entre a busca e a
- * limpeza do token), devolve sucesso sem tentar confirmar de novo —
- * `alreadyConfirmed: true` avisa quem chama para não reenviar o welcome
- * e-mail.
- *
- * Limitação conhecida (aceitável nesta fase): como `confirmation_token` é
- * apagado após o uso, um segundo acesso ao MESMO link (ex.: pré-carregamento
- * por scanners de e-mail/antivírus corporativo) não consegue mais ser
- * diferenciado de um token que nunca existiu — os dois caem em "link
- * inválido". Se isso virar problema real, a correção é parar de apagar o
- * token e confiar só em `confirmed_at` como fonte de verdade.
+ * A atualização condicional em `confirmed_at is null` também torna a
+ * transição segura quando duas requisições chegam quase ao mesmo tempo:
+ * apenas a primeira envia o welcome; as demais recebem
+ * `alreadyConfirmed: true`.
  */
 export async function confirmSubscriberByToken(token: string): Promise<ConfirmSubscriberResult> {
   const { data, error } = await supabaseAdminClient
@@ -344,10 +337,15 @@ export async function confirmSubscriberByToken(token: string): Promise<ConfirmSu
     return { ok: true, email: data.email, alreadyConfirmed: true };
   }
 
-  const { error: updateError } = await supabaseAdminClient
+  const { data: confirmedData, error: updateError } = await supabaseAdminClient
     .from(TABLE)
-    .update({ confirmed_at: new Date().toISOString(), confirmation_token: null })
-    .eq("id", data.id);
+    .update({ confirmed_at: new Date().toISOString() })
+    .eq("id", data.id)
+    .is("confirmed_at", null)
+    .select("id, email, confirmed_at")
+    .maybeSingle();
+  // Só a requisição que ainda encontra confirmed_at nulo pode efetivar a
+  // transição pendente → confirmado.
 
   if (updateError) {
     console.error("[subscriberService] confirmSubscriberByToken update error", updateError);
@@ -357,25 +355,51 @@ export async function confirmSubscriberByToken(token: string): Promise<ConfirmSu
     };
   }
 
-  return { ok: true, email: data.email, alreadyConfirmed: false };
+  if (confirmedData) {
+    return { ok: true, email: data.email, alreadyConfirmed: false };
+  }
+
+  // Outra requisição pode ter confirmado o mesmo token entre o SELECT e o
+  // UPDATE. Como o token foi preservado, conseguimos distinguir essa corrida
+  // de um token inexistente.
+  const { data: current, error: currentError } = await supabaseAdminClient
+    .from(TABLE)
+    .select("email, confirmed_at")
+    .eq("id", data.id)
+    .maybeSingle();
+
+  if (currentError) {
+    console.error("[subscriberService] confirmSubscriberByToken reread error", currentError);
+    return {
+      ok: false,
+      error: "Não foi possível confirmar seu e-mail agora. Tente novamente em alguns instantes.",
+    };
+  }
+
+  if (current?.confirmed_at) {
+    return { ok: true, email: current.email, alreadyConfirmed: true };
+  }
+
+  return {
+    ok: false,
+    error: "Não foi possível confirmar seu e-mail agora. Tente novamente em alguns instantes.",
+  };
 }
 
+/**
+ * Confirma manualmente um assinante pendente — usado pelo botão "✅ Confirmar"
+ * do admin para leitores antigos ou conhecidos. A confirmação manual também
+ * preserva um token existente para que um clique posterior no e-mail seja
+ * reconhecido como "já confirmado".
+ */
 export type ConfirmSubscriberManuallyResult =
   | { ok: true; email: string }
   | { ok: false; error: string };
 
 /**
- * Confirma manualmente um assinante pendente — usado pelo botão "✅ Confirmar"
- * do admin (`/admin/subscribers`), para leitores antigos/conhecidos que já
- * deram consentimento fora do fluxo público de double opt-in (ex.: alguém
- * que já era do "Clube dos Leitores" antes do double opt-in existir). Mesma
- * semântica de `confirmSubscriberByToken` (preenche `confirmed_at`, limpa
- * `confirmation_token`), só que disparada pelo admin em vez de um clique no
- * link do e-mail — por isso não recebe/valida token.
- *
- * Defesa em profundidade: recusa se o assinante já estiver confirmado —
- * mesmo que a UI já esconda o botão nesse caso, esta função nunca deveria
- * reprocessar quem já é do Crew.
+ * A confirmação manual mantém o token pendente no registro. Assim, se o
+ * assinante também abrir o e-mail que recebeu, o link será reconhecido como
+ * já confirmado em vez de parecer inválido.
  */
 export async function confirmSubscriberManually(id: string): Promise<ConfirmSubscriberManuallyResult> {
   const { data, error } = await supabaseAdminClient
@@ -399,7 +423,7 @@ export async function confirmSubscriberManually(id: string): Promise<ConfirmSubs
 
   const { error: updateError } = await supabaseAdminClient
     .from(TABLE)
-    .update({ confirmed_at: new Date().toISOString(), confirmation_token: null })
+    .update({ confirmed_at: new Date().toISOString() })
     .eq("id", id);
 
   if (updateError) {

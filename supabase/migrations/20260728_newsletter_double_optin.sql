@@ -8,8 +8,9 @@
 --
 -- 1) `confirmation_token`: token opaco (hex de 32 bytes aleatórios, gerado
 --    em `generateConfirmationToken`) enviado por e-mail para o inscrito
---    confirmar. `null` quando não há confirmação pendente (inscrito já
---    confirmado, com o token já limpo em `confirmSubscriberByToken`).
+--    confirmar. `null` quando não há confirmação pendente. Após a
+--    confirmação, o token é preservado para que acessos repetidos ao mesmo
+--    link sejam reconhecidos como "já confirmado", sem reenviar o welcome.
 --    Índice único parcial (só considera linhas com token) — garante que
 --    dois inscritos nunca compartilhem o mesmo token, sem impedir vários
 --    `null` simultâneos (comportamento padrão de índice único no Postgres,
@@ -29,7 +30,7 @@ alter table public.newsletter_subscribers
   add column if not exists confirmation_sent_at timestamptz null;
 
 comment on column public.newsletter_subscribers.confirmation_token is
-  'Token opaco enviado no e-mail de confirmação (double opt-in) — null quando não há confirmação pendente. Limpo ao confirmar.';
+  'Token opaco enviado no e-mail de confirmação (double opt-in) — preservado após a confirmação para reconhecer acessos repetidos sem reenviar o welcome.';
 
 comment on column public.newsletter_subscribers.confirmation_sent_at is
   'Data/hora do último envio (ou reenvio) do e-mail de confirmação — base para uma futura regra de expiração de token.';

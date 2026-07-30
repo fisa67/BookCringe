@@ -2,6 +2,8 @@ export const SITE_NAME = "BookCringe";
 export const SITE_SLOGAN = "Cringe por fora, cult por dentro.";
 export const SITE_DESCRIPTION =
   "BookCringe é uma marca brasileira de conteúdo literário que incentiva a leitura através de vídeos, resenhas, estatísticas, listas e clube de leitura.";
+export const STORE_INTEREST_SUCCESS_MESSAGE =
+  "✅ Interesse registrado.\n\nAvisaremos quando esta coleção estiver disponível.";
 /**
  * Base para SEO (metadataBase, sitemap, robots, canonical) e para todo link
  * absoluto gerado no servidor (e-mails transacionais: confirmação/boas-vindas/
@@ -20,6 +22,8 @@ export const NAV_LINKS = [
   { label: "Sobre", href: "/sobre" },
   { label: "Biblioteca", href: "/biblioteca" },
   { label: "Recomendações", href: "/recomendacoes" },
+  { label: "Ofertas", href: "/ofertas" },
+  { label: "Store", href: "/bookcringe-store" },
   { label: "Conteúdos", href: "/conteudos" },
   { label: "Clube de Leitura", href: "/clube-de-leitura" },
   { label: "Estatísticas", href: "/estatisticas" },

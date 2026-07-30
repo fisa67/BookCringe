@@ -7,9 +7,11 @@ import { Rating } from "@/components/bookclub/Rating";
 import { Badge } from "@/components/ui/Badge";
 import { BookContentsSection } from "@/components/content/BookContentsSection";
 import { AffiliateDisclosure } from "@/components/book/AffiliateDisclosure";
+import { BookRatingsSection } from "@/components/book/BookRatingsSection";
 import { NewsletterCTA } from "@/components/forms/NewsletterCTA";
 import { formatRating } from "@/lib/utils";
 import { SITE_NAME, SITE_URL } from "@/lib/constants";
+import { getPublicBookRatingSummary } from "@/lib/services/bookRatingService";
 
 interface BookPageProps {
   params: Promise<{ slug: string }>;
@@ -68,6 +70,8 @@ export default async function BookPage({ params }: BookPageProps) {
   if (!book) {
     notFound();
   }
+
+  const communityRatings = await getPublicBookRatingSummary(book.id);
 
   return (
     <div className="pt-28 pb-16 px-6">
@@ -146,6 +150,17 @@ export default async function BookPage({ params }: BookPageProps) {
         </div>
 
         <BookContentsSection contents={book.contents} />
+
+        <BookRatingsSection
+          bookId={book.id}
+          initialSummary={
+            communityRatings ?? {
+              average: null,
+              count: 0,
+              ratings: [],
+            }
+          }
+        />
 
         {/* O CTA do Crew vem depois da recomendação, da compra e dos
             conteúdos relacionados: continua relevante, mas não compete com

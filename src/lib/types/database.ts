@@ -10,8 +10,14 @@ import type {
   CmsStatisticsRecord,
   CmsSettingsRecord,
   CmsNewsletterSubscriberRecord,
+  CmsBookRatingRecord,
   CmsNewsletterCampaignRecord,
   CmsMonthlyRecommendationRecord,
+  CmsPromotionalCampaignRecord,
+  CmsPromotionalCampaignItemRecord,
+  CmsStoreCollectionRecord,
+  CmsStoreProductRecord,
+  CmsStoreInterestRecord,
 } from "@/lib/types/cms";
 
 /**
@@ -31,6 +37,7 @@ import type {
 type Simplify<T> = { [K in keyof T]: T[K] };
 
 type NewRow<T> = Omit<T, "id" | "created_at" | "updated_at">;
+type NewRowWithUpdatedAt<T> = Omit<T, "id" | "created_at">;
 
 interface TableShape<Row, Insert, Update> {
   Row: Simplify<Row>;
@@ -83,6 +90,11 @@ export interface Database {
         NewRow<CmsNewsletterSubscriberRecord>,
         Partial<CmsNewsletterSubscriberRecord>
       >;
+      book_ratings: TableShape<
+        CmsBookRatingRecord,
+        NewRowWithUpdatedAt<CmsBookRatingRecord>,
+        Partial<CmsBookRatingRecord>
+      >;
       newsletter_campaigns: TableShape<
         CmsNewsletterCampaignRecord,
         NewRow<CmsNewsletterCampaignRecord>,
@@ -92,6 +104,31 @@ export interface Database {
         CmsMonthlyRecommendationRecord,
         NewRow<CmsMonthlyRecommendationRecord>,
         Partial<CmsMonthlyRecommendationRecord>
+      >;
+      promotional_campaigns: TableShape<
+        CmsPromotionalCampaignRecord,
+        NewRow<CmsPromotionalCampaignRecord>,
+        Partial<CmsPromotionalCampaignRecord>
+      >;
+      promotional_campaign_items: TableShape<
+        CmsPromotionalCampaignItemRecord,
+        NewRow<CmsPromotionalCampaignItemRecord>,
+        Partial<CmsPromotionalCampaignItemRecord>
+      >;
+      store_collections: TableShape<
+        CmsStoreCollectionRecord,
+        NewRow<CmsStoreCollectionRecord>,
+        Partial<CmsStoreCollectionRecord>
+      >;
+      store_products: TableShape<
+        CmsStoreProductRecord,
+        NewRow<CmsStoreProductRecord>,
+        Partial<CmsStoreProductRecord>
+      >;
+      store_interests: TableShape<
+        CmsStoreInterestRecord,
+        NewRow<CmsStoreInterestRecord>,
+        Partial<CmsStoreInterestRecord>
       >;
     };
     Views: { [_ in never]: never };

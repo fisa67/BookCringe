@@ -16,7 +16,10 @@ const SHORTCUTS = [
   { href: "/admin/content", label: "Conteúdo" },
   { href: "/admin/stats", label: "Estatísticas" },
   { href: "/admin/subscribers", label: "Assinantes" },
+  { href: "/admin/ratings", label: "Avaliações da comunidade" },
   { href: "/admin/newsletters", label: "Newsletters" },
+  { href: "/admin/campaigns", label: "Campanhas promocionais" },
+  { href: "/admin/store", label: "BookCringe Store" },
   { href: "/admin/settings", label: "Configurações" },
 ];
 

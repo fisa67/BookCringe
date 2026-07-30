@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
+import type { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import { NodeSelection } from "@tiptap/pm/state";
 import { getNewsletterEditorContent } from "@/lib/newsletters/legacyContent";
@@ -56,6 +57,27 @@ type DialogState = LinkDialogState | ImageDialogState | CtaDialogState | null;
 const buttonClass =
   "rounded border border-slate-700 px-2 py-1 text-xs font-medium text-slate-200 transition hover:border-slate-500 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40";
 
+function findImagePosition(editor: Editor): number | null {
+  const { selection } = editor.state;
+
+  if (selection instanceof NodeSelection && selection.node.type.name === "image") {
+    return selection.from;
+  }
+
+  const candidates = [
+    [selection.$from.nodeAfter, selection.$from.pos],
+    [selection.$from.nodeBefore, selection.$from.pos - (selection.$from.nodeBefore?.nodeSize ?? 0)],
+    [selection.$to.nodeAfter, selection.$to.pos],
+    [selection.$to.nodeBefore, selection.$to.pos - (selection.$to.nodeBefore?.nodeSize ?? 0)],
+  ] as const;
+
+  for (const [node, position] of candidates) {
+    if (node?.type.name === "image") return position;
+  }
+
+  return null;
+}
+
 function ToolbarButton({
   label,
   title,
@@ -68,7 +90,15 @@ function ToolbarButton({
   disabled?: boolean;
 }) {
   return (
-    <button type="button" className={buttonClass} title={title} aria-label={title} onClick={onClick} disabled={disabled}>
+    <button
+      type="button"
+      className={buttonClass}
+      title={title}
+      aria-label={title}
+      onMouseDown={(event) => event.preventDefault()}
+      onClick={onClick}
+      disabled={disabled}
+    >
       {label}
     </button>
   );
@@ -100,7 +130,11 @@ export function NewsletterRichTextEditor({ initialContent }: NewsletterRichTextE
   const initialHtml = getNewsletterEditorContent(initialContent);
   const [content, setContent] = useState(initialHtml);
   const [dialog, setDialog] = useState<DialogState>(null);
-  const [selectedNodeType, setSelectedNodeType] = useState<string | null>(null);
+  const [selectionState, setSelectionState] = useState({
+    empty: true,
+    nodeType: null as string | null,
+  });
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [isUploading, startUpload] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -119,11 +153,31 @@ export function NewsletterRichTextEditor({ initialContent }: NewsletterRichTextE
     onSelectionUpdate: ({ editor: updatedEditor }) => {
       const nodeSelection =
         updatedEditor.state.selection instanceof NodeSelection ? updatedEditor.state.selection.node : null;
-      setSelectedNodeType(nodeSelection?.type.name ?? null);
+      setSelectionState({
+        empty: updatedEditor.state.selection.empty,
+        nodeType: nodeSelection?.type.name ?? null,
+      });
     },
   });
 
-  const selectedNode = editor && editor.state.selection instanceof NodeSelection ? editor.state.selection.node : null;
+  const selectedNode =
+    editor && editor.state.selection instanceof NodeSelection ? editor.state.selection.node : null;
+  const selectedNodeType = selectionState.nodeType;
+
+  const applyHeading = (level: 2 | 3) => {
+    if (!editor) return;
+    if (editor.state.selection instanceof NodeSelection) return;
+
+    const { $head } = editor.state.selection;
+    let depth = $head.depth;
+    while (depth > 1 && !$head.node(depth).isBlock) depth -= 1;
+    if (depth === 0 || !$head.node(depth).isTextblock) return;
+
+    const from = $head.start(depth);
+    const to = from + $head.node(depth).content.size;
+
+    editor.chain().focus().setTextSelection({ from, to }).toggleHeading({ level }).run();
+  };
 
   const openLinkDialog = () => {
     if (!editor) return;
@@ -250,42 +304,46 @@ export function NewsletterRichTextEditor({ initialContent }: NewsletterRichTextE
     event.target.value = "";
     if (!file || !editor) return;
 
+    setUploadError(null);
     startUpload(async () => {
       const formData = new FormData();
       formData.set("file", file);
-      const result = await uploadNewsletterImageAction(formData);
+      try {
+        const result = await uploadNewsletterImageAction(formData);
 
-      if (!result.ok) {
+        if (!result.ok) {
+          setUploadError(result.error);
+          return;
+        }
+
+        editor
+          .chain()
+          .focus()
+          .insertContent({
+            type: "image",
+            attrs: { src: result.url, alt: "", align: "center", size: "full" },
+          })
+          .run();
+        const imagePosition = findImagePosition(editor);
+        if (imagePosition === null) {
+          setUploadError("A imagem foi enviada, mas não foi possível selecioná-la no editor.");
+          return;
+        }
+
+        editor.commands.setNodeSelection(imagePosition);
         setDialog({
           kind: "image",
-          position: editor.state.selection.from,
-          src: "",
+          position: imagePosition,
+          src: result.url,
           alt: "",
           href: "",
           align: "center",
           size: "full",
-          error: result.error,
         });
-        return;
+      } catch (error) {
+        console.error("[NewsletterRichTextEditor] image upload error", error);
+        setUploadError("Não foi possível enviar a imagem. Tente novamente.");
       }
-
-      editor
-        .chain()
-        .focus()
-        .insertContent({
-          type: "image",
-          attrs: { src: result.url, alt: "", align: "center", size: "full" },
-        })
-        .run();
-      setDialog({
-        kind: "image",
-        position: editor.state.selection.from,
-        src: result.url,
-        alt: "",
-        href: "",
-        align: "center",
-        size: "full",
-      });
     });
   };
 
@@ -293,8 +351,8 @@ export function NewsletterRichTextEditor({ initialContent }: NewsletterRichTextE
     <div className="space-y-2">
       <div className="overflow-hidden rounded-md border border-slate-700 bg-slate-950">
         <div className="flex flex-wrap items-center gap-1 border-b border-slate-700 bg-slate-900 p-2">
-          <ToolbarButton label="H2" title="Título H2" onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()} />
-          <ToolbarButton label="H3" title="Título H3" onClick={() => editor?.chain().focus().toggleHeading({ level: 3 }).run()} />
+          <ToolbarButton label="H2" title="Título H2" onClick={() => applyHeading(2)} />
+          <ToolbarButton label="H3" title="Título H3" onClick={() => applyHeading(3)} />
           <ToolbarButton label="B" title="Negrito" onClick={() => editor?.chain().focus().toggleBold().run()} />
           <ToolbarButton label="I" title="Itálico" onClick={() => editor?.chain().focus().toggleItalic().run()} />
           <ToolbarButton label="• Lista" title="Lista com marcadores" onClick={() => editor?.chain().focus().toggleBulletList().run()} />
@@ -303,7 +361,7 @@ export function NewsletterRichTextEditor({ initialContent }: NewsletterRichTextE
             label="Link"
             title="Adicionar ou editar link"
             onClick={openLinkDialog}
-            disabled={!editor || (editor.state.selection.empty && !editor.isActive("link"))}
+            disabled={!editor || (selectionState.empty && !editor.isActive("link"))}
           />
           <ToolbarButton label="Quote" title="Citação" onClick={() => editor?.chain().focus().toggleBlockquote().run()} />
           <ToolbarButton
@@ -339,6 +397,11 @@ export function NewsletterRichTextEditor({ initialContent }: NewsletterRichTextE
         </div>
       </div>
       <input type="hidden" name="content" value={content} readOnly />
+      {uploadError ? (
+        <p role="alert" className="rounded-md border border-red-900/60 bg-red-950/40 px-3 py-2 text-sm text-red-300">
+          {uploadError}
+        </p>
+      ) : null}
       <p className="text-xs text-slate-500">
         Crie livremente com texto, imagens e botões CTA. O preview e o e-mail usam a mesma renderização
         compatível com clientes de e-mail.

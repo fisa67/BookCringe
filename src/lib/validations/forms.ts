@@ -1,12 +1,13 @@
 import { z } from "zod";
 
-export const formTypes = ["contato", "trabalhe-comigo", "clube-de-leitura"] as const;
+export const formTypes = ["contato", "trabalhe-comigo", "clube-de-leitura", "store-interesse"] as const;
 export type FormType = (typeof formTypes)[number];
 
 export const formTypeLabels: Record<FormType, string> = {
   contato: "Contato",
   "trabalhe-comigo": "Trabalhe Comigo",
   "clube-de-leitura": "Clube de Leitura",
+  "store-interesse": "BookCringe Store",
 };
 
 export const contactSubjects = [
@@ -82,16 +83,40 @@ export const clubeFormSchema = z.object({
   ...baseFormFields,
 });
 
+export const storeInterestFormSchema = z.object({
+  formType: z.literal("store-interesse"),
+  name: baseFormFields.name,
+  email: baseFormFields.email,
+  message: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    z.string().trim().max(5000, "Mensagem deve ter no máximo 5000 caracteres").optional()
+  ),
+  collectionId: z.string().uuid("Coleção inválida"),
+  collectionName: z
+    .string()
+    .trim()
+    .min(1, "Coleção é obrigatória")
+    .max(150, "Nome da coleção deve ter no máximo 150 caracteres"),
+  productId: z.string().uuid("Produto inválido"),
+  productName: z
+    .string()
+    .trim()
+    .min(1, "Produto é obrigatório")
+    .max(200, "Nome do produto deve ter no máximo 200 caracteres"),
+});
+
 export const formSubmissionSchema = z.discriminatedUnion("formType", [
   contatoFormSchema,
   trabalheComigoFormSchema,
   clubeFormSchema,
+  storeInterestFormSchema,
 ]);
 
 export type FormSubmission = z.infer<typeof formSubmissionSchema>;
 export type ContatoFormInput = z.infer<typeof contatoFormSchema>;
 export type TrabalheComigoFormInput = z.infer<typeof trabalheComigoFormSchema>;
 export type ClubeFormInput = z.infer<typeof clubeFormSchema>;
+export type StoreInterestFormInput = z.infer<typeof storeInterestFormSchema>;
 
 export function formatValidationErrors(
   error: z.ZodError

@@ -249,14 +249,25 @@ export interface CmsNewsletterSubscriberRecord {
   confirmed_at?: string | null;
   /**
    * Token de confirmação pendente (double opt-in, Fase 3C) — `null` quando
-   * não há confirmação em aberto (inscrito já confirmado, com o token já
-   * limpo). Nunca deve ser exposto fora do backend (ex.: exportação CSV do
-   * admin) — é um segredo enquanto válido.
+   * não há confirmação em aberto. Após a confirmação, o token é preservado
+   * para que acessos repetidos ao mesmo link sejam reconhecidos como "já
+   * confirmado". Nunca deve ser exposto fora do backend (ex.: exportação CSV
+   * do admin) — é um segredo enquanto válido.
    */
   confirmation_token?: string | null;
   /** Data/hora do último envio (ou reenvio) do e-mail de confirmação. */
   confirmation_sent_at?: string | null;
   created_at: string;
+}
+
+export interface CmsBookRatingRecord {
+  id: string;
+  book_id: string;
+  subscriber_id: string;
+  rating: number;
+  comment: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 /**
@@ -285,6 +296,69 @@ export interface CmsNewsletterCampaignRecord {
   sent_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export type PromotionalCampaignItemType = "book" | "kindle" | "accessory" | "other";
+
+export interface CmsPromotionalCampaignRecord {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  is_active: boolean;
+  banner_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CmsPromotionalCampaignItemRecord {
+  id: string;
+  campaign_id: string;
+  title: string;
+  image_url: string;
+  description: string | null;
+  affiliate_url: string;
+  price: number | null;
+  position: number;
+  is_active: boolean;
+  item_type: PromotionalCampaignItemType;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CmsStoreCollectionRecord {
+  id: string;
+  name: string;
+  description: string | null;
+  is_active: boolean;
+  total_quantity: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CmsStoreProductRecord {
+  id: string;
+  collection_id: string;
+  name: string;
+  description: string | null;
+  image_url: string;
+  price: number;
+  quantity: number;
+  is_active: boolean;
+  crew_exclusive: boolean;
+  position: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CmsStoreInterestRecord {
+  id: string;
+  collection_id: string;
+  product_id: string;
+  name: string;
+  email: string;
+  message: string | null;
+  created_at: string;
 }
 
 export interface CmsServiceResult<T> {

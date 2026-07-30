@@ -55,13 +55,18 @@ export default async function ConfirmarCrewLiterarioPage({ searchParams }: Confi
     console.error("[crew-literario/confirmar] getPublicRecommendationOfMonth error", err);
     return null;
   });
+  const alreadyConfirmed = result.alreadyConfirmed;
 
   return (
     <PageHero
-      badge="🎉 E-mail confirmado"
+      badge={alreadyConfirmed ? "✅ E-mail já confirmado" : "🎉 E-mail confirmado"}
       eyebrow="Crew Literário"
       title="📚 Bem-vindo ao Crew Literário!"
-      subtitle="Seu e-mail foi confirmado com sucesso."
+      subtitle={
+        alreadyConfirmed
+          ? "Seu e-mail já foi confirmado anteriormente."
+          : "Seu e-mail foi confirmado com sucesso."
+      }
     >
       <div className="flex flex-wrap gap-3">
         <Link href="/recomendacoes">

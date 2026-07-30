@@ -9,10 +9,17 @@ import {
 } from "@/lib/validations/forms";
 
 function buildInternalDetails(data: FormSubmission): string {
-  const lines = [
-    `Nome: ${data.name}`,
-    `E-mail: ${data.email}`,
-  ];
+  const lines =
+    data.formType === "store-interesse"
+      ? [
+          `Coleção: ${data.collectionName}`,
+          `Produto: ${data.productName}`,
+          `Nome: ${data.name}`,
+          `Email: ${data.email}`,
+          `Coleção ID: ${data.collectionId}`,
+          `Produto ID: ${data.productId}`,
+        ]
+      : [`Nome: ${data.name}`, `E-mail: ${data.email}`];
 
   if (data.formType === "contato") {
     lines.push(`Assunto: ${contactSubjectLabels[data.subject]}`);
@@ -25,16 +32,26 @@ function buildInternalDetails(data: FormSubmission): string {
     lines.push(`Tipo de parceria: ${partnershipTypeLabels[data.type]}`);
   }
 
-  lines.push("", "Mensagem:", data.message);
+  lines.push("", "Mensagem:", data.message?.trim() || "Nenhuma mensagem adicional.");
 
   return lines.join("\n");
 }
 
 function buildInternalHtml(data: FormSubmission): string {
-  const details: string[] = [
-    `<p><strong>Nome:</strong> ${escapeHtml(data.name)}</p>`,
-    `<p><strong>E-mail:</strong> ${escapeHtml(data.email)}</p>`,
-  ];
+  const details: string[] =
+    data.formType === "store-interesse"
+      ? [
+          `<p><strong>Coleção:</strong> ${escapeHtml(data.collectionName)}</p>`,
+          `<p><strong>Produto:</strong> ${escapeHtml(data.productName)}</p>`,
+          `<p><strong>Nome:</strong> ${escapeHtml(data.name)}</p>`,
+          `<p><strong>Email:</strong> ${escapeHtml(data.email)}</p>`,
+          `<p><strong>Coleção ID:</strong> ${escapeHtml(data.collectionId)}</p>`,
+          `<p><strong>Produto ID:</strong> ${escapeHtml(data.productId)}</p>`,
+        ]
+      : [
+          `<p><strong>Nome:</strong> ${escapeHtml(data.name)}</p>`,
+          `<p><strong>E-mail:</strong> ${escapeHtml(data.email)}</p>`,
+        ];
 
   if (data.formType === "contato") {
     details.push(
@@ -55,7 +72,7 @@ function buildInternalHtml(data: FormSubmission): string {
 
   details.push(
     `<p><strong>Mensagem:</strong></p>`,
-    `<p>${escapeHtml(data.message).replace(/\n/g, "<br />")}</p>`
+    `<p>${escapeHtml(data.message?.trim() || "Nenhuma mensagem adicional.").replace(/\n/g, "<br />")}</p>`
   );
 
   return `
@@ -69,6 +86,13 @@ function buildConfirmationText(data: FormSubmission): string {
     `Olá ${data.name},`,
     "",
     `Recebemos sua mensagem enviada pelo formulário de ${formTypeLabels[data.formType]} do ${SITE_NAME}.`,
+    ...(data.formType === "store-interesse"
+      ? [
+          "",
+          `Registramos seu interesse em: ${data.productName}.`,
+          `Coleção: ${data.collectionName}.`,
+        ]
+      : []),
     "",
     "Responderei em até 5 dias úteis.",
     "",
@@ -84,6 +108,11 @@ function buildConfirmationHtml(data: FormSubmission): string {
       Recebemos sua mensagem enviada pelo formulário de
       <strong>${escapeHtml(formTypeLabels[data.formType])}</strong> do ${escapeHtml(SITE_NAME)}.
     </p>
+    ${
+      data.formType === "store-interesse"
+        ? `<p>Registramos seu interesse em <strong>${escapeHtml(data.productName)}</strong>, da coleção <strong>${escapeHtml(data.collectionName)}</strong>.</p>`
+        : ""
+    }
     <p>Responderei em até 5 dias úteis.</p>
     <p>Abraços,<br />${escapeHtml(SITE_NAME)}</p>
   `.trim();
@@ -98,6 +127,10 @@ function buildInternalSubject(data: FormSubmission): string {
 
   if (data.formType === "trabalhe-comigo") {
     return `[${label}] ${partnershipTypeLabels[data.type]} — ${data.name}`;
+  }
+
+  if (data.formType === "store-interesse") {
+    return `[${label}] Interesse — ${data.productName} — ${data.name}`;
   }
 
   return `[${label}] — ${data.name}`;

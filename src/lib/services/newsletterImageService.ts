@@ -79,6 +79,12 @@ export async function uploadNewsletterImage(file: File): Promise<UploadNewslette
 
   if (error) {
     console.error("[newsletterImageService] uploadNewsletterImage error", error);
+    if (/bucket|not found|does not exist/i.test(error.message)) {
+      return {
+        ok: false,
+        error: "O bucket newsletter-images não está disponível. Execute a migration de imagens e tente novamente.",
+      };
+    }
     return { ok: false, error: "Não foi possível enviar a imagem. Tente novamente." };
   }
 
