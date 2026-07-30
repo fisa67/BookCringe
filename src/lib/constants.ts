@@ -25,9 +25,9 @@ export const NAV_LINKS = [
   { label: "Ofertas", href: "/ofertas" },
   { label: "Store", href: "/bookcringe-store" },
   { label: "Conteúdos", href: "/conteudos" },
-  { label: "Clube de Leitura", href: "/clube-de-leitura" },
+  { label: "Clube", href: "/clube-de-leitura" },
   { label: "Estatísticas", href: "/estatisticas" },
-  { label: "Trabalhe Comigo", href: "/trabalhe-comigo" },
+  { label: "Parcerias", href: "/trabalhe-comigo" },
   { label: "Contato", href: "/contato" },
 ] as const;
 
