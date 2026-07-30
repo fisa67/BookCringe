@@ -61,7 +61,16 @@ create index if not exists monthly_recommendations_book_id_idx
 
 alter table public.monthly_recommendations enable row level security;
 
-drop policy if exists "Service role access to monthly_recommendations" on public.monthly_recommendations;
+drop policy if exists "Service role access to monthly_recommendations"
+  on public.monthly_recommendations;
 
-create policy "Service role access to monthly_recommendations" on public.monthly_recommendations
-  for all to service_role using (true) with check (true);
+create policy "Service role access to monthly_recommendations"
+  on public.monthly_recommendations
+  for all
+  to service_role
+  using (true)
+  with check (true);
+
+grant select, insert, update
+  on table public.monthly_recommendations
+  to service_role;
