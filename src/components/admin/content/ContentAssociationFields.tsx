@@ -76,6 +76,8 @@ export function ContentAssociationFields({ books, content }: ContentAssociationF
 
       {associationType === "book" ? (
         <div className="space-y-2">
+          <input type="hidden" name="content_category" value="book" />
+
           <label htmlFor="book_id" className={adminLabelClass}>
             Livro *
           </label>
