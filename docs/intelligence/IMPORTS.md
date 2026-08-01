@@ -42,41 +42,55 @@ src/lib/intelligence/imports/
 ├── contracts.ts        # Interfaces do pipeline (ImportDetector, PlatformParser,
 │                        # ImportNormalizer, ImportPersistence, ImporterDefinition)
 ├── types.ts             # Tipos de dados (ImportPlatform, NormalizedImportRecord, ...)
+├── columns.ts           # Padrão oficial: CanonicalColumnSchema + matchColumns
+│                        # (fonte única de verdade compartilhada entre detector e parser)
+├── columns.test.ts
 ├── index.ts              # Barrel público do módulo
 ├── preview.ts            # Dispatcher genérico: detecta a plataforma e delega
 │                          # ao adapter correspondente (hoje só YouTube)
 ├── preview.test.ts
 │
 ├── detection/
-│   ├── fileDetector.ts        # IntelligenceFileDetector — pontua por nome,
-│   │                           # cabeçalhos e conteúdo, escolhe a melhor plataforma
-│   ├── platformDetectors.ts   # Um detector de sinais por plataforma
-│   ├── utils.ts               # Normalização de texto, inferência de formato
-│   └── fileDetector.test.ts
+│   ├── fileDetector.ts              # IntelligenceFileDetector — escolhe a melhor plataforma
+│   ├── canonicalColumnDetector.ts   # Factory oficial: pontua por colunas canônicas
+│   ├── platformDetectors.ts         # Um detector por plataforma (YouTube usa o factory)
+│   ├── utils.ts                     # Normalização de texto, inferência de formato
+│   └── *.test.ts
 │
 ├── platforms/
 │   ├── shared.ts               # `PlatformParserContract` — só o tipo comum
 │   ├── youtube/
-│   │   ├── parser.ts           # Parser + normalizer do YouTube Studio (CSV)
+│   │   ├── columns.ts           # Schema canônico + aliases (en/pt/es) — fonte única
+│   │   ├── columns.test.ts
+│   │   ├── parser.ts           # Parser + normalizer (resolve por chave canônica)
 │   │   ├── parser.test.ts
-│   │   ├── preview.ts          # Resumo amigável (período, métricas, vídeos)
-│   │   │                       # para a Detection Preview da UI
+│   │   ├── preview.ts
 │   │   ├── preview.test.ts
-│   │   ├── persistence.ts      # ImportPersistence do YouTube — mapeia
-│   │   │                       # NormalizedImportRecord[] para Content/Metric
+│   │   ├── persistence.ts
 │   │   └── persistence.test.ts
-│   ├── instagram/parser.ts     # Só o esqueleto de tipos — adapter ainda não implementado
-│   ├── tiktok/parser.ts        # Idem
-│   ├── meta-ads/parser.ts      # Idem
-│   ├── google-analytics/parser.ts  # Idem
-│   └── manual/parser.ts        # Idem
+│   ├── instagram/
+│   │   ├── columns.ts          # Schema esqueleto (padrão pronto; adapter ainda não)
+│   │   └── parser.ts
+│   ├── tiktok/
+│   │   ├── columns.ts
+│   │   └── parser.ts
+│   ├── meta-ads/
+│   │   ├── columns.ts
+│   │   └── parser.ts
+│   ├── google-analytics/
+│   │   ├── columns.ts
+│   │   └── parser.ts
+│   └── manual/parser.ts
 │
 └── test-data/                  # Fixtures de teste, organizadas por plataforma
-    ├── youtube/youtube-studio-report.csv
+    ├── youtube/
+    │   ├── youtube-studio-report.csv          # inglês
+    │   ├── youtube-studio-report-pt.csv       # português
+    │   └── youtube-studio-table-data-pt.csv   # export real (linha Total + colunas extras)
     ├── instagram/instagram-reels-insights.csv
     ├── tiktok/tiktok-creator-analytics.csv
     ├── meta-ads/meta-ads-campaigns.csv
-    └── generic/generic-report.csv   # Arquivo sem sinais de nenhuma plataforma
+    └── generic/generic-report.csv
 ```
 
 ```
@@ -120,6 +134,77 @@ plataforma (ex. `platforms/youtube/parser.test.ts`,
 plataforma para deixar claro, ao adicionar um novo adapter, onde colocar
 seus arquivos de exemplo — basta criar `test-data/<plataforma>/` com um CSV
 representativo.
+
+### Colunas canônicas (padrão oficial de todos os importadores)
+
+Esta é a **fonte única de verdade** para cabeçalhos de CSV no Intelligence.
+Não é um ajuste específico do YouTube em português — é o padrão que
+Instagram, TikTok, Meta Ads e Google Analytics devem seguir quando seus
+adapters forem implementados.
+
+#### Por que existe
+
+As plataformas exportam CSVs com cabeçalhos localizados pelo idioma da
+conta (`"Video title"` / `"Título do vídeo"` / `"Título del video"`).
+Comparar strings literais em inglês quebra a Detection Preview e o
+parser. Manter duas listas (uma no detector, outra no parser) também
+quebra — elas inevitavelmente divergem.
+
+#### Contrato
+
+```
+imports/columns.ts
+  CanonicalColumnSchema<TColumn>   # aliases + required + optional
+  matchColumns(schema, headers)    # resolve índices por chave canônica
+  getColumnValue(row, match, col)  # lê célula pelo índice resolvido
+
+imports/detection/canonicalColumnDetector.ts
+  createCanonicalColumnDetector({ platform, schema, brandHints? })
+  # pontua confiança: colunas obrigatórias (peso alto) > opcionais >
+  # marca no nome/conteúdo > formato do arquivo
+
+platforms/<plataforma>/columns.ts
+  <PLATAFORMA>_COLUMN_SCHEMA       # o único mapa de aliases da plataforma
+```
+
+Regras:
+
+1. **Uma plataforma = um `columns.ts`.** Detector e parser consomem
+   exatamente o mesmo schema. Nunca listas duplicadas de cabeçalhos.
+2. **Comparação por igualdade exata normalizada** (sem acento, minúscula),
+   nunca substring solta — evita falso positivo (`"Views"` ≠ `"Video views"`
+   do TikTok).
+3. **Ordem das colunas não importa.** Colunas extras/desconhecidas são
+   ignoradas. Colunas opcionais ausentes degradam graciosamente (ex.:
+   métrica = 0 no parser do YouTube).
+4. **Linhas agregadas** (ex.: `"Total"` do `Table data.csv`) são
+   ignoradas quando faltam as colunas de identidade obrigatórias.
+
+#### Como adicionar um novo idioma
+
+Edite **somente** `platforms/<plataforma>/columns.ts` e acrescente o
+alias ao array da coluna canônica correspondente:
+
+```ts
+videoTitle: ["Video title", "Título do vídeo", "Título del video", "Titre de la vidéo"],
+```
+
+Nenhum outro arquivo (detector, parser, testes de UI) precisa mudar.
+
+#### Como o YouTube aplica o padrão hoje
+
+- Schema: `platforms/youtube/columns.ts` (`YOUTUBE_COLUMN_SCHEMA`).
+  Obrigatórias: `videoTitle`, `videoPublishTime`. Opcionais: as 4 métricas.
+- Detector: `youtubeDetector = createCanonicalColumnDetector({ schema: YOUTUBE_COLUMN_SCHEMA, ... })`.
+- Parser: `matchColumns(YOUTUBE_COLUMN_SCHEMA, headers)` + `getColumnValue`.
+- Fixtures: `youtube-studio-report.csv` (en), `youtube-studio-report-pt.csv`
+  (pt), `youtube-studio-table-data-pt.csv` (export real com linha `Total`).
+
+Instagram/TikTok/Meta Ads/Google Analytics já têm `columns.ts` esqueleto
+(aliases iniciais das fixtures atuais). Ainda usam detector por
+palavras-chave até a sprint do adapter respectivo — nessa sprint, basta
+trocar para `createCanonicalColumnDetector({ schema: ... })` e implementar
+o parser com `matchColumns`.
 
 ### `src/lib/intelligence/session/` — Import Session
 
@@ -307,14 +392,18 @@ ainda não foi implementado.
 
 ## Estado por plataforma
 
-| Plataforma | Detector | Adapter (parser + normalizer) | Preview na UI | Persistência |
-|---|---|---|---|---|
-| YouTube | ✅ | ✅ | ✅ | ✅ |
-| Instagram | ✅ | ⏳ esqueleto de tipos | ❌ | ❌ |
-| TikTok | ✅ | ⏳ esqueleto de tipos | ❌ | ❌ |
-| Meta Ads | ✅ | ⏳ esqueleto de tipos | ❌ | ❌ |
-| Google Analytics | ❌ | ⏳ esqueleto de tipos | ❌ | ❌ |
-| Manual | ❌ | ⏳ esqueleto de tipos | ❌ | ❌ |
+| Plataforma | `columns.ts` | Detector | Adapter (parser + normalizer) | Preview | Persistência |
+|---|---|---|---|---|---|
+| YouTube | ✅ (en/pt/es) | ✅ canônico | ✅ | ✅ | ✅ |
+| Instagram | ✅ esqueleto | ✅ keyword (legado) | ⏳ tipos | ❌ | ❌ |
+| TikTok | ✅ esqueleto | ✅ keyword (legado) | ⏳ tipos | ❌ | ❌ |
+| Meta Ads | ✅ esqueleto | ✅ keyword (legado) | ⏳ tipos | ❌ | ❌ |
+| Google Analytics | ✅ esqueleto | ❌ | ⏳ tipos | ❌ | ❌ |
+| Manual | ❌ | ❌ | ⏳ tipos | ❌ | ❌ |
+
+"Detector canônico" = `createCanonicalColumnDetector` + schema compartilhado.
+"Keyword (legado)" = pontuação por substrings; deve migrar para o padrão
+canônico na sprint do adapter respectivo.
 
 Ordem de implementação definida em `AGENTS.md`: YouTube primeiro, depois
 Instagram, TikTok, Meta Ads e Google Analytics.
@@ -323,23 +412,35 @@ Instagram, TikTok, Meta Ads e Google Analytics.
 
 ## Como adicionar uma nova plataforma (quando chegar a vez)
 
-1. Detector de sinais em `detection/platformDetectors.ts` (nome de arquivo,
-   cabeçalhos, conteúdo) — se ainda não existir.
-2. Fixtures de exemplo em `test-data/<plataforma>/`.
-3. Parser + normalizer em `platforms/<plataforma>/parser.ts`, implementando
-   `PlatformParserContract` e `ImportNormalizer` — só dessa plataforma, sem
-   tocar nas demais.
-4. Função de resumo (`preview.ts`) específica da plataforma, se a UI precisar
-   exibir métricas amigáveis antes de persistir.
-5. Registrar a plataforma em `previewImportFile`
-   (`lib/intelligence/imports/preview.ts`) para o dispatcher passar a chamar
-   o novo adapter em vez de retornar `unsupported`.
-6. `persistence.ts` implementando `ImportPersistence` — mapeia o payload
-   normalizado da plataforma para Content/Metric, reusando as funções
-   agnósticas de `intelligenceDatasetService.ts` (encontrar/criar Dataset,
-   criar Import, upsert Content, inserir Metrics). Ver
-   `platforms/youtube/persistence.ts` como referência.
-7. Testes cobrindo detecção, parser/normalizer, preview e persistence.
+Siga o padrão de **colunas canônicas** (seção acima). O YouTube é a
+referência completa; Instagram/TikTok/Meta Ads/GA já têm `columns.ts`
+esqueleto.
+
+1. **`platforms/<plataforma>/columns.ts`** — complete o
+   `CanonicalColumnSchema` (aliases por idioma, `required`, `optional`).
+   Este é o único mapa de cabeçalhos da plataforma.
+2. **Detector** em `detection/platformDetectors.ts`:
+   `createCanonicalColumnDetector({ platform, schema, brandHints })`
+   apontando para o schema do passo 1 — nunca uma lista de strings
+   paralela.
+3. **Fixtures** em `test-data/<plataforma>/` (pelo menos um CSV no idioma
+   principal da conta; idealmente também um em outro idioma).
+4. **Parser + normalizer** em `platforms/<plataforma>/parser.ts` —
+   resolva índices com `matchColumns(schema, headers)` e leia células com
+   `getColumnValue`. Ignore colunas desconhecidas e linhas agregadas
+   (sem identidade). Implemente `PlatformParserContract` +
+   `ImportNormalizer` só dessa plataforma.
+5. **Preview** (`preview.ts`) específico, se a UI precisar de resumo
+   amigável antes de persistir.
+6. Registrar em `previewImportFile` (`imports/preview.ts`) para o
+   dispatcher chamar o novo adapter em vez de retornar `unsupported`.
+7. **`persistence.ts`** implementando `ImportPersistence` — mapeia o
+   payload normalizado para Content/Metric, reusando
+   `intelligenceDatasetService.ts`. Ver `platforms/youtube/persistence.ts`.
+8. **Testes** cobrindo: CSV em inglês e em outro idioma, ordem diferente
+   das colunas, colunas extras, linha agregada (quando existir), ausência
+   de coluna obrigatória, aliases misturados, detector usando o mesmo
+   schema.
 
 ---
 

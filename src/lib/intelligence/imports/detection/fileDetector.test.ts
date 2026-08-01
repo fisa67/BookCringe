@@ -53,6 +53,31 @@ describe("IntelligenceFileDetector", () => {
     });
   });
 
+  it("detecta relatório do YouTube em português, mesmo sem 'youtube' no nome do arquivo (i18n)", async () => {
+    const relativePath = "youtube/youtube-studio-table-data-pt.csv";
+    const content = readFixture(relativePath);
+
+    const result = await detector.detect({
+      file: {
+        // Nome real que o YouTube Studio usa ao exportar — sem nenhuma
+        // palavra que aponte para a plataforma, de propósito, para provar
+        // que o sinal vem só dos cabeçalhos em português, não do nome.
+        id: "table-data.csv",
+        name: "Table data.csv",
+        size: statSync(fixtureUrl(relativePath)).size,
+        extension: "csv",
+        format: "unknown",
+        mimeType: "text/csv",
+      },
+      contentSample: content,
+    });
+
+    expect(result.platform).toBe("youtube");
+    expect(result.format).toBe("csv");
+    expect(result.issues).toEqual([]);
+    expect(result.confidence).toBeGreaterThanOrEqual(0.8);
+  });
+
   it("detecta relatório do Instagram por cabeçalhos de Reels e alcance", async () => {
     const relativePath = "instagram/instagram-reels-insights.csv";
     const content = readFixture(relativePath);

@@ -7,6 +7,9 @@ export type {
   PlatformParser,
 } from "@/lib/intelligence/imports/contracts";
 
+export type { CanonicalColumnSchema, ColumnMatch } from "@/lib/intelligence/imports/columns";
+export { getColumnValue, matchColumns } from "@/lib/intelligence/imports/columns";
+
 export {
   IntelligenceFileDetector,
   intelligenceFileDetector,

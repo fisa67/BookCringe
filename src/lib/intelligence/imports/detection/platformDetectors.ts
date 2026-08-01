@@ -1,7 +1,6 @@
 import type {
   DetectionResult,
   ImportDetectionInput,
-  ImportFileFormat,
   ImportPlatform,
 } from "@/lib/intelligence/imports/types";
 import {
@@ -11,18 +10,11 @@ import {
   inferFileFormat,
   normalizeDetectionText,
 } from "@/lib/intelligence/imports/detection/utils";
+import { createCanonicalColumnDetector } from "@/lib/intelligence/imports/detection/canonicalColumnDetector";
+import { YOUTUBE_COLUMN_SCHEMA } from "@/lib/intelligence/imports/platforms/youtube/columns";
+import type { PlatformDetectionScore, PlatformFileDetector } from "@/lib/intelligence/imports/detection/types";
 
-export interface PlatformDetectionScore {
-  platform: ImportPlatform;
-  format: ImportFileFormat;
-  confidence: number;
-  reasons: string[];
-}
-
-export interface PlatformFileDetector {
-  readonly platform: ImportPlatform;
-  score(input: ImportDetectionInput): PlatformDetectionScore;
-}
+export type { PlatformDetectionScore, PlatformFileDetector } from "@/lib/intelligence/imports/detection/types";
 
 interface PlatformDetectorConfig {
   platform: ImportPlatform;
@@ -82,11 +74,24 @@ function createPlatformDetector(config: PlatformDetectorConfig): PlatformFileDet
   };
 }
 
-export const youtubeDetector = createPlatformDetector({
+/**
+ * Detector do YouTube — padrão oficial de detecção do Intelligence
+ * (`createCanonicalColumnDetector`, ver `docs/intelligence/IMPORTS.md`).
+ * Consome o MESMO schema (`YOUTUBE_COLUMN_SCHEMA`) que
+ * `platforms/youtube/parser.ts` usa para resolver as colunas de verdade —
+ * detector e parser nunca podem divergir sobre o que é uma coluna do
+ * YouTube. Suportar um idioma novo é só acrescentar um alias em
+ * `platforms/youtube/columns.ts`; nenhuma linha deste arquivo muda.
+ *
+ * Instagram/TikTok/Meta Ads ainda usam o detector genérico por
+ * palavras-chave (`createPlatformDetector`) porque ainda não têm parser
+ * nem `columns.ts` próprios (ver sprint atual em `AGENTS.md`) — quando a
+ * vez de cada um chegar, o padrão a seguir é o do YouTube, não este.
+ */
+export const youtubeDetector: PlatformFileDetector = createCanonicalColumnDetector({
   platform: "youtube",
-  fileNameHints: ["youtube", "yt", "studio", "channel"],
-  headerHints: ["watch time (hours)", "impressions", "subscribers"],
-  contentHints: ["youtube", "youtube studio", "channel", "watch time (hours)"],
+  schema: YOUTUBE_COLUMN_SCHEMA,
+  brandHints: ["youtube", "yt", "studio", "channel"],
 });
 
 export const instagramDetector = createPlatformDetector({

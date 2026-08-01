@@ -8,6 +8,11 @@ import type {
 } from "@/lib/intelligence/imports/types";
 import type { ImporterDefinition } from "@/lib/intelligence/imports/contracts";
 import type { PlatformParserContract } from "@/lib/intelligence/imports/platforms/shared";
+import { getColumnValue, matchColumns, type ColumnMatch } from "@/lib/intelligence/imports/columns";
+import {
+  YOUTUBE_COLUMN_SCHEMA,
+  type YouTubeCanonicalColumn,
+} from "@/lib/intelligence/imports/platforms/youtube/columns";
 
 export interface YouTubeStudioSourceRecord {
   videoTitle: string;
@@ -38,15 +43,6 @@ export interface YouTubeStudioMetricPayload extends Record<string, unknown> {
 }
 
 export type YouTubeNormalizedRecord = NormalizedImportRecord<"youtube", YouTubeStudioMetricPayload>;
-
-const REQUIRED_HEADERS = [
-  "Video title",
-  "Video publish time",
-  "Views",
-  "Watch time (hours)",
-  "Impressions",
-  "Subscribers",
-] as const;
 
 function parseCsvLine(line: string): string[] {
   const values: string[] = [];
@@ -90,24 +86,16 @@ function parseNumber(value: string): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function getRequiredHeaderIndexes(headers: string[]): Map<(typeof REQUIRED_HEADERS)[number], number> | null {
-  const indexes = new Map<(typeof REQUIRED_HEADERS)[number], number>();
-
-  for (const header of REQUIRED_HEADERS) {
-    const index = headers.findIndex((value) => value === header);
-    if (index === -1) return null;
-    indexes.set(header, index);
-  }
-
-  return indexes;
-}
-
-function getValue(
-  row: string[],
-  indexes: Map<(typeof REQUIRED_HEADERS)[number], number>,
-  header: (typeof REQUIRED_HEADERS)[number]
-): string {
-  return row[indexes.get(header) ?? -1] ?? "";
+/**
+ * Métricas são colunas opcionais do schema (`YOUTUBE_COLUMN_SCHEMA`):
+ * coluna ausente do export ou célula vazia/inválida sempre resulta em 0,
+ * nunca invalida a linha — só `videoTitle`/`videoPublishTime` ausentes
+ * fazem isso (ver a validação de identidade dentro de `parse` abaixo).
+ */
+function getMetric(row: readonly string[], match: ColumnMatch<YouTubeCanonicalColumn>, column: YouTubeCanonicalColumn): number {
+  const value = getColumnValue(row, match, column);
+  if (value === undefined) return 0;
+  return parseNumber(value) ?? 0;
 }
 
 export const youtubeStudioParser: YouTubeParser = {
@@ -154,15 +142,15 @@ export const youtubeStudioParser: YouTubeParser = {
       };
     }
 
-    const indexes = getRequiredHeaderIndexes(headers);
-    if (!indexes) {
+    const match = matchColumns(YOUTUBE_COLUMN_SCHEMA, headers);
+    if (match.missingRequired.length > 0) {
       return {
         records: [],
         issues: [
           {
             stage: "parse",
             code: "youtube-missing-headers",
-            message: "O relatório do YouTube Studio não possui todos os cabeçalhos esperados.",
+            message: `O relatório do YouTube Studio não possui as colunas obrigatórias: ${match.missingRequired.join(", ")}.`,
           },
         ],
       };
@@ -171,18 +159,21 @@ export const youtubeStudioParser: YouTubeParser = {
     const issues: ParseResult<YouTubeParsedRecord>["issues"] = [];
     const records = dataRows.flatMap((row, index) => {
       const rowNumber = index + 2;
-      const views = parseNumber(getValue(row, indexes, "Views"));
-      const watchTimeHours = parseNumber(getValue(row, indexes, "Watch time (hours)"));
-      const impressions = parseNumber(getValue(row, indexes, "Impressions"));
-      const subscribers = parseNumber(getValue(row, indexes, "Subscribers"));
-      const videoTitle = getValue(row, indexes, "Video title");
-      const videoPublishTime = getValue(row, indexes, "Video publish time");
+      const videoTitle = getColumnValue(row, match, "videoTitle") ?? "";
+      const videoPublishTime = getColumnValue(row, match, "videoPublishTime") ?? "";
 
-      if (!videoTitle || !videoPublishTime || views === null || watchTimeHours === null || impressions === null || subscribers === null) {
+      if (!videoTitle && !videoPublishTime) {
+        // Linha agregada (ex.: "Total" do Table data.csv) — sem
+        // identidade de vídeo, é esperada e ignorada silenciosamente,
+        // não é um erro de parse.
+        return [];
+      }
+
+      if (!videoTitle || !videoPublishTime) {
         issues.push({
           stage: "parse",
           code: "youtube-invalid-row",
-          message: "Linha ignorada por conter campos obrigatórios ausentes ou inválidos.",
+          message: "Linha ignorada por não ter título e horário de publicação do vídeo.",
           row: rowNumber,
         });
         return [];
@@ -196,10 +187,10 @@ export const youtubeStudioParser: YouTubeParser = {
           sourceRecord: {
             videoTitle,
             videoPublishTime,
-            views,
-            watchTimeHours,
-            impressions,
-            subscribers,
+            views: getMetric(row, match, "views"),
+            watchTimeHours: getMetric(row, match, "watchTimeHours"),
+            impressions: getMetric(row, match, "impressions"),
+            subscribers: getMetric(row, match, "subscribers"),
           },
         },
       ];

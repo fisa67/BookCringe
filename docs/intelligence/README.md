@@ -27,7 +27,7 @@ Seu objetivo é ajudar o criador de conteúdo a tomar melhores decisões.
 **Domínio e funcionalidades**
 
 - [`DATA_MODEL.md`](DATA_MODEL.md) — modelo canônico (`Platform`, `Dataset`, `Import`, `Content`, `Metric`, `Insight`)
-- [`IMPORTS.md`](IMPORTS.md) — pipeline de importações, estrutura de código, persistência e estado por plataforma
+- [`IMPORTS.md`](IMPORTS.md) — pipeline de importações, padrão de colunas canônicas (i18n), persistência e estado por plataforma
 - [`DATASETS.md`](DATASETS.md) — ciclo de vida, versionamento e telas do Dataset
 - [`DASHBOARD.md`](DASHBOARD.md) — arquitetura e conteúdo do Dashboard
 - [`MATCHING.md`](MATCHING.md) — matching assistido Content ↔ Livro

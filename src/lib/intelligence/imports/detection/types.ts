@@ -1,0 +1,20 @@
+import type { ImportDetectionInput, ImportFileFormat, ImportPlatform } from "@/lib/intelligence/imports/types";
+
+/**
+ * Tipos compartilhados entre `platformDetectors.ts` (registro de todos os
+ * detectores) e `canonicalColumnDetector.ts` (fábrica baseada em colunas
+ * canônicas) — isolados num arquivo próprio, sem lógica, para os dois
+ * poderem se importar sem criar um ciclo.
+ */
+
+export interface PlatformDetectionScore {
+  platform: ImportPlatform;
+  format: ImportFileFormat;
+  confidence: number;
+  reasons: string[];
+}
+
+export interface PlatformFileDetector {
+  readonly platform: ImportPlatform;
+  score(input: ImportDetectionInput): PlatformDetectionScore;
+}

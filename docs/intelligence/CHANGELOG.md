@@ -1,3 +1,25 @@
+# v0.4.1
+
+Padrão oficial de **colunas canônicas** para todos os importadores do
+Intelligence — detector e parser compartilham a mesma fonte de verdade,
+independente do idioma da conta da plataforma.
+
+## Added
+
+- `imports/columns.ts` — `CanonicalColumnSchema`, `matchColumns`, `getColumnValue`
+- `detection/canonicalColumnDetector.ts` — factory de detecção por colunas canônicas
+- `platforms/youtube/columns.ts` com aliases en/pt/es; parser e detector do YouTube migrados
+- Esqueletos `columns.ts` para Instagram, TikTok, Meta Ads e Google Analytics
+- Fixtures pt-BR do YouTube Studio (`youtube-studio-report-pt.csv`, `youtube-studio-table-data-pt.csv`)
+
+## Changed
+
+- Detection Preview do YouTube reconhece exports em português (ex.: `Table data.csv`)
+- Parser do YouTube ignora linha agregada `Total` e colunas extras; métricas opcionais ausentes viram 0
+- Documentação em `IMPORTS.md` atualizada com o guia do padrão canônico
+
+---
+
 # v0.4.0
 
 Épico Workspace — Decisions viram ações clicáveis, transformando o
