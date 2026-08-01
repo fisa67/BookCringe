@@ -58,7 +58,17 @@ export const GENERAL_CONTENT_CATEGORIES = CONTENT_CATEGORIES.filter((category) =
  */
 export const CONTENT_ASSOCIATION_TYPES = ["book", "general"] as const;
 
+/**
+ * Trata tanto string vazia (`<input>` presente mas em branco) quanto `null`
+ * (campo ausente do FormData — `FormData.get` de um nome que não existe no
+ * DOM, ex.: `book_id` quando "Conteúdo geral" está selecionado) como "não
+ * informado". Sem o segundo caso, `z.string().optional()` rejeita `null`
+ * explicitamente ("Expected string, received null"), quebrando a validação
+ * de qualquer campo que só existe condicionalmente no formulário
+ * (`ContentAssociationFields`).
+ */
 function emptyToUndefined(value: unknown) {
+  if (value === null) return undefined;
   return typeof value === "string" && value.trim() === "" ? undefined : value;
 }
 
@@ -118,6 +128,11 @@ export const contentFormSchema = z
     ...data,
     book_id: data.association_type === "book" ? data.book_id ?? null : null,
     content_category: data.association_type === "book" ? ("book" as const) : data.content_category!,
+    // Conteúdo sobre um livro não tem mais campo de título manual (a Biblioteca
+    // já é a fonte do título exibido publicamente, via `content.book?.title`) —
+    // qualquer valor vindo do form nesse fluxo é ignorado. "Conteúdo geral"
+    // continua livre para digitar um título, pois não tem livro para derivar.
+    title: data.association_type === "book" ? undefined : data.title,
   }));
 
 export type ContentFormInput = z.infer<typeof contentFormSchema>;

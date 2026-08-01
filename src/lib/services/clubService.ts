@@ -94,6 +94,67 @@ export async function getBookClubMonthById(id: string): Promise<CmsBookClubMonth
   return data;
 }
 
+export interface BookClubAppearance {
+  yearId: string;
+  monthId: string;
+  /** Ano do calendário do clube (`bookclub_years.year`), não o ano de criação da linha. */
+  year: number;
+  /** 1-12 — usar `getMonthLabel` (`src/lib/admin/bookclubLabels.ts`) para exibir. */
+  month: number;
+  yearTitle?: string;
+  /** `bookclub_month_books.created_at` — quando o livro foi selecionado para o mês, usado na Timeline. */
+  createdAt: string;
+}
+
+/**
+ * Meses do Clube em que `bookId` aparece — base da seção "Participações"
+ * (`bookParticipationsAdapter`) e da Timeline (`bookTimelineAdapter`) em
+ * `/admin/books/[id]/edit`. Mesma técnica de embed do PostgREST usada em
+ * `promotionalCampaignService.getCampaignsContainingBook` (o tipo
+ * `Database` não declara relações, mas as FKs existem no Postgres).
+ */
+export async function getBookClubAppearancesForBook(bookId: string): Promise<BookClubAppearance[] | null> {
+  const { data, error } = await supabaseAdminClient
+    .from(MONTH_BOOKS_TABLE)
+    .select("month_id, created_at, bookclub_months(id, month, year_id, bookclub_years(id, year, title))")
+    .eq("book_id", bookId);
+
+  if (error) {
+    console.error("[clubService] getBookClubAppearancesForBook error", error);
+    return null;
+  }
+
+  type Row = {
+    month_id: string;
+    created_at: string;
+    bookclub_months: {
+      id: string;
+      month: number;
+      year_id: string;
+      bookclub_years: { id: string; year: number; title?: string } | null;
+    } | null;
+  };
+
+  const rows = data as unknown as Row[];
+
+  return rows.flatMap((row) => {
+    const month = row.bookclub_months;
+    const year = month?.bookclub_years;
+    if (!month || !year) return [];
+
+    return [
+      {
+        yearId: year.id,
+        monthId: row.month_id,
+        year: year.year,
+        month: month.month,
+        yearTitle: year.title,
+        createdAt: row.created_at,
+      },
+    ];
+  });
+}
+
 export async function getBookClubMonthBooks(monthId: string): Promise<CmsBookClubMonthBookRecord[] | null> {
   const { data, error } = await supabaseAdminClient
     .from(MONTH_BOOKS_TABLE)

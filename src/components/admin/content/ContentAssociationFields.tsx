@@ -12,6 +12,8 @@ type AssociationType = (typeof CONTENT_ASSOCIATION_TYPES)[number];
 interface ContentAssociationFieldsProps {
   books: CmsBookRecord[];
   content?: CmsContentRecord;
+  /** Pré-seleciona o livro ao abrir a partir de "Ações rápidas"/"Criar conteúdo" da Biblioteca. */
+  defaultBookId?: string;
 }
 
 /**
@@ -25,7 +27,7 @@ interface ContentAssociationFieldsProps {
  * módulo Conteúdo exigia sempre um livro, então cadastrar sem nenhum livro
  * ainda na Biblioteca não fazia sentido; agora isso deixou de ser verdade.
  */
-export function ContentAssociationFields({ books, content }: ContentAssociationFieldsProps) {
+export function ContentAssociationFields({ books, content, defaultBookId }: ContentAssociationFieldsProps) {
   const hasBooks = books.length > 0;
   const initialAssociationType: AssociationType = content ? (content.book_id ? "book" : "general") : "book";
   const [associationType, setAssociationType] = useState<AssociationType>(
@@ -85,7 +87,7 @@ export function ContentAssociationFields({ books, content }: ContentAssociationF
             id="book_id"
             name="book_id"
             required
-            defaultValue={content?.book_id ?? ""}
+            defaultValue={content?.book_id ?? defaultBookId ?? ""}
             className={adminInputClass}
           >
             <option value="">Selecione um livro...</option>
@@ -97,29 +99,49 @@ export function ContentAssociationFields({ books, content }: ContentAssociationF
           </select>
         </div>
       ) : (
-        <div className="space-y-2">
-          <label htmlFor="content_category" className={adminLabelClass}>
-            Categoria *
-          </label>
-          <select
-            id="content_category"
-            name="content_category"
-            required
-            defaultValue={
-              content?.content_category && content.content_category !== "book" ? content.content_category : ""
-            }
-            className={adminInputClass}
-          >
-            <option value="" disabled>
-              Selecione...
-            </option>
-            {GENERAL_CONTENT_CATEGORIES.map((category) => (
-              <option key={category} value={category}>
-                {CONTENT_CATEGORY_LABELS[category]}
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label htmlFor="content_category" className={adminLabelClass}>
+              Categoria *
+            </label>
+            <select
+              id="content_category"
+              name="content_category"
+              required
+              defaultValue={
+                content?.content_category && content.content_category !== "book" ? content.content_category : ""
+              }
+              className={adminInputClass}
+            >
+              <option value="" disabled>
+                Selecione...
               </option>
-            ))}
-          </select>
-          <p className="text-xs text-slate-500">Conteúdo geral não fica vinculado a nenhum livro.</p>
+              {GENERAL_CONTENT_CATEGORIES.map((category) => (
+                <option key={category} value={category}>
+                  {CONTENT_CATEGORY_LABELS[category]}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-slate-500">Conteúdo geral não fica vinculado a nenhum livro.</p>
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="title" className={adminLabelClass}>
+              Título
+            </label>
+            <input
+              id="title"
+              name="title"
+              type="text"
+              maxLength={200}
+              placeholder='Ex.: "Como criar o hábito da leitura"'
+              defaultValue={content?.title}
+              className={adminInputClass}
+            />
+            <p className="text-xs text-slate-500">
+              Sem livro para derivar um título, conteúdo geral precisa do seu próprio.
+            </p>
+          </div>
         </div>
       )}
     </div>

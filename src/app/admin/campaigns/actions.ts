@@ -14,6 +14,7 @@ import {
   updatePromotionalCampaign,
   updatePromotionalCampaignItem,
 } from "@/lib/services/promotionalCampaignService";
+import { getBookById } from "@/lib/services/bookService";
 import {
   promotionalCampaignFormDataToInput,
   promotionalCampaignFormSchema,
@@ -30,6 +31,24 @@ function revalidateCampaignPaths(campaignId?: string) {
   revalidatePath("/admin/campaigns");
   revalidatePath("/ofertas");
   if (campaignId) revalidatePath(`/admin/campaigns/${campaignId}`);
+}
+
+/**
+ * Quando um item vinculado a um livro entra/sai/muda numa campanha, tanto a
+ * seção "Participações" (`/admin/books/[id]/edit`) quanto os badges "📍
+ * Campanha" da página pública do livro (`/livro/[slug]`) ficam
+ * desatualizados até a próxima revalidação — antecipamos isso aqui, mesmo
+ * padrão de `markAsRecommendationOfMonthAction`.
+ */
+async function revalidateBookPaths(bookId: string | null) {
+  if (!bookId) return;
+
+  revalidatePath(`/admin/books/${bookId}/edit`);
+
+  const book = await getBookById(bookId);
+  if (book?.slug) {
+    revalidatePath(`/livro/${book.slug}`);
+  }
 }
 
 export async function createPromotionalCampaignAction(formData: FormData): Promise<void> {
@@ -154,9 +173,10 @@ export async function createPromotionalCampaignItemAction(
 
   const created = await createPromotionalCampaignItem({
     campaign_id: campaignId,
+    book_id: parsed.data.book_id,
     title: parsed.data.title,
     image_url: parsed.data.image_url,
-    description: parsed.data.description ?? null,
+    description: parsed.data.description,
     affiliate_url: parsed.data.affiliate_url,
     price: parsed.data.price ?? null,
     position,
@@ -171,6 +191,7 @@ export async function createPromotionalCampaignItemAction(
   }
 
   revalidateCampaignPaths(campaignId);
+  await revalidateBookPaths(parsed.data.book_id);
   redirect(`/admin/campaigns/${campaignId}`);
 }
 
@@ -189,11 +210,15 @@ export async function updatePromotionalCampaignItemAction(
     );
   }
 
+  const existingItems = await getPromotionalCampaignItems(campaignId);
+  const previousBookId = existingItems?.find((candidate) => candidate.id === itemId)?.book_id ?? null;
+
   const updated = await updatePromotionalCampaignItem(campaignId, {
     id: itemId,
+    book_id: parsed.data.book_id,
     title: parsed.data.title,
     image_url: parsed.data.image_url,
-    description: parsed.data.description ?? null,
+    description: parsed.data.description,
     affiliate_url: parsed.data.affiliate_url,
     price: parsed.data.price ?? null,
     ...(parsed.data.position === undefined ? {} : { position: parsed.data.position }),
@@ -208,6 +233,10 @@ export async function updatePromotionalCampaignItemAction(
   }
 
   revalidateCampaignPaths(campaignId);
+  await revalidateBookPaths(previousBookId);
+  if (parsed.data.book_id !== previousBookId) {
+    await revalidateBookPaths(parsed.data.book_id);
+  }
   redirect(`/admin/campaigns/${campaignId}`);
 }
 
@@ -215,7 +244,11 @@ export async function deletePromotionalCampaignItemAction(
   campaignId: string,
   itemId: string
 ): Promise<void> {
+  const existingItems = await getPromotionalCampaignItems(campaignId);
+  const bookId = existingItems?.find((candidate) => candidate.id === itemId)?.book_id ?? null;
+
   await deletePromotionalCampaignItem(campaignId, itemId);
   revalidateCampaignPaths(campaignId);
+  await revalidateBookPaths(bookId);
   redirect(`/admin/campaigns/${campaignId}`);
 }

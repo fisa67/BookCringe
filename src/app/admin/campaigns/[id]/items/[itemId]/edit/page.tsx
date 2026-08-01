@@ -6,6 +6,7 @@ import {
   getPromotionalCampaignById,
   getPromotionalCampaignItems,
 } from "@/lib/services/promotionalCampaignService";
+import { getBooks } from "@/lib/services/bookService";
 
 export const metadata: Metadata = {
   title: "Editar item — Admin BookCringe",
@@ -21,9 +22,10 @@ export default async function EditCampaignItemPage({
   searchParams,
 }: EditCampaignItemPageProps) {
   const [{ id, itemId }, { error }] = await Promise.all([params, searchParams]);
-  const [campaign, items] = await Promise.all([
+  const [campaign, items, books] = await Promise.all([
     getPromotionalCampaignById(id),
     getPromotionalCampaignItems(id),
+    getBooks(),
   ]);
   const item = items?.find((candidate) => candidate.id === itemId);
 
@@ -39,6 +41,7 @@ export default async function EditCampaignItemPage({
       <div className="rounded-3xl border border-slate-800 bg-slate-950/80 p-6">
         <PromotionalCampaignItemForm
           action={updatePromotionalCampaignItemAction.bind(null, campaign.id, item.id)}
+          books={books ?? []}
           item={item}
           cancelHref={`/admin/campaigns/${campaign.id}`}
           errorMessage={error}

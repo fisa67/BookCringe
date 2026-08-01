@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { CmsBookRecord, CmsContentRecord } from "@/lib/types/cms";
+import type { CmsBookRecord, CmsContentPlatform, CmsContentRecord, CmsContentType } from "@/lib/types/cms";
 import { adminInputClass, adminLabelClass } from "@/components/admin/formStyles";
 import { CONTENT_PLATFORMS, CONTENT_TYPES } from "@/lib/validations/content";
 import { CONTENT_TYPE_LABELS, PLATFORM_LABELS } from "@/lib/admin/contentLabels";
@@ -12,6 +12,10 @@ interface ContentFormProps {
   cancelHref: string;
   submitLabel: string;
   errorMessage?: string;
+  /** Pré-preenchimento vindo de "Ações rápidas"/"Criar conteúdo" (Biblioteca) — ignorado ao editar um conteúdo existente. */
+  defaultBookId?: string;
+  defaultPlatform?: CmsContentPlatform;
+  defaultContentType?: CmsContentType;
 }
 
 /**
@@ -31,6 +35,9 @@ export function ContentForm({
   cancelHref,
   submitLabel,
   errorMessage,
+  defaultBookId,
+  defaultPlatform,
+  defaultContentType,
 }: ContentFormProps) {
   return (
     <form action={action} className="space-y-6">
@@ -44,25 +51,7 @@ export function ContentForm({
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2">
-          <ContentAssociationFields books={books} content={content} />
-
-          <div className="space-y-2 sm:col-span-2">
-            <label htmlFor="title" className={adminLabelClass}>
-              Título
-            </label>
-            <input
-              id="title"
-              name="title"
-              type="text"
-              maxLength={200}
-              placeholder='Ex.: "Reel de recomendação", "Carrossel de frases"'
-              defaultValue={content?.title}
-              className={adminInputClass}
-            />
-            <p className="text-xs text-slate-500">
-              Opcional — se vazio, os cards públicos usam o título do livro.
-            </p>
-          </div>
+          <ContentAssociationFields books={books} content={content} defaultBookId={defaultBookId} />
 
           <div className="space-y-2">
             <label htmlFor="platform" className={adminLabelClass}>
@@ -72,7 +61,7 @@ export function ContentForm({
               id="platform"
               name="platform"
               required
-              defaultValue={content?.platform ?? ""}
+              defaultValue={content?.platform ?? defaultPlatform ?? ""}
               className={adminInputClass}
             >
               <option value="" disabled>
@@ -94,7 +83,7 @@ export function ContentForm({
               id="content_type"
               name="content_type"
               required
-              defaultValue={content?.content_type ?? ""}
+              defaultValue={content?.content_type ?? defaultContentType ?? ""}
               className={adminInputClass}
             >
               <option value="" disabled>

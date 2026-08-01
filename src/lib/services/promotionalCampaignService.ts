@@ -67,6 +67,114 @@ export async function getPromotionalCampaignItems(
   return data;
 }
 
+export type CampaignSummary = Pick<CmsPromotionalCampaignRecord, "id" | "name" | "slug">;
+
+/**
+ * Campanhas onde `bookId` aparece como item vinculado (`book_id`) — base da
+ * seção "Participações" da Biblioteca (`bookParticipationsAdapter`) e da
+ * futura lista "📍 Campanhas" em `/livro/[slug]`. Usa o embed do
+ * PostgREST (`promotional_campaigns(...)`) via a FK `campaign_id` — mesma
+ * técnica de `getFinishedReadingsWithBooks`/`getRecommendationHistory`
+ * (o tipo `Database` não declara relações, mas a FK existe no Postgres).
+ */
+export async function getCampaignsContainingBook(bookId: string): Promise<CampaignSummary[] | null> {
+  const { data, error } = await supabaseAdminClient
+    .from(ITEMS_TABLE)
+    .select("promotional_campaigns(id, name, slug)")
+    .eq("book_id", bookId);
+
+  if (error) {
+    console.error("[promotionalCampaignService] getCampaignsContainingBook error", error);
+    return null;
+  }
+
+  const rows = data as unknown as Array<{ promotional_campaigns: CampaignSummary | null }>;
+  const campaignsById = new Map<string, CampaignSummary>();
+  for (const row of rows) {
+    if (row.promotional_campaigns) {
+      campaignsById.set(row.promotional_campaigns.id, row.promotional_campaigns);
+    }
+  }
+
+  return Array.from(campaignsById.values());
+}
+
+/**
+ * Mesmo relacionamento de `getCampaignsContainingBook`, mas filtrado para o
+ * que a página pública `/livro/[slug]` pode mostrar: só campanhas
+ * publicadas (`is_active`) e onde o item do livro também está ativo.
+ * Usa `!inner` para poder filtrar por uma coluna da tabela relacionada
+ * (`promotional_campaigns.is_active`) via PostgREST.
+ */
+export async function getActivePublicCampaignsForBook(bookId: string): Promise<CampaignSummary[] | null> {
+  const { data, error } = await supabaseAdminClient
+    .from(ITEMS_TABLE)
+    .select("promotional_campaigns!inner(id, name, slug, is_active)")
+    .eq("book_id", bookId)
+    .eq("is_active", true)
+    .eq("promotional_campaigns.is_active", true);
+
+  if (error) {
+    console.error("[promotionalCampaignService] getActivePublicCampaignsForBook error", error);
+    return null;
+  }
+
+  const rows = data as unknown as Array<{
+    promotional_campaigns: (CampaignSummary & { is_active: boolean }) | null;
+  }>;
+  const campaignsById = new Map<string, CampaignSummary>();
+  for (const row of rows) {
+    if (row.promotional_campaigns) {
+      const { id, name, slug } = row.promotional_campaigns;
+      campaignsById.set(id, { id, name, slug });
+    }
+  }
+
+  return Array.from(campaignsById.values());
+}
+
+export interface CampaignItemEvent {
+  campaignId: string;
+  campaignName: string;
+  /** `promotional_campaign_items.created_at` — quando o livro entrou nesta campanha, usado na Timeline. */
+  createdAt: string;
+}
+
+/**
+ * Um evento por item de campanha vinculado a `bookId` (sem dedupe por
+ * campanha, ao contrário de `getCampaignsContainingBook`) — base da
+ * Timeline (`bookTimelineAdapter`), que precisa da data em que cada
+ * vínculo foi criado. Mesmo embed do PostgREST das demais buscas
+ * "campanhas de um livro" desta tabela.
+ */
+export async function getCampaignItemEventsForBook(bookId: string): Promise<CampaignItemEvent[] | null> {
+  const { data, error } = await supabaseAdminClient
+    .from(ITEMS_TABLE)
+    .select("created_at, promotional_campaigns(id, name)")
+    .eq("book_id", bookId);
+
+  if (error) {
+    console.error("[promotionalCampaignService] getCampaignItemEventsForBook error", error);
+    return null;
+  }
+
+  const rows = data as unknown as Array<{
+    created_at: string;
+    promotional_campaigns: { id: string; name: string } | null;
+  }>;
+
+  return rows.flatMap((row) => {
+    if (!row.promotional_campaigns) return [];
+    return [
+      {
+        campaignId: row.promotional_campaigns.id,
+        campaignName: row.promotional_campaigns.name,
+        createdAt: row.created_at,
+      },
+    ];
+  });
+}
+
 export async function getActivePromotionalCampaign(): Promise<CmsPromotionalCampaignWithItems | null> {
   const { data, error } = await supabaseAdminClient
     .from(CAMPAIGNS_TABLE)

@@ -11,7 +11,19 @@ export const metadata: Metadata = {
   title: "Campanhas promocionais — Admin BookCringe",
 };
 
-export default async function AdminCampaignsPage() {
+interface AdminCampaignsPageProps {
+  searchParams: Promise<{ bookId?: string }>;
+}
+
+/**
+ * `bookId` na querystring vem do atalho "Adicionar à campanha" (Ações
+ * rápidas / Participações, em `/admin/books/[id]/edit`) — como uma
+ * campanha pode ter vários itens, esta listagem é a etapa intermediária
+ * onde o admin escolhe em qual campanha o livro entra, antes de seguir
+ * para `items/new` já com o livro pré-selecionado.
+ */
+export default async function AdminCampaignsPage({ searchParams }: AdminCampaignsPageProps) {
+  const { bookId } = await searchParams;
   const campaigns = await getPromotionalCampaigns();
   const itemCounts = campaigns
     ? await Promise.all(
@@ -42,6 +54,12 @@ export default async function AdminCampaignsPage() {
           </Link>
         </div>
       </div>
+
+      {bookId ? (
+        <p className="rounded-3xl border border-sky-900/60 bg-sky-950/40 p-5 text-sm text-sky-200">
+          Escolha em qual campanha adicionar este livro.
+        </p>
+      ) : null}
 
       {campaigns === null ? (
         <p className="rounded-3xl border border-red-900/60 bg-red-950/40 p-6 text-sm text-red-300">
@@ -81,6 +99,14 @@ export default async function AdminCampaignsPage() {
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
+                {bookId ? (
+                  <Link
+                    href={`/admin/campaigns/${campaign.id}/items/new?bookId=${bookId}`}
+                    className="rounded-md border border-sky-800 bg-sky-950/60 px-3 py-1.5 text-xs font-medium text-sky-200 transition hover:border-sky-600 hover:text-white"
+                  >
+                    + Adicionar aqui
+                  </Link>
+                ) : null}
                 <Link
                   href={`/admin/campaigns/${campaign.id}`}
                   className="rounded-md border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-100 transition hover:border-slate-500 hover:text-white"

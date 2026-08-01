@@ -3,6 +3,10 @@ import { getBookBySlug } from "@/lib/services/bookService";
 import { getReadingByBook } from "@/lib/services/bookReadingService";
 import { getSettings } from "@/lib/services/settingsService";
 import { resolveAmazonPurchaseUrl } from "@/lib/services/affiliateService";
+import {
+  getActivePublicCampaignsForBook,
+  type CampaignSummary,
+} from "@/lib/services/promotionalCampaignService";
 import { getPublicContentsForBook, type PublicContentWithBook } from "@/lib/adapters/contentPublicAdapter";
 import { isVideoContentType } from "@/lib/content";
 
@@ -10,23 +14,25 @@ import { isVideoContentType } from "@/lib/content";
  * Adapter da página pública `/livro/[slug]` — primeira página de detalhe
  * de livro do site (antes só existiam listagens: Biblioteca, Recomendações,
  * Clube). Combina `books` + `book_readings` (nota/review/favorito) +
- * `contents` (conteúdos publicados) numa única chamada, reaproveitando os
- * services já existentes — nenhuma query nova.
+ * `contents` (conteúdos publicados) + campanhas ativas numa única chamada,
+ * reaproveitando os services já existentes — nenhuma query nova.
  */
 export interface PublicBookDetail extends DetailedBook {
   favorite: boolean;
   wouldRecommend: boolean;
   contents: PublicContentWithBook[];
+  campaigns: CampaignSummary[];
 }
 
 export async function getPublicBookDetail(slug: string): Promise<PublicBookDetail | null> {
   const book = await getBookBySlug(slug);
   if (!book) return null;
 
-  const [reading, settings, contents] = await Promise.all([
+  const [reading, settings, contents, campaigns] = await Promise.all([
     getReadingByBook(book.id),
     getSettings(),
     getPublicContentsForBook(book.id),
+    getActivePublicCampaignsForBook(book.id),
   ]);
 
   return {
@@ -50,5 +56,6 @@ export async function getPublicBookDetail(slug: string): Promise<PublicBookDetai
     contentCount: contents.length,
     hasVideoContent: contents.some((content) => isVideoContentType(content.content_type)),
     contents,
+    campaigns: campaigns ?? [],
   };
 }

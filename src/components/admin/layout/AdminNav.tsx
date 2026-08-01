@@ -26,6 +26,7 @@ const ADMIN_NAV_ITEMS = [
   { href: "/admin/newsletters", label: "Newsletters" },
   { href: "/admin/campaigns", label: "Campanhas" },
   { href: "/admin/store", label: "Store" },
+  { href: "/admin/intelligence", label: "Intelligence" },
 ] as const;
 
 function isNavItemActive(pathname: string, href: string): boolean {

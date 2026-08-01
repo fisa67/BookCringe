@@ -119,6 +119,29 @@ export async function syncRecommendationHistory({
   }
 }
 
+/**
+ * Histórico de recomendação de um único livro, mais recente primeiro — base
+ * da seção "Participações" (`bookParticipationsAdapter`) e da Timeline
+ * (`bookTimelineAdapter`) em `/admin/books/[id]/edit`. Mesma tabela de
+ * `getRecommendationHistory`, só filtrada por `book_id`.
+ */
+export async function getRecommendationHistoryForBook(
+  bookId: string
+): Promise<CmsMonthlyRecommendationRecord[] | null> {
+  const { data, error } = await supabaseAdminClient
+    .from(TABLE)
+    .select("*")
+    .eq("book_id", bookId)
+    .order("started_at", { ascending: false });
+
+  if (error) {
+    console.error("[monthlyRecommendationService] getRecommendationHistoryForBook error", error);
+    return null;
+  }
+
+  return data;
+}
+
 /** Recomendação ativa no momento (`ended_at is null`) — `null` se nenhuma. */
 export async function getActiveRecommendationHistoryEntry(): Promise<CmsMonthlyRecommendationRecord | null> {
   const { data, error } = await supabaseAdminClient

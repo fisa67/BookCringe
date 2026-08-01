@@ -311,13 +311,28 @@ export interface CmsPromotionalCampaignRecord {
   updated_at: string;
 }
 
+/**
+ * Item de campanha promocional (`20260730_promotional_campaigns.sql`,
+ * evoluído por `20260801_promotional_campaign_items_book_link.sql`). Duas
+ * fontes de dados possíveis, mutuamente exclusivas (ver constraint
+ * `promotional_campaign_items_source_check`):
+ *   - `book_id` presente ("vinculado ao CMS"): `title`/`image_url`/
+ *     `description`/`affiliate_url` são sempre `null` — os dados reais vêm
+ *     da Biblioteca via join (`resolveCampaignItem`, `src/lib/campaigns.ts`).
+ *   - `book_id` ausente ("manual"): os 4 campos acima são preenchidos à mão
+ *     (produtos que não existem na Biblioteca — Kindle, acessórios etc.).
+ *
+ * `price` não duplica nada da Biblioteca (livros não têm preço cadastrado)
+ * — é sempre um campo próprio da campanha, para os dois casos.
+ */
 export interface CmsPromotionalCampaignItemRecord {
   id: string;
   campaign_id: string;
-  title: string;
-  image_url: string;
+  book_id: string | null;
+  title: string | null;
+  image_url: string | null;
   description: string | null;
-  affiliate_url: string;
+  affiliate_url: string | null;
   price: number | null;
   position: number;
   is_active: boolean;

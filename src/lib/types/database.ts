@@ -19,6 +19,16 @@ import type {
   CmsStoreProductRecord,
   CmsStoreInterestRecord,
 } from "@/lib/types/cms";
+import type {
+  IntelligenceContentCreate,
+  IntelligenceContentRecord,
+  IntelligenceDatasetCreate,
+  IntelligenceDatasetRecord,
+  IntelligenceImportCreate,
+  IntelligenceImportRecord,
+  IntelligenceMetricCreate,
+  IntelligenceMetricRecord,
+} from "@/lib/types/intelligence";
 
 /**
  * Tipagem do schema do Supabase (formato compatível com @supabase/supabase-js).
@@ -129,6 +139,26 @@ export interface Database {
         CmsStoreInterestRecord,
         NewRow<CmsStoreInterestRecord>,
         Partial<CmsStoreInterestRecord>
+      >;
+      intelligence_datasets: TableShape<
+        IntelligenceDatasetRecord,
+        IntelligenceDatasetCreate,
+        Partial<IntelligenceDatasetRecord>
+      >;
+      intelligence_imports: TableShape<
+        IntelligenceImportRecord,
+        IntelligenceImportCreate,
+        Partial<IntelligenceImportRecord>
+      >;
+      intelligence_contents: TableShape<
+        IntelligenceContentRecord,
+        IntelligenceContentCreate,
+        Partial<IntelligenceContentRecord>
+      >;
+      intelligence_metrics: TableShape<
+        IntelligenceMetricRecord,
+        IntelligenceMetricCreate,
+        Partial<IntelligenceMetricRecord>
       >;
     };
     Views: { [_ in never]: never };

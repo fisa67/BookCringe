@@ -104,6 +104,18 @@ dois OAuth Apps — dev/prod) e do faseamento (1A → 1B → 2 → 3) está em
 > em duas camadas (`src/proxy.ts` + defesa em profundidade em
 > `src/app/admin/layout.tsx`), ambas reutilizando o mesmo `auth()` central.
 
+A visão de longo prazo do domínio editorial (Biblioteca como fonte única de
+verdade, princípios de referência vs. duplicação, entidades futuras como
+Autor/Editora/Coleção) está documentada em
+[docs/architecture.md](docs/architecture.md) — vale ler antes de modelar
+qualquer módulo novo.
+
+Dentro do admin, o módulo **Intelligence** (`/admin/intelligence`) centraliza
+métricas de todas as plataformas do BookCringe através de um pipeline de
+importação (Detection Preview → Adapter da Plataforma → dados normalizados).
+Documentação completa (produto, arquitetura, modelo de dados, decisões,
+sprints) em [docs/intelligence/](docs/intelligence/README.md).
+
 ---
 
 ## Identidade visual

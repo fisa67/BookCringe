@@ -11,7 +11,9 @@ import {
   getPromotionalCampaignById,
   getPromotionalCampaignItems,
 } from "@/lib/services/promotionalCampaignService";
+import { getBooks } from "@/lib/services/bookService";
 import { PROMOTIONAL_ITEM_TYPE_LABELS } from "@/lib/admin/promotionalCampaignLabels";
+import { resolveCampaignItem } from "@/lib/campaigns";
 
 export const metadata: Metadata = {
   title: "Campanha promocional — Admin BookCringe",
@@ -39,7 +41,15 @@ export default async function CampaignDetailPage({
 
   if (!campaign) notFound();
 
-  const items = await getPromotionalCampaignItems(campaign.id);
+  const [items, books] = await Promise.all([getPromotionalCampaignItems(campaign.id), getBooks()]);
+  const booksById = new Map((books ?? []).map((book) => [book.id, book]));
+  // `resolveCampaignItem` retorna null para itens vinculados a um livro
+  // removido da Biblioteca (órfãos) — mantemos o item bruto nesse caso para
+  // ainda assim mostrar um aviso e permitir excluir/reeditar o item.
+  const resolvedItems = (items ?? []).map((item) => ({
+    item,
+    resolved: resolveCampaignItem(item, booksById),
+  }));
 
   return (
     <div className="space-y-6">
@@ -132,20 +142,27 @@ export default async function CampaignDetailPage({
           </p>
         ) : (
           <ul className="mt-6 grid gap-4 md:grid-cols-2">
-            {items.map((item) => (
+            {resolvedItems.map(({ item, resolved }) => (
               <li
                 key={item.id}
                 className="flex min-w-0 gap-4 rounded-2xl border border-slate-800 bg-slate-900/70 p-4"
               >
                 <div className="h-24 w-20 shrink-0 overflow-hidden rounded-md bg-slate-950">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={item.image_url} alt="" className="h-full w-full object-cover" loading="lazy" />
+                  {resolved?.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={resolved.imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
+                  ) : null}
                 </div>
                 <div className="flex min-w-0 flex-1 flex-col">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-full border border-slate-700 bg-slate-950 px-2 py-0.5 text-xs text-slate-300">
                       {PROMOTIONAL_ITEM_TYPE_LABELS[item.item_type]}
                     </span>
+                    {resolved?.bookHref ? (
+                      <span className="rounded-full border border-sky-900/60 bg-sky-950/40 px-2 py-0.5 text-xs text-sky-300">
+                        📚 Vinculado à Biblioteca
+                      </span>
+                    ) : null}
                     <span
                       className={`rounded-full border px-2 py-0.5 text-xs ${
                         item.is_active
@@ -156,16 +173,33 @@ export default async function CampaignDetailPage({
                       {item.is_active ? "Ativo" : "Inativo"}
                     </span>
                   </div>
-                  <h3 className="mt-2 truncate font-semibold text-white" title={item.title}>
-                    {item.title}
-                  </h3>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Ordem {item.position}
-                    {formatPrice(item.price) ? ` · ${formatPrice(item.price)}` : ""}
-                  </p>
-                  {item.description ? (
-                    <p className="mt-2 line-clamp-2 text-sm text-slate-400">{item.description}</p>
-                  ) : null}
+                  {resolved ? (
+                    <>
+                      <h3 className="mt-2 truncate font-semibold text-white" title={resolved.title}>
+                        {resolved.title}
+                      </h3>
+                      <p className="mt-1 text-xs text-slate-500">
+                        Ordem {resolved.position}
+                        {formatPrice(resolved.price) ? ` · ${formatPrice(resolved.price)}` : ""}
+                      </p>
+                      {resolved.description ? (
+                        <p className="mt-2 line-clamp-2 text-sm text-slate-400">{resolved.description}</p>
+                      ) : null}
+                      {resolved.bookHref ? (
+                        <Link
+                          href={resolved.bookHref}
+                          target="_blank"
+                          className="mt-2 text-xs text-sky-400 underline hover:text-sky-300"
+                        >
+                          Ver página pública do livro
+                        </Link>
+                      ) : null}
+                    </>
+                  ) : (
+                    <p className="mt-2 rounded-md border border-red-900/60 bg-red-950/40 p-2 text-xs text-red-300">
+                      Livro vinculado não foi encontrado na Biblioteca (removido). Edite este item para corrigir.
+                    </p>
+                  )}
                   <div className="mt-auto flex flex-wrap gap-2 pt-3">
                     <Link
                       href={`/admin/campaigns/${campaign.id}/items/${item.id}/edit`}
@@ -175,7 +209,7 @@ export default async function CampaignDetailPage({
                     </Link>
                     <ConfirmSubmitButton
                       action={deletePromotionalCampaignItemAction.bind(null, campaign.id, item.id)}
-                      confirmMessage={`Remover "${item.title}" desta campanha?`}
+                      confirmMessage={`Remover "${resolved?.title ?? "este item"}" desta campanha?`}
                       label="Excluir"
                     />
                   </div>

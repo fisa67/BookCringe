@@ -166,3 +166,68 @@ export async function saveReadingAction(bookId: string, formData: FormData): Pro
   }
   redirect(`/admin/books/${bookId}/edit`);
 }
+
+/**
+ * Ação rápida do card "Ações rápidas" — marca `bookId` como "Recomendação
+ * do mês" em um clique, sem passar pelo formulário "Dados de leitura".
+ * Reaproveita exatamente o mesmo caminho de `saveReadingAction`
+ * (`clearRecommendationOfMonthExcept` → `saveReading` →
+ * `syncRecommendationHistory`), preservando nota/resenha/tempo de leitura
+ * já existentes.
+ *
+ * `readingFormSchema` exige Favorito ou Recomendaria marcado para permitir
+ * "Recomendação do mês" — como esta ação não passa pelo formulário, ativa
+ * "Recomendaria" automaticamente quando nenhum dos dois já está marcado,
+ * para o clique único sempre funcionar sem violar essa regra.
+ */
+export async function markAsRecommendationOfMonthAction(bookId: string): Promise<void> {
+  const [existingReading, book] = await Promise.all([getReadingByBook(bookId), getBookById(bookId)]);
+
+  if (existingReading?.is_recommendation_of_month) {
+    redirect(`/admin/books/${bookId}/edit`);
+  }
+
+  await clearRecommendationOfMonthExcept(bookId);
+
+  const alreadyQualifies = (existingReading?.favorite ?? false) || (existingReading?.would_recommend ?? false);
+
+  const saved = await saveReading({
+    book_id: bookId,
+    rating: existingReading?.rating,
+    review: existingReading?.review,
+    favorite: existingReading?.favorite ?? false,
+    would_recommend: alreadyQualifies ? existingReading?.would_recommend ?? false : true,
+    recommendation_reason: existingReading?.recommendation_reason,
+    is_recommendation_of_month: true,
+    reading_time_seconds: existingReading?.reading_time_seconds ?? undefined,
+    started_at: existingReading?.started_at,
+    finished_at: existingReading?.finished_at ?? new Date().toISOString().slice(0, 10),
+    status: existingReading?.status ?? "finished",
+    format: existingReading?.format ?? book?.format,
+    metadata: existingReading?.metadata ?? {},
+  });
+
+  if (!saved) {
+    redirect(
+      `/admin/books/${bookId}/edit?readingError=${encodeURIComponent("Não foi possível marcar como recomendação do mês.")}`
+    );
+  }
+
+  await syncRecommendationHistory({
+    bookReadingId: saved.id,
+    bookId,
+    wasActive: existingReading?.is_recommendation_of_month ?? false,
+    isActive: true,
+  });
+
+  revalidatePath("/admin/books");
+  revalidatePath(`/admin/books/${bookId}/edit`);
+  revalidatePath("/admin/recommendations");
+  revalidatePath("/estatisticas");
+  revalidatePath("/biblioteca");
+  revalidatePath("/recomendacoes");
+  if (book?.slug) {
+    revalidatePath(`/livro/${book.slug}`);
+  }
+  redirect(`/admin/books/${bookId}/edit`);
+}

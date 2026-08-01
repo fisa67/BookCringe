@@ -1,23 +1,34 @@
 import Link from "next/link";
-import type { CmsPromotionalCampaignItemRecord } from "@/lib/types/cms";
+import type { CmsBookRecord, CmsPromotionalCampaignItemRecord } from "@/lib/types/cms";
 import { adminInputClass, adminLabelClass } from "@/components/admin/formStyles";
-import {
-  PROMOTIONAL_ITEM_TYPE_LABELS,
-  PROMOTIONAL_ITEM_TYPE_VALUES,
-} from "@/lib/admin/promotionalCampaignLabels";
+import { CampaignItemSourceFields } from "@/components/admin/campaigns/CampaignItemSourceFields";
 
 interface PromotionalCampaignItemFormProps {
   action: (formData: FormData) => void | Promise<void>;
+  books: CmsBookRecord[];
   item?: CmsPromotionalCampaignItemRecord;
   cancelHref: string;
   errorMessage?: string;
+  /** Pré-seleciona o livro ao vir de "Ações rápidas"/"Adicionar à campanha" (Biblioteca). */
+  defaultBookId?: string;
 }
 
+/**
+ * Formulário de item de campanha (criar/editar). A escolha entre "livro da
+ * Biblioteca" e "produto manual" fica em `CampaignItemSourceFields` (ilha
+ * client, mesmo padrão de `ContentAssociationFields`) — `title`/`image_url`/
+ * `description`/`affiliate_url`/`item_type` só aparecem no fluxo manual;
+ * `price`, `position` e `is_active` são comuns aos dois, pois não duplicam
+ * nenhuma informação da Biblioteca (preço/ordem/ativo são sempre da
+ * campanha, nunca do livro).
+ */
 export function PromotionalCampaignItemForm({
   action,
+  books,
   item,
   cancelHref,
   errorMessage,
+  defaultBookId,
 }: PromotionalCampaignItemFormProps) {
   return (
     <form action={action} className="space-y-6">
@@ -31,68 +42,7 @@ export function PromotionalCampaignItemForm({
       ) : null}
 
       <div className="grid gap-5 sm:grid-cols-2">
-        <div className="space-y-2 sm:col-span-2">
-          <label htmlFor="title" className={adminLabelClass}>
-            Título *
-          </label>
-          <input
-            id="title"
-            name="title"
-            type="text"
-            required
-            maxLength={200}
-            defaultValue={item?.title ?? ""}
-            placeholder="Kindle Paperwhite"
-            className={adminInputClass}
-          />
-        </div>
-
-        <div className="space-y-2 sm:col-span-2">
-          <label htmlFor="image_url" className={adminLabelClass}>
-            Imagem *
-          </label>
-          <input
-            id="image_url"
-            name="image_url"
-            type="text"
-            required
-            maxLength={500}
-            defaultValue={item?.image_url ?? ""}
-            placeholder="https://... ou /images/produto.jpg"
-            className={adminInputClass}
-          />
-          <p className="text-xs text-slate-500">Informe uma URL pública ou um path local de imagem.</p>
-        </div>
-
-        <div className="space-y-2 sm:col-span-2">
-          <label htmlFor="description" className={adminLabelClass}>
-            Descrição curta
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            rows={4}
-            maxLength={2000}
-            defaultValue={item?.description ?? ""}
-            placeholder="Leve, compacto e ideal para ler em qualquer lugar."
-            className={adminInputClass}
-          />
-        </div>
-
-        <div className="space-y-2 sm:col-span-2">
-          <label htmlFor="affiliate_url" className={adminLabelClass}>
-            Link afiliado *
-          </label>
-          <input
-            id="affiliate_url"
-            name="affiliate_url"
-            type="url"
-            required
-            defaultValue={item?.affiliate_url ?? ""}
-            placeholder="https://www.amazon.com.br/..."
-            className={adminInputClass}
-          />
-        </div>
+        <CampaignItemSourceFields books={books} item={item} defaultBookId={defaultBookId} />
 
         <div className="space-y-2">
           <label htmlFor="price" className={adminLabelClass}>
@@ -124,25 +74,6 @@ export function PromotionalCampaignItemForm({
             placeholder="Adiciona ao final"
             className={adminInputClass}
           />
-        </div>
-
-        <div className="space-y-2">
-          <label htmlFor="item_type" className={adminLabelClass}>
-            Tipo *
-          </label>
-          <select
-            id="item_type"
-            name="item_type"
-            required
-            defaultValue={item?.item_type ?? "other"}
-            className={adminInputClass}
-          >
-            {PROMOTIONAL_ITEM_TYPE_VALUES.map((value) => (
-              <option key={value} value={value}>
-                {PROMOTIONAL_ITEM_TYPE_LABELS[value]}
-              </option>
-            ))}
-          </select>
         </div>
       </div>
 

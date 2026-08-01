@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { PromotionalCampaignItemForm } from "@/components/admin/campaigns/PromotionalCampaignItemForm";
 import { createPromotionalCampaignItemAction } from "@/app/admin/campaigns/actions";
 import { getPromotionalCampaignById } from "@/lib/services/promotionalCampaignService";
+import { getBooks } from "@/lib/services/bookService";
 
 export const metadata: Metadata = {
   title: "Novo item — Admin BookCringe",
@@ -10,15 +11,16 @@ export const metadata: Metadata = {
 
 interface NewCampaignItemPageProps {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string }>;
+  /** `bookId` chega do atalho "Adicionar à campanha" (Biblioteca) para pré-selecionar o livro. */
+  searchParams: Promise<{ error?: string; bookId?: string }>;
 }
 
 export default async function NewCampaignItemPage({
   params,
   searchParams,
 }: NewCampaignItemPageProps) {
-  const [{ id }, { error }] = await Promise.all([params, searchParams]);
-  const campaign = await getPromotionalCampaignById(id);
+  const [{ id }, { error, bookId }] = await Promise.all([params, searchParams]);
+  const [campaign, books] = await Promise.all([getPromotionalCampaignById(id), getBooks()]);
 
   if (!campaign) notFound();
 
@@ -32,8 +34,10 @@ export default async function NewCampaignItemPage({
       <div className="rounded-3xl border border-slate-800 bg-slate-950/80 p-6">
         <PromotionalCampaignItemForm
           action={createPromotionalCampaignItemAction.bind(null, campaign.id)}
+          books={books ?? []}
           cancelHref={`/admin/campaigns/${campaign.id}`}
           errorMessage={error}
+          defaultBookId={bookId}
         />
       </div>
     </div>

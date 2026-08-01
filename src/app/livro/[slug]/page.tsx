@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { getPublicBookDetail } from "@/lib/adapters/bookDetailPublicAdapter";
 import { BookCover } from "@/components/book/BookCover";
 import { BookCTA } from "@/components/book/BookCTA";
@@ -105,6 +106,14 @@ export default async function BookPage({ params }: BookPageProps) {
                   🎥 {book.contentCount} conteúdo{book.contentCount === 1 ? "" : "s"}
                 </Badge>
               )}
+              {/* Campanhas ativas onde este livro é item — hoje só existe uma
+                  campanha pública ativa por vez (ver setPromotionalCampaignActive),
+                  então a lista é sempre 0 ou 1, mas o layout já suporta mais. */}
+              {book.campaigns.map((campaign) => (
+                <Link key={campaign.id} href="/ofertas">
+                  <Badge variant="muted">📍 {campaign.name}</Badge>
+                </Link>
+              ))}
             </div>
 
             <div className="flex flex-wrap gap-3 text-sm text-[var(--bc-muted)]">
