@@ -2,9 +2,12 @@ import { defineConfig } from "vitest/config";
 import path from "node:path";
 
 /**
- * Config mínima do Vitest — só testes unitários de serviços isolados
- * (`src/lib/services/*`), sem DOM/React. Alias `@/*` espelha o
- * `tsconfig.json` para os testes poderem importar como o app de verdade.
+ * Config do Vitest. Padrão continua "node" (a maioria dos testes é lógica
+ * pura/serviços, sem DOM/React) — testes que precisam de um hook React
+ * (`.test.tsx`) optam individualmente por `jsdom` via o pragma
+ * `// @vitest-environment jsdom` no topo do arquivo, sem afetar os demais.
+ * Alias `@/*` espelha o `tsconfig.json` para os testes poderem importar como
+ * o app de verdade.
  */
 export default defineConfig({
   resolve: {
@@ -14,6 +17,6 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    include: ["src/**/*.test.ts"],
+    include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
   },
 });

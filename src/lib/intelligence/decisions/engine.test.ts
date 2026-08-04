@@ -14,11 +14,24 @@ function noAnswer<T>(questionId: string): QuestionAnswer<T> {
 }
 
 describe("DECISION_RULES", () => {
-  it("lista as 3 decisões da Sprint 11", () => {
+  it("lista as decisões de Content e Audience", () => {
     expect(DECISION_RULES.map((rule) => rule.id)).toEqual([
       "repeat-best-theme",
       "import-stale-dataset",
       "complete-matching",
+      "respond-to-follower-growth",
+      "publish-at-activity-peak",
+      "focus-top-audience-territory",
+      "serve-primary-audience",
+      "increase-focus-on-growing-segment",
+      "test-format-for-underserved-segment",
+      "explore-growing-territory",
+      "rebalance-publishing-strategy",
+      "increase-high-growth-themes",
+      "prioritize-high-engagement-formats",
+      "expand-audience-acquisition-content",
+      "reinforce-retention-focused-content",
+      "reallocate-campaign-budget",
     ]);
   });
 });

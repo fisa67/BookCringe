@@ -1,4 +1,8 @@
-import type { ImportDetectionInput, ImportPlatform } from "@/lib/intelligence/imports/types";
+import type {
+  ImportDetectionInput,
+  ImportPlatform,
+  TikTokDatasetKind,
+} from "@/lib/intelligence/imports/types";
 import { matchColumns, type CanonicalColumnSchema } from "@/lib/intelligence/imports/columns";
 import {
   countMatches,
@@ -11,6 +15,7 @@ import type { PlatformDetectionScore, PlatformFileDetector } from "@/lib/intelli
 
 export interface CanonicalColumnDetectorConfig<TColumn extends string> {
   platform: ImportPlatform;
+  datasetKind?: TikTokDatasetKind;
   /** O MESMO schema (`platforms/<plataforma>/columns.ts`) que o parser da plataforma usa — nunca uma cópia. */
   schema: CanonicalColumnSchema<TColumn>;
   /**
@@ -62,6 +67,7 @@ export function createCanonicalColumnDetector<TColumn extends string>(
 
   return {
     platform: config.platform,
+    ...(config.datasetKind ? { datasetKind: config.datasetKind } : {}),
     score(input: ImportDetectionInput): PlatformDetectionScore {
       const format = inferFileFormat(input.file);
       const headers = getDetectionHeaders(input);
@@ -94,7 +100,13 @@ export function createCanonicalColumnDetector<TColumn extends string>(
         supportedFormat ? "extensão/formato" : undefined,
       ].filter((reason): reason is string => Boolean(reason));
 
-      return { platform: config.platform, format, confidence, reasons };
+      return {
+        platform: config.platform,
+        ...(config.datasetKind ? { datasetKind: config.datasetKind } : {}),
+        format,
+        confidence,
+        reasons,
+      };
     },
   };
 }

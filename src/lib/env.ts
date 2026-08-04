@@ -88,3 +88,36 @@ export function getAuthEnv(): AuthEnv {
 
   return parsed.data;
 }
+
+// ──────────────────────────────────────────────────────────────
+// Intelligence Chat (Sprint 23) — camada de linguagem natural sobre
+// Questions/Insights/Decisions já existentes (`/admin/intelligence/chat`).
+// Usa o padrão "OpenAI-compatible" do Vercel AI SDK para nunca acoplar o
+// código a um provedor específico (OpenAI, Anthropic, ...): qualquer
+// endpoint compatível com a Chat Completions API da OpenAI funciona só
+// trocando estas 3 variáveis, sem alterar nenhuma linha de código.
+// ──────────────────────────────────────────────────────────────
+const intelligenceChatEnvSchema = z.object({
+  INTELLIGENCE_CHAT_API_KEY: z.string().min(1, "INTELLIGENCE_CHAT_API_KEY é obrigatória"),
+  INTELLIGENCE_CHAT_BASE_URL: z.string().url("INTELLIGENCE_CHAT_BASE_URL deve ser uma URL válida"),
+  INTELLIGENCE_CHAT_MODEL: z.string().min(1, "INTELLIGENCE_CHAT_MODEL é obrigatória"),
+});
+
+export type IntelligenceChatEnv = z.infer<typeof intelligenceChatEnvSchema>;
+
+/**
+ * Diferente de `getServerEnv`/`getSupabaseEnv`/`getAuthEnv`, esta função
+ * NUNCA lança: o Chat de Intelligence precisa continuar funcionando (com um
+ * erro amigável) mesmo sem nenhum provedor de IA configurado, em vez de
+ * derrubar a aplicação. Retorna `null` quando a configuração estiver
+ * ausente ou inválida — quem chama decide como comunicar isso ao usuário.
+ */
+export function getIntelligenceChatEnv(): IntelligenceChatEnv | null {
+  const parsed = intelligenceChatEnvSchema.safeParse({
+    INTELLIGENCE_CHAT_API_KEY: process.env.INTELLIGENCE_CHAT_API_KEY,
+    INTELLIGENCE_CHAT_BASE_URL: process.env.INTELLIGENCE_CHAT_BASE_URL,
+    INTELLIGENCE_CHAT_MODEL: process.env.INTELLIGENCE_CHAT_MODEL,
+  });
+
+  return parsed.success ? parsed.data : null;
+}

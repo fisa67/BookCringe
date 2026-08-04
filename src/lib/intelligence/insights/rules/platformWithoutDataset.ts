@@ -5,9 +5,11 @@ import { PLATFORM_LABELS } from "@/lib/intelligence/session";
 /**
  * Plataformas com persistência implementada (`docs/intelligence.md`, seção
  * "Estado por plataforma") — a única lista que precisa crescer quando um
- * novo adapter ganhar seu `persistence.ts`. Hoje só o YouTube.
+ * novo adapter ganhar seu `persistence.ts`. Desde a Sprint 14, YouTube e
+ * Instagram (audiência) — mantida em espelho manual de
+ * `imports/platformCapabilities.ts` (Rules Engine fora do escopo da unificação).
  */
-export const PLATFORMS_WITH_PERSISTENCE: ImportPlatform[] = ["youtube"];
+export const PLATFORMS_WITH_PERSISTENCE: ImportPlatform[] = ["youtube", "instagram", "tiktok"];
 
 /**
  * "Plataforma sem Dataset": diferente das demais regras (que olham para

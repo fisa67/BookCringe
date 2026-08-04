@@ -42,4 +42,5 @@ export type {
   ParsedImportRecord,
   ParserInput,
   PersistenceReceipt,
+  TikTokDatasetKind,
 } from "@/lib/intelligence/imports/types";

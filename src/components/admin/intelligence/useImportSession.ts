@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { importYouTubeDatasetAction, previewYouTubeImportAction } from "@/app/admin/intelligence/importacoes/actions";
+import { confirmImportAction, previewImportAction } from "@/app/admin/intelligence/importacoes/actions";
 import {
   EMPTY_IMPORT_SESSION,
   summarizeImportPreview,
@@ -24,12 +24,20 @@ function wait(ms: number): Promise<void> {
 
 /**
  * Orquestra a Import Session no cliente: liga a seleção de arquivo à
- * Detection Preview já existente (`previewYouTubeImportAction`, inalterada
- * desde a Sprint 2) e, a partir do resultado, calcula a Validação. O
- * arquivo original fica guardado em `fileRef` — não no estado da sessão —
- * porque `confirmImport` precisa reenviá-lo para gerar os
- * `NormalizedImportRecord[]` de novo (a Detection Preview só guarda o
- * resumo, não os registros completos).
+ * Detection Preview (`previewImportAction` — desde a Sprint 13 também
+ * reconhece `.xlsx` de audiência do Instagram, além do `.csv` do YouTube) e,
+ * a partir do resultado, calcula a Validação. O arquivo original fica
+ * guardado em `fileRef` — não no estado da sessão — porque `confirmImport`
+ * precisa reenviá-lo para gerar os `NormalizedImportRecord[]` de novo (a
+ * Detection Preview só guarda o resumo, não os registros completos).
+ *
+ * `confirmImport` chama `confirmImportAction`, o dispatcher que decide (pela
+ * extensão do arquivo) se grava no Dataset do YouTube ou no Dataset de
+ * audiência do Instagram (`docs/intelligence/AUDIENCE_PERSISTENCE.md`,
+ * Sprint 14) — o hook não precisa saber qual plataforma está em jogo. A
+ * checagem "persistence" da Validação (`session/validation.ts`) continua
+ * sendo o que impede a sessão de chegar em `ready` para qualquer plataforma
+ * sem `persistence.ts` — hoje YouTube e Instagram.
  */
 export function useImportSession() {
   const [session, setSession] = useState<ImportSession>(EMPTY_IMPORT_SESSION);
@@ -51,7 +59,7 @@ export function useImportSession() {
       formData.set("file", file);
 
       try {
-        const preview = await previewYouTubeImportAction(formData);
+        const preview = await previewImportAction(formData);
         if (tokenRef.current !== token) return; // uma seleção mais recente já substituiu esta
 
         setSession((current) => ({
@@ -75,32 +83,39 @@ export function useImportSession() {
         setSession((current) => ({
           ...current,
           stage: "error",
-          errorMessage: "Não foi possível processar o arquivo. Verifique se é um CSV válido e tente novamente.",
+          errorMessage:
+            "Não foi possível processar o arquivo. Verifique se é um CSV do YouTube/TikTok ou um XLSX de audiência do Instagram válido.",
         }));
       }
     })();
   }, []);
 
-  /** Confirma a importação — só tem efeito quando a sessão está em `ready` e o arquivo original ainda está disponível. */
+  /**
+   * Confirma a importação — só tem efeito quando a sessão está em `ready` e
+   * o arquivo original ainda está disponível.
+   *
+   * A decisão de importar é tomada de forma síncrona, lendo `session.stage`
+   * diretamente (valor já committed do último render) — nunca a partir de
+   * uma variável preenchida dentro do callback de `setSession`, já que esse
+   * callback só é executado pelo React de forma assíncrona/diferida, depois
+   * que o restante da função já terminou de rodar. Ler o resultado de dentro
+   * do próprio callback (`shouldImport`) causava um `return` prematuro antes
+   * de o callback ter chance de executar, travando a sessão em `importing`
+   * para sempre sem nunca chamar a Server Action.
+   */
   const confirmImport = useCallback(() => {
     const token = tokenRef.current;
     const file = fileRef.current;
-    if (!file) return;
+    if (!file || session.stage !== "ready") return;
 
-    let shouldImport = false;
-    setSession((current) => {
-      if (current.stage !== "ready") return current;
-      shouldImport = true;
-      return { ...current, stage: "importing" };
-    });
-    if (!shouldImport) return;
+    setSession((current) => ({ ...current, stage: "importing" }));
 
     void (async () => {
       const formData = new FormData();
       formData.set("file", file);
 
       try {
-        const receipt = await importYouTubeDatasetAction(formData);
+        const receipt = await confirmImportAction(formData);
         if (tokenRef.current !== token) return;
 
         if (receipt.status === "persisted" && receipt.acceptedRecords > 0) {
@@ -123,7 +138,7 @@ export function useImportSession() {
         }));
       }
     })();
-  }, []);
+  }, [session.stage]);
 
   const reset = useCallback(() => {
     tokenRef.current += 1;

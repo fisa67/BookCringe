@@ -13,6 +13,14 @@ import type {
   TopContentEntry,
 } from "@/lib/intelligence/dashboard/types";
 import { runIntelligenceRules } from "@/lib/intelligence/insights";
+import { buildAudienceDatasetSummaries } from "@/lib/intelligence/audience/summary";
+import { buildCampaignDatasetSummaries } from "@/lib/intelligence/campaign/summary";
+import {
+  correlateContentThemesToGrowth,
+  correlateContentToAcquisition,
+  correlateContentToEngagement,
+  correlateContentToRetention,
+} from "@/lib/intelligence/contentPerformance/correlations";
 
 /**
  * Deriva o Dashboard inteiro a partir dos dados já persistidos — nenhuma
@@ -141,6 +149,7 @@ export function buildIntelligenceDashboardData(params: {
   const linkedBookIds = new Set(
     contents.filter((content) => content.book_id).map((content) => content.book_id as string)
   );
+  const correlationParams = { datasets, contents, metrics, books };
 
   return {
     summary: {
@@ -148,6 +157,14 @@ export function buildIntelligenceDashboardData(params: {
       importsCount: imports.length,
       contentsCount: contents.length,
       linkedBooksCount: linkedBookIds.size,
+    },
+    audience: buildAudienceDatasetSummaries(datasets, metrics),
+    campaign: buildCampaignDatasetSummaries(datasets, imports, metrics, contents),
+    correlations: {
+      growth: correlateContentThemesToGrowth(correlationParams),
+      engagement: correlateContentToEngagement(correlationParams),
+      acquisition: correlateContentToAcquisition(correlationParams),
+      retention: correlateContentToRetention(correlationParams),
     },
     latestImport: buildLatestImport(imports, datasetById),
     topContents: buildTopContents({

@@ -2,6 +2,7 @@ import type {
   DetectionResult,
   ImportDetectionInput,
   ImportPlatform,
+  TikTokDatasetKind,
 } from "@/lib/intelligence/imports/types";
 import {
   countMatches,
@@ -12,12 +13,20 @@ import {
 } from "@/lib/intelligence/imports/detection/utils";
 import { createCanonicalColumnDetector } from "@/lib/intelligence/imports/detection/canonicalColumnDetector";
 import { YOUTUBE_COLUMN_SCHEMA } from "@/lib/intelligence/imports/platforms/youtube/columns";
+import {
+  INSTAGRAM_AUDIENCE_ACTIVITY_SCHEMA,
+  INSTAGRAM_AUDIENCE_DEMOGRAPHICS_SCHEMA,
+  INSTAGRAM_AUDIENCE_HISTORY_SCHEMA,
+  INSTAGRAM_AUDIENCE_TERRITORY_SCHEMA,
+} from "@/lib/intelligence/imports/platforms/instagram/columns";
+import { TIKTOK_PROMOTIONS_COLUMN_SCHEMA } from "@/lib/intelligence/imports/platforms/tiktok/columns";
 import type { PlatformDetectionScore, PlatformFileDetector } from "@/lib/intelligence/imports/detection/types";
 
 export type { PlatformDetectionScore, PlatformFileDetector } from "@/lib/intelligence/imports/detection/types";
 
 interface PlatformDetectorConfig {
   platform: ImportPlatform;
+  datasetKind?: TikTokDatasetKind;
   fileNameHints: readonly string[];
   headerHints: readonly string[];
   contentHints: readonly string[];
@@ -59,6 +68,7 @@ function scorePlatform(input: ImportDetectionInput, config: PlatformDetectorConf
 
   return {
     platform: config.platform,
+    ...(config.datasetKind ? { datasetKind: config.datasetKind } : {}),
     format,
     confidence,
     reasons,
@@ -68,6 +78,7 @@ function scorePlatform(input: ImportDetectionInput, config: PlatformDetectorConf
 function createPlatformDetector(config: PlatformDetectorConfig): PlatformFileDetector {
   return {
     platform: config.platform,
+    ...(config.datasetKind ? { datasetKind: config.datasetKind } : {}),
     score(input) {
       return scorePlatform(input, config);
     },
@@ -83,10 +94,13 @@ function createPlatformDetector(config: PlatformDetectorConfig): PlatformFileDet
  * YouTube. Suportar um idioma novo é só acrescentar um alias em
  * `platforms/youtube/columns.ts`; nenhuma linha deste arquivo muda.
  *
- * Instagram/TikTok/Meta Ads ainda usam o detector genérico por
- * palavras-chave (`createPlatformDetector`) porque ainda não têm parser
- * nem `columns.ts` próprios (ver sprint atual em `AGENTS.md`) — quando a
- * vez de cada um chegar, o padrão a seguir é o do YouTube, não este.
+ * TikTok/Meta Ads ainda usam o detector genérico por palavras-chave
+ * (`createPlatformDetector`) porque ainda não têm parser nem `columns.ts`
+ * próprios — quando a vez de cada um chegar, o padrão a seguir é o do
+ * YouTube, não este. O Instagram já tem os dois: `instagramDetector`
+ * (legado, só para o relatório de Reels, que ainda não tem parser) e os 4
+ * detectores canônicos de audiência mais abaixo (que têm parser completo,
+ * ver `platforms/instagram/audienceParser.ts`).
  */
 export const youtubeDetector: PlatformFileDetector = createCanonicalColumnDetector({
   platform: "youtube",
@@ -101,11 +115,53 @@ export const instagramDetector = createPlatformDetector({
   contentHints: ["instagram", "reels", "accounts reached", "profile visits"],
 });
 
+/**
+ * Detectores de audiência do Instagram (FollowerHistory, FollowerActivity,
+ * FollowerGender, FollowerTopTerritories) — padrão oficial de colunas
+ * canônicas, mesmo tratamento do YouTube, e não do `instagramDetector`
+ * legado acima (que continua servindo só o relatório de Reels, ainda sem
+ * parser próprio). `PlatformFileDetector.platform` não tem restrição de
+ * unicidade (`detection/types.ts`), então múltiplos detectores podem
+ * compartilhar `platform: "instagram"` sem conflito — o
+ * `IntelligenceFileDetector` pontua todos e escolhe o de maior confiança.
+ */
+export const instagramAudienceHistoryDetector: PlatformFileDetector = createCanonicalColumnDetector({
+  platform: "instagram",
+  schema: INSTAGRAM_AUDIENCE_HISTORY_SCHEMA,
+  brandHints: ["instagram", "followerhistory", "seguidores"],
+});
+
+export const instagramAudienceActivityDetector: PlatformFileDetector = createCanonicalColumnDetector({
+  platform: "instagram",
+  schema: INSTAGRAM_AUDIENCE_ACTIVITY_SCHEMA,
+  brandHints: ["instagram", "followeractivity", "seguidores ativos"],
+});
+
+export const instagramAudienceDemographicsDetector: PlatformFileDetector = createCanonicalColumnDetector({
+  platform: "instagram",
+  schema: INSTAGRAM_AUDIENCE_DEMOGRAPHICS_SCHEMA,
+  brandHints: ["instagram", "followergender", "genero"],
+});
+
+export const instagramAudienceTerritoryDetector: PlatformFileDetector = createCanonicalColumnDetector({
+  platform: "instagram",
+  schema: INSTAGRAM_AUDIENCE_TERRITORY_SCHEMA,
+  brandHints: ["instagram", "followertopterritories", "territorios"],
+});
+
 export const tiktokDetector = createPlatformDetector({
   platform: "tiktok",
+  datasetKind: "tiktok_creator",
   fileNameHints: ["tiktok", "tt", "creator"],
   headerHints: ["video views", "total play time", "average watch time", "traffic source", "new followers"],
   contentHints: ["tiktok", "creator center", "video views", "total play time"],
+});
+
+export const tiktokPromotionsDetector: PlatformFileDetector = createCanonicalColumnDetector({
+  platform: "tiktok",
+  datasetKind: "tiktok_promotions",
+  schema: TIKTOK_PROMOTIONS_COLUMN_SCHEMA,
+  brandHints: ["tiktok", "promotions", "promotion", "promoções"],
 });
 
 export const metaAdsDetector = createPlatformDetector({
@@ -118,6 +174,11 @@ export const metaAdsDetector = createPlatformDetector({
 export const DEFAULT_PLATFORM_DETECTORS = [
   youtubeDetector,
   instagramDetector,
+  instagramAudienceHistoryDetector,
+  instagramAudienceActivityDetector,
+  instagramAudienceDemographicsDetector,
+  instagramAudienceTerritoryDetector,
+  tiktokPromotionsDetector,
   tiktokDetector,
   metaAdsDetector,
 ] as const;
@@ -125,6 +186,7 @@ export const DEFAULT_PLATFORM_DETECTORS = [
 export function detectionScoreToResult(score: PlatformDetectionScore): DetectionResult {
   return {
     platform: score.platform,
+    ...(score.datasetKind ? { datasetKind: score.datasetKind } : {}),
     format: score.format,
     confidence: Number(score.confidence.toFixed(2)),
     issues: [],

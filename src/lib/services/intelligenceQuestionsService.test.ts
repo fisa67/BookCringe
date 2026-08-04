@@ -1,5 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
-import { getBestContentAnswer, getStaleDatasetAnswer, getUnmatchedContentAnswer } from "./intelligenceQuestionsService";
+import {
+  getAudienceAnswers,
+  getAudienceStrategyAnswers,
+  getBestContentAnswer,
+  getCampaignAnswers,
+  getContentPerformanceAnswers,
+  getStaleDatasetAnswer,
+  getUnmatchedContentAnswer,
+} from "./intelligenceQuestionsService";
 import type {
   IntelligenceContentRecord,
   IntelligenceDatasetRecord,
@@ -143,5 +151,165 @@ describe("getUnmatchedContentAnswer", () => {
 
     expect(result.hasAnswer).toBe(false);
     expect(result.data).toBeNull();
+  });
+});
+
+describe("getAudienceAnswers", () => {
+  it("busca Dataset e Metrics uma vez e responde às quatro perguntas de audiência", async () => {
+    const audienceDataset: IntelligenceDatasetRecord = {
+      ...DATASET,
+      id: "instagram-audience",
+      platform: "instagram",
+      name: "Instagram — Audiência",
+    };
+    const audienceMetrics: IntelligenceMetricRecord[] = [
+      { ...METRIC, id: "followers", dataset_id: audienceDataset.id, content_id: undefined, key: "followers", value: 1800 },
+      { ...METRIC, id: "growth", dataset_id: audienceDataset.id, content_id: undefined, key: "followersDelta", value: 42 },
+      { ...METRIC, id: "activity", dataset_id: audienceDataset.id, content_id: undefined, key: "activeFollowers", value: 900 },
+      { ...METRIC, id: "territory", dataset_id: audienceDataset.id, content_id: undefined, key: "territory:BR", value: 0.71 },
+      { ...METRIC, id: "gender", dataset_id: audienceDataset.id, content_id: undefined, key: "gender:Mulheres", value: 0.64 },
+    ];
+    listDatasetsMock.mockResolvedValue([audienceDataset]);
+    listMetricsMock.mockResolvedValue(audienceMetrics);
+
+    const result = await getAudienceAnswers();
+
+    expect(result.followerGrowth.data).toMatchObject({ growth: 42, followers: 1800 });
+    expect(result.activityPeak.data).toMatchObject({ activeFollowers: 900 });
+    expect(result.topTerritory.data).toMatchObject({ territory: "BR" });
+    expect(result.primaryAudience.data).toMatchObject({ label: "Mulheres" });
+  });
+});
+
+describe("getAudienceStrategyAnswers", () => {
+  it("responde às quatro perguntas estratégicas de audiência", async () => {
+    const audienceDataset: IntelligenceDatasetRecord = {
+      ...DATASET,
+      id: "instagram-audience",
+      platform: "instagram",
+      name: "Instagram — Audiência",
+    };
+    listDatasetsMock.mockResolvedValue([audienceDataset]);
+    listContentsMock.mockResolvedValue([CONTENT]);
+    listMetricsMock.mockResolvedValue([
+      { ...METRIC, id: "g1", dataset_id: audienceDataset.id, content_id: undefined, key: "gender:Mulheres", value: 0.55, measured_at: "2026-07-01T00:00:00.000Z" },
+      { ...METRIC, id: "g2", dataset_id: audienceDataset.id, content_id: undefined, key: "gender:Homens", value: 0.45, measured_at: "2026-07-01T00:00:00.000Z" },
+      { ...METRIC, id: "g3", dataset_id: audienceDataset.id, content_id: undefined, key: "gender:Mulheres", value: 0.62, measured_at: "2026-08-01T00:00:00.000Z" },
+      { ...METRIC, id: "g4", dataset_id: audienceDataset.id, content_id: undefined, key: "gender:Homens", value: 0.38, measured_at: "2026-08-01T00:00:00.000Z" },
+      { ...METRIC, id: "t1", dataset_id: audienceDataset.id, content_id: undefined, key: "territory:BR", value: 0.7, measured_at: "2026-07-01T00:00:00.000Z" },
+      { ...METRIC, id: "t2", dataset_id: audienceDataset.id, content_id: undefined, key: "territory:MX", value: 0.1, measured_at: "2026-07-01T00:00:00.000Z" },
+      { ...METRIC, id: "t3", dataset_id: audienceDataset.id, content_id: undefined, key: "territory:BR", value: 0.6, measured_at: "2026-08-01T00:00:00.000Z" },
+      { ...METRIC, id: "t4", dataset_id: audienceDataset.id, content_id: undefined, key: "territory:MX", value: 0.25, measured_at: "2026-08-01T00:00:00.000Z" },
+    ]);
+
+    const result = await getAudienceStrategyAnswers();
+
+    expect(result.fastestGrowingSegment.data).toMatchObject({ segment: "Mulheres", confidence: "high" });
+    expect(result.underservedSegment.data).toMatchObject({ segment: "Homens" });
+    expect(result.territoryGrowthOpportunity.data).toMatchObject({ territory: "MX", confidence: "high" });
+    expect(result.audienceContentMismatch.hasAnswer).toBe(true);
+  });
+});
+
+describe("getContentPerformanceAnswers", () => {
+  it("responde às quatro perguntas de content performance", async () => {
+    const audienceDataset: IntelligenceDatasetRecord = {
+      ...DATASET,
+      id: "instagram-audience",
+      platform: "instagram",
+      name: "Instagram — Audiência",
+    };
+    listDatasetsMock.mockResolvedValue([DATASET, audienceDataset]);
+    listContentsMock.mockResolvedValue([CONTENT, { ...CONTENT, id: "content-2", title: "Outro" }]);
+    listMetricsMock.mockResolvedValue([
+      { ...METRIC, id: "v1", content_id: CONTENT.id, key: "views", value: 1000 },
+      { ...METRIC, id: "w1", content_id: CONTENT.id, key: "watchTimeHours", value: 40 },
+      { ...METRIC, id: "s1", content_id: CONTENT.id, key: "subscribers", value: 20 },
+      { ...METRIC, id: "v2", content_id: "content-2", key: "views", value: 3000 },
+      { ...METRIC, id: "w2", content_id: "content-2", key: "watchTimeHours", value: 5 },
+      { ...METRIC, id: "s2", content_id: "content-2", key: "subscribers", value: 4 },
+      {
+        ...METRIC,
+        id: "growth",
+        dataset_id: audienceDataset.id,
+        content_id: undefined,
+        key: "followersDelta",
+        value: 55,
+      },
+      {
+        ...METRIC,
+        id: "activity",
+        dataset_id: audienceDataset.id,
+        content_id: undefined,
+        key: "activeFollowers",
+        value: 700,
+      },
+    ]);
+    getBooksMock.mockResolvedValue([BOOK]);
+
+    const result = await getContentPerformanceAnswers();
+
+    expect(result.growthTheme.hasAnswer).toBe(true);
+    expect(result.engagementFormat.hasAnswer).toBe(true);
+    expect(result.audienceAcquisitionContent.hasAnswer).toBe(true);
+    expect(result.retentionContent.hasAnswer).toBe(true);
+  });
+});
+
+describe("getCampaignAnswers", () => {
+  it("busca Dataset e Metrics de campanha e responde às três perguntas mínimas (Sprint 20.5)", async () => {
+    const campaignDataset: IntelligenceDatasetRecord = {
+      ...DATASET,
+      id: "tiktok-promotions",
+      platform: "tiktok",
+      name: "TikTok — Promoções",
+    };
+    const campaignMetric = (
+      id: string,
+      key: string,
+      value: number,
+      importId: string,
+      measuredAt: string
+    ): IntelligenceMetricRecord => ({
+      ...METRIC,
+      id,
+      dataset_id: campaignDataset.id,
+      import_id: importId,
+      content_id: undefined,
+      key,
+      value,
+      measured_at: measuredAt,
+      created_at: measuredAt,
+    });
+    listDatasetsMock.mockResolvedValue([campaignDataset]);
+    listImportsMock.mockResolvedValue([]);
+    listContentsMock.mockResolvedValue([]);
+    listMetricsMock.mockResolvedValue([
+      campaignMetric("cost-1", "promo:adCostBrl", 1200, "import-1", "2026-07-01T00:00:00.000Z"),
+      campaignMetric("views-1", "promo:views", 48000, "import-1", "2026-07-01T00:00:00.000Z"),
+      campaignMetric("followers-1", "promo:newFollowers", 720, "import-1", "2026-07-01T00:00:00.000Z"),
+      campaignMetric("cost-2", "promo:adCostBrl", 800, "import-2", "2026-07-08T00:00:00.000Z"),
+      campaignMetric("views-2", "promo:views", 16000, "import-2", "2026-07-08T00:00:00.000Z"),
+      campaignMetric("followers-2", "promo:newFollowers", 200, "import-2", "2026-07-08T00:00:00.000Z"),
+    ]);
+
+    const result = await getCampaignAnswers();
+
+    expect(result.bestCampaign.hasAnswer).toBe(true);
+    expect(result.lowestCostPerFollower.hasAnswer).toBe(true);
+    expect(result.highestAcquisition.data).toMatchObject({ newFollowers: 720 });
+  });
+
+  it("trata retorno null de qualquer service como lista vazia, sem lançar erro", async () => {
+    listDatasetsMock.mockResolvedValue(null);
+    listImportsMock.mockResolvedValue(null);
+    listContentsMock.mockResolvedValue(null);
+    listMetricsMock.mockResolvedValue(null);
+
+    const result = await getCampaignAnswers();
+
+    expect(result.bestCampaign.hasAnswer).toBe(false);
+    expect(result.lowestCostPerFollower.hasAnswer).toBe(false);
+    expect(result.highestAcquisition.hasAnswer).toBe(false);
   });
 });

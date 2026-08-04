@@ -7,6 +7,52 @@ import type { StaleDatasetAnswerData } from "@/lib/intelligence/questions/staleD
 import { unmatchedContentQuestion } from "@/lib/intelligence/questions/unmatchedContent";
 import type { UnmatchedContentAnswerData } from "@/lib/intelligence/questions/unmatchedContent";
 import type { QuestionAnswer } from "@/lib/intelligence/questions/types";
+import {
+  activityPeakQuestion,
+  followerGrowthQuestion,
+  primaryAudienceQuestion,
+  topTerritoryQuestion,
+} from "@/lib/intelligence/questions/audience";
+import type {
+  ActivityPeakAnswerData,
+  FollowerGrowthAnswerData,
+  PrimaryAudienceAnswerData,
+  TopTerritoryAnswerData,
+} from "@/lib/intelligence/questions/audience";
+import {
+  audienceContentMismatchQuestion,
+  fastestGrowingSegmentQuestion,
+  territoryGrowthOpportunityQuestion,
+  underservedSegmentQuestion,
+} from "@/lib/intelligence/questions/audienceStrategy";
+import type {
+  AudienceContentMismatchAnswerData,
+  FastestGrowingSegmentAnswerData,
+  TerritoryGrowthOpportunityAnswerData,
+  UnderservedSegmentAnswerData,
+} from "@/lib/intelligence/questions/audienceStrategy";
+import {
+  audienceAcquisitionContentQuestion,
+  engagementFormatQuestion,
+  growthThemeQuestion,
+  retentionContentQuestion,
+} from "@/lib/intelligence/questions/contentPerformance";
+import type {
+  AudienceAcquisitionContentAnswerData,
+  EngagementFormatAnswerData,
+  GrowthThemeAnswerData,
+  RetentionContentAnswerData,
+} from "@/lib/intelligence/questions/contentPerformance";
+import {
+  bestCampaignQuestion,
+  highestAcquisitionQuestion,
+  lowestCostPerFollowerQuestion,
+} from "@/lib/intelligence/questions/campaign";
+import type {
+  BestCampaignAnswerData,
+  HighestAcquisitionAnswerData,
+  LowestCostPerFollowerAnswerData,
+} from "@/lib/intelligence/questions/campaign";
 
 /**
  * Ponto de entrada de I/O do Épico Questions (Sprint 10,
@@ -50,4 +96,114 @@ export async function getUnmatchedContentAnswer(): Promise<QuestionAnswer<Unmatc
   const contents = await listContents();
 
   return unmatchedContentQuestion.answer({ now: new Date(), contents: contents ?? [] });
+}
+
+export interface AudienceQuestionAnswers {
+  followerGrowth: QuestionAnswer<FollowerGrowthAnswerData>;
+  activityPeak: QuestionAnswer<ActivityPeakAnswerData>;
+  topTerritory: QuestionAnswer<TopTerritoryAnswerData>;
+  primaryAudience: QuestionAnswer<PrimaryAudienceAnswerData>;
+}
+
+export async function getAudienceAnswers(): Promise<AudienceQuestionAnswers> {
+  const [datasets, metrics] = await Promise.all([listDatasets(), listMetrics()]);
+  const context = {
+    now: new Date(),
+    datasets: datasets ?? [],
+    metrics: metrics ?? [],
+  };
+
+  return {
+    followerGrowth: followerGrowthQuestion.answer(context),
+    activityPeak: activityPeakQuestion.answer(context),
+    topTerritory: topTerritoryQuestion.answer(context),
+    primaryAudience: primaryAudienceQuestion.answer(context),
+  };
+}
+
+export interface AudienceStrategyQuestionAnswers {
+  fastestGrowingSegment: QuestionAnswer<FastestGrowingSegmentAnswerData>;
+  underservedSegment: QuestionAnswer<UnderservedSegmentAnswerData>;
+  territoryGrowthOpportunity: QuestionAnswer<TerritoryGrowthOpportunityAnswerData>;
+  audienceContentMismatch: QuestionAnswer<AudienceContentMismatchAnswerData>;
+}
+
+export async function getAudienceStrategyAnswers(): Promise<AudienceStrategyQuestionAnswers> {
+  const [datasets, metrics, contents] = await Promise.all([
+    listDatasets(),
+    listMetrics(),
+    listContents(),
+  ]);
+  const context = {
+    now: new Date(),
+    datasets: datasets ?? [],
+    metrics: metrics ?? [],
+    contents: contents ?? [],
+  };
+
+  return {
+    fastestGrowingSegment: fastestGrowingSegmentQuestion.answer(context),
+    underservedSegment: underservedSegmentQuestion.answer(context),
+    territoryGrowthOpportunity: territoryGrowthOpportunityQuestion.answer(context),
+    audienceContentMismatch: audienceContentMismatchQuestion.answer(context),
+  };
+}
+
+export interface ContentPerformanceQuestionAnswers {
+  growthTheme: QuestionAnswer<GrowthThemeAnswerData>;
+  engagementFormat: QuestionAnswer<EngagementFormatAnswerData>;
+  audienceAcquisitionContent: QuestionAnswer<AudienceAcquisitionContentAnswerData>;
+  retentionContent: QuestionAnswer<RetentionContentAnswerData>;
+}
+
+export async function getContentPerformanceAnswers(): Promise<ContentPerformanceQuestionAnswers> {
+  const [datasets, contents, metrics, books] = await Promise.all([
+    listDatasets(),
+    listContents(),
+    listMetrics(),
+    getBooks(),
+  ]);
+  const context = {
+    now: new Date(),
+    datasets: datasets ?? [],
+    contents: contents ?? [],
+    metrics: metrics ?? [],
+    books: books ?? [],
+  };
+
+  return {
+    growthTheme: growthThemeQuestion.answer(context),
+    engagementFormat: engagementFormatQuestion.answer(context),
+    audienceAcquisitionContent: audienceAcquisitionContentQuestion.answer(context),
+    retentionContent: retentionContentQuestion.answer(context),
+  };
+}
+
+export interface CampaignQuestionAnswers {
+  bestCampaign: QuestionAnswer<BestCampaignAnswerData>;
+  lowestCostPerFollower: QuestionAnswer<LowestCostPerFollowerAnswerData>;
+  highestAcquisition: QuestionAnswer<HighestAcquisitionAnswerData>;
+}
+
+/** Mesma ideia de `getAudienceAnswers`, para as perguntas mínimas de Campaign Datasets (Sprint 20.5, ADR-010). */
+export async function getCampaignAnswers(): Promise<CampaignQuestionAnswers> {
+  const [datasets, imports, metrics, contents] = await Promise.all([
+    listDatasets(),
+    listImports(),
+    listMetrics(),
+    listContents(),
+  ]);
+  const context = {
+    now: new Date(),
+    datasets: datasets ?? [],
+    imports: imports ?? [],
+    metrics: metrics ?? [],
+    contents: contents ?? [],
+  };
+
+  return {
+    bestCampaign: bestCampaignQuestion.answer(context),
+    lowestCostPerFollower: lowestCostPerFollowerQuestion.answer(context),
+    highestAcquisition: highestAcquisitionQuestion.answer(context),
+  };
 }

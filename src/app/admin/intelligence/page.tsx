@@ -5,12 +5,16 @@ import { getWorkspaceActions } from "@/lib/services/workspaceService";
 import { PLATFORM_LABELS } from "@/lib/intelligence/session";
 import { formatNumber } from "@/lib/utils";
 import type {
+  AudienceDatasetSummary,
+  CampaignDatasetSummary,
+  DashboardCorrelations,
   IntelligenceDashboardSummary,
   LatestImportSummary,
   MatchingRateSummary,
   PlatformDistributionEntry,
   TopContentEntry,
 } from "@/lib/intelligence/dashboard";
+import { campaignEntryLabel } from "@/lib/intelligence/dashboard";
 import type { Insight, InsightSeverity } from "@/lib/intelligence/insights";
 import type { WorkspaceAction, WorkspaceActionCategory } from "@/lib/intelligence/actions";
 
@@ -19,10 +23,15 @@ export const metadata: Metadata = {
 };
 
 const DATE_TIME_FORMATTER = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "UTC" });
+const BRL_FORMATTER = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
 function formatDateTime(value: string): string {
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? value : DATE_TIME_FORMATTER.format(parsed);
+}
+
+function formatBRL(value: number): string {
+  return BRL_FORMATTER.format(value);
 }
 
 function platformLabel(platform: string): string {
@@ -65,6 +74,12 @@ export default async function IntelligenceDashboardPage() {
       <SummaryCards summary={data.summary} />
 
       <InsightsSection insights={data.insights} />
+
+      <CorrelationsSection correlations={data.correlations} />
+
+      <AudienceSection audience={data.audience} />
+
+      <CampaignSection campaign={data.campaign} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <LatestImportPanel latestImport={data.latestImport} />
@@ -385,6 +400,192 @@ function TopContentsSection({ topContents }: { topContents: TopContentEntry[] })
           ))}
         </ol>
       )}
+    </section>
+  );
+}
+
+function CorrelationsSection({ correlations }: { correlations: DashboardCorrelations }) {
+  const entries = [
+    { key: "growth", label: "Growth Drivers", result: correlations.growth },
+    { key: "engagement", label: "Engagement Drivers", result: correlations.engagement },
+    { key: "acquisition", label: "Acquisition Drivers", result: correlations.acquisition },
+    { key: "retention", label: "Retention Drivers", result: correlations.retention },
+  ].filter((entry) => entry.result !== null);
+
+  if (entries.length === 0) return null;
+
+  return (
+    <section className="rounded-3xl border border-slate-800 bg-slate-900/90 p-6">
+      <p className="text-sm uppercase tracking-[0.2em] text-slate-400">Content ↔ Audience Correlations</p>
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
+        {entries.map(({ key, label, result }) => {
+          if (!result) return null;
+
+          return (
+            <article key={key} className="rounded-2xl border border-slate-800 bg-slate-950/80 p-5">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-medium text-white">{label}</p>
+                <span
+                  className={
+                    result.confidence === "high"
+                      ? "rounded-full border border-emerald-800 px-2 py-0.5 text-xs text-emerald-300"
+                      : "rounded-full border border-amber-800 px-2 py-0.5 text-xs text-amber-300"
+                  }
+                >
+                  {result.confidence} confidence
+                </span>
+              </div>
+              <p className="mt-3 text-sm font-medium text-slate-200">
+                {result.theme} → {result.title}
+              </p>
+              {result.format ? <p className="mt-1 text-xs text-slate-500">Formato: {result.format}</p> : null}
+              <p className="mt-2 text-sm text-slate-400">{result.evidence}</p>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function AudienceSection({ audience }: { audience: AudienceDatasetSummary[] }) {
+  if (audience.length === 0) return null;
+
+  return (
+    <section className="rounded-3xl border border-slate-800 bg-slate-900/90 p-6">
+      <p className="text-sm uppercase tracking-[0.2em] text-slate-400">Audiência</p>
+
+      <div className="mt-4 space-y-5">
+        {audience.map((entry) => (
+          <div key={entry.datasetId} className="rounded-2xl border border-slate-800 bg-slate-950/80 p-5">
+            <p className="text-sm font-medium text-white">{entry.datasetName}</p>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <AudienceMetricCard
+                label="Seguidores"
+                value={entry.followers ? formatNumber(entry.followers.value) : "—"}
+              />
+              <AudienceMetricCard
+                label="Crescimento"
+                value={
+                  entry.followerGrowth
+                    ? `${entry.followerGrowth.value > 0 ? "+" : ""}${formatNumber(entry.followerGrowth.value)}`
+                    : "—"
+                }
+              />
+              <AudienceMetricCard
+                label="Seguidores ativos (pico)"
+                value={
+                  entry.activityPeak
+                    ? `${new Date(entry.activityPeak.measuredAt).getUTCHours()}h · ${formatNumber(entry.activityPeak.value)}`
+                    : "—"
+                }
+              />
+            </div>
+
+            <div className="mt-4 grid gap-4 lg:grid-cols-2">
+              <AudienceDistribution
+                title="Distribuição de gênero"
+                entries={entry.genderDistribution}
+              />
+              <AudienceDistribution
+                title="Distribuição de territórios"
+                entries={entry.territoryDistribution}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function AudienceMetricCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-slate-800 p-4">
+      <p className="text-xs uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="mt-2 text-xl font-semibold text-white">{value}</p>
+    </div>
+  );
+}
+
+function AudienceDistribution({
+  title,
+  entries,
+}: {
+  title: string;
+  entries: AudienceDatasetSummary["genderDistribution"];
+}) {
+  return (
+    <div>
+      <p className="text-xs uppercase tracking-wide text-slate-500">{title}</p>
+      {entries.length === 0 ? (
+        <p className="mt-2 text-sm text-slate-500">Sem dados importados.</p>
+      ) : (
+        <dl className="mt-2 space-y-2 text-sm">
+          {entries.map((entry) => (
+            <div key={entry.label} className="flex items-center justify-between gap-3">
+              <dt className="text-slate-300">{entry.label}</dt>
+              <dd className="font-medium text-white">{Math.round(entry.value * 100)}%</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+    </div>
+  );
+}
+
+/**
+ * "Campanha" (Sprint 20.5, ADR-010): mesma ideia de `AudienceSection`, mas
+ * para Datasets "em formato de campanha" (ex.: TikTok — Promoções). Custo
+ * por view/seguidor nunca vem persistido — `campaign.costPerView`/
+ * `costPerFollower` já chegam calculados por `buildCampaignDatasetSummaries`
+ * (`lib/intelligence/campaign/summary.ts`).
+ */
+function CampaignSection({ campaign }: { campaign: CampaignDatasetSummary[] }) {
+  if (campaign.length === 0) return null;
+
+  return (
+    <section className="rounded-3xl border border-slate-800 bg-slate-900/90 p-6">
+      <p className="text-sm uppercase tracking-[0.2em] text-slate-400">Campanhas</p>
+
+      <div className="mt-4 space-y-5">
+        {campaign.map((entry) => (
+          <div key={entry.datasetId} className="rounded-2xl border border-slate-800 bg-slate-950/80 p-5">
+            <p className="text-sm font-medium text-white">{entry.datasetName}</p>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-4">
+              <AudienceMetricCard label="Gasto total" value={formatBRL(entry.totalAdCostBrl)} />
+              <AudienceMetricCard label="Views pagas" value={formatNumber(entry.totalViews)} />
+              <AudienceMetricCard label="Seguidores adquiridos" value={formatNumber(entry.totalNewFollowers)} />
+              <AudienceMetricCard
+                label="Custo por seguidor"
+                value={entry.costPerFollower !== null ? formatBRL(entry.costPerFollower) : "—"}
+              />
+            </div>
+
+            {entry.entries.length > 0 ? (
+              <ol className="mt-4 divide-y divide-slate-800">
+                {entry.entries.map((campaignEntry) => (
+                  <li key={campaignEntry.key} className="flex items-center justify-between gap-4 py-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-white">{campaignEntryLabel(campaignEntry)}</p>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        {formatBRL(campaignEntry.adCostBrl)} · {formatNumber(campaignEntry.views)} views ·{" "}
+                        {formatNumber(campaignEntry.newFollowers)} seguidores
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-sm font-semibold text-white">
+                      {campaignEntry.costPerFollower !== null ? formatBRL(campaignEntry.costPerFollower) : "—"}
+                      <span className="ml-1 text-xs font-normal text-slate-500">/seguidor</span>
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            ) : null}
+          </div>
+        ))}
+      </div>
     </section>
   );
 }

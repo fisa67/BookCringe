@@ -1,4 +1,9 @@
-import type { ImportDetectionInput, ImportFileFormat, ImportPlatform } from "@/lib/intelligence/imports/types";
+import type {
+  ImportDetectionInput,
+  ImportFileFormat,
+  ImportPlatform,
+  TikTokDatasetKind,
+} from "@/lib/intelligence/imports/types";
 
 /**
  * Tipos compartilhados entre `platformDetectors.ts` (registro de todos os
@@ -9,6 +14,7 @@ import type { ImportDetectionInput, ImportFileFormat, ImportPlatform } from "@/l
 
 export interface PlatformDetectionScore {
   platform: ImportPlatform;
+  datasetKind?: TikTokDatasetKind;
   format: ImportFileFormat;
   confidence: number;
   reasons: string[];
@@ -16,5 +22,6 @@ export interface PlatformDetectionScore {
 
 export interface PlatformFileDetector {
   readonly platform: ImportPlatform;
+  readonly datasetKind?: TikTokDatasetKind;
   score(input: ImportDetectionInput): PlatformDetectionScore;
 }

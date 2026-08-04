@@ -9,11 +9,33 @@ import { EMPTY_IMPORT_SESSION_SUMMARY, type ImportSessionSummary } from "@/lib/i
  */
 export function summarizeImportPreview(result: ImportPreviewResult): ImportSessionSummary {
   if (result.status === "ready") {
+    if (result.platform === "youtube") {
+      return {
+        platform: result.platform,
+        confidence: result.preview.confidence,
+        period: result.preview.period,
+        recordCount: result.preview.videoCount,
+        metrics: result.preview.metrics,
+      };
+    }
+
+    if (result.platform === "tiktok") {
+      return {
+        platform: result.platform,
+        confidence: result.preview.confidence,
+        period: result.preview.period,
+        recordCount: result.preview.recordCount,
+        metrics: result.preview.metrics,
+      };
+    }
+
     return {
       platform: result.platform,
       confidence: result.preview.confidence,
-      period: result.preview.period,
-      recordCount: result.preview.videoCount,
+      // Um único arquivo de audiência do Instagram só produz um `datasetKind`
+      // por vez — o período (quando existe) fica no resumo desse kind.
+      period: result.preview.kinds[0]?.period ?? null,
+      recordCount: result.preview.recordCount,
       metrics: result.preview.metrics,
     };
   }

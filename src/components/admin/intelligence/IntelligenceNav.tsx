@@ -8,6 +8,7 @@ const INTELLIGENCE_NAV_ITEMS = [
   { href: "/admin/intelligence", label: "Dashboard" },
   { href: "/admin/intelligence/importacoes", label: "Importações" },
   { href: "/admin/intelligence/conteudos", label: "Conteúdos" },
+  { href: "/admin/intelligence/chat", label: "Chat" },
   { href: "/admin/intelligence/plataformas", label: "Plataformas" },
   { href: "/admin/intelligence/ia", label: "IA" },
   { href: "/admin/intelligence/relatorios", label: "Relatórios" },

@@ -12,3 +12,17 @@ export {
   PLATFORMS_WITH_PERSISTENCE,
   platformWithoutDatasetRule,
 } from "@/lib/intelligence/insights/rules/platformWithoutDataset";
+export {
+  audienceContentAlignmentRule,
+  audienceEmergingTerritoriesRule,
+  audienceGrowthLeadersRule,
+  audienceUnderservedSegmentsRule,
+} from "@/lib/intelligence/insights/rules/audienceInsights";
+export {
+  audienceAcquisitionPatternsRule,
+  audienceRetentionPatternsRule,
+  topEngagementDriversRule,
+  topGrowthDriversRule,
+} from "@/lib/intelligence/insights/rules/contentPerformanceInsights";
+export { contentAudienceCorrelationRule } from "@/lib/intelligence/insights/rules/contentAudienceCorrelation";
+export { campaignEfficiencyRule } from "@/lib/intelligence/insights/rules/campaignEfficiency";

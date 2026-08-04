@@ -26,6 +26,9 @@ export type ImportPlatform = KnownImportPlatform | (string & {});
 
 export type ImportFileFormat = "csv" | "excel" | "pdf" | "json" | "unknown";
 
+/** Formatos distintos que compartilham a mesma plataforma TikTok. */
+export type TikTokDatasetKind = "tiktok_promotions" | "tiktok_creator";
+
 export type ImportPipelineStage =
   | "import"
   | "detect"
@@ -75,6 +78,7 @@ export interface ImportBatch {
 
 export interface DetectionResult {
   platform: ImportPlatform;
+  datasetKind?: TikTokDatasetKind;
   format: ImportFileFormat;
   confidence: number;
   issues: ImportIssue[];

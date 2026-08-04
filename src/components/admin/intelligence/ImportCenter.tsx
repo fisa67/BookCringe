@@ -6,6 +6,9 @@ import { ImportValidationChecklist } from "@/components/admin/intelligence/Impor
 import { useImportSession } from "@/components/admin/intelligence/useImportSession";
 import type { ImportPreviewResult } from "@/lib/intelligence/imports/preview";
 import type { YouTubeImportPreview } from "@/lib/intelligence/imports/platforms/youtube/preview";
+import type { InstagramAudiencePreview } from "@/lib/intelligence/imports/platforms/instagram/audiencePreview";
+import type { TikTokPromotionsImportPreview } from "@/lib/intelligence/imports/platforms/tiktok/promotionsPreview";
+import { INSTAGRAM_DATASET_KIND_LABELS } from "@/lib/intelligence/imports/platforms/instagram/audienceTypes";
 import { PLATFORM_LABELS, type ImportSession, type ImportSessionStage } from "@/lib/intelligence/session";
 import { cn, formatNumber } from "@/lib/utils";
 
@@ -27,9 +30,14 @@ function platformLabel(platform: string): string {
 /**
  * Import Center — orquestra as 4 etapas visuais (Selecionar arquivo →
  * Detection Preview → Validação → Pronto para importar) em cima da Import
- * Session (`useImportSession`). O botão "Importar" só fica habilitado
- * quando a Validação passa; ao ser confirmado, grava de verdade no Dataset
- * do YouTube (`confirmImport` → `importYouTubeDatasetAction`).
+ * Session (`useImportSession`). Desde a Sprint 13 também reconhece e monta
+ * a Preview para arquivos de audiência do Instagram (`.xlsx`), lado a lado
+ * com o YouTube; desde a Sprint 14
+ * (`docs/intelligence/AUDIENCE_PERSISTENCE.md`), o botão "Importar" também
+ * fica habilitado para o Instagram, porque a checagem "persistence"
+ * (`session/validation.ts`) já reconhece as duas plataformas. Ao ser
+ * confirmado, grava de verdade no Dataset correspondente (`confirmImport` →
+ * `confirmImportAction`, que despacha para YouTube ou Instagram).
  */
 export function ImportCenter() {
   const { session, selectFile, confirmImport, reset } = useImportSession();
@@ -69,7 +77,7 @@ export function ImportCenter() {
       ) : null}
 
       {session.stage === "imported" && session.importResult ? (
-        <ImportResultPanel result={session.importResult} />
+        <ImportResultPanel result={session.importResult} platform={session.summary.platform} />
       ) : null}
 
       <ImportFooter session={session} onImport={confirmImport} onReset={reset} />
@@ -77,12 +85,25 @@ export function ImportCenter() {
   );
 }
 
-function ImportResultPanel({ result }: { result: NonNullable<ImportSession["importResult"]> }) {
+function ImportResultPanel({
+  result,
+  platform,
+}: {
+  result: NonNullable<ImportSession["importResult"]>;
+  platform: ImportSession["summary"]["platform"];
+}) {
+  const isInstagram = platform === "instagram";
+  const isTikTok = platform === "tiktok";
+
   return (
     <section className="rounded-3xl border border-emerald-900/60 bg-emerald-950/10 p-6">
       <p className="text-sm uppercase tracking-[0.24em] text-emerald-400">Importação concluída</p>
       <h3 className="mt-2 text-xl font-semibold text-white">
-        {formatNumber(result.acceptedRecords)} vídeo(s) salvos no Dataset do YouTube
+        {isInstagram
+          ? `${formatNumber(result.acceptedRecords)} registro(s) de audiência salvos no Dataset do Instagram`
+          : isTikTok
+            ? `${formatNumber(result.acceptedRecords)} registro(s) de promoção salvos no Dataset do TikTok`
+            : `${formatNumber(result.acceptedRecords)} vídeo(s) salvos no Dataset do YouTube`}
       </h3>
       <p className="mt-2 text-sm text-slate-400">
         O Dataset foi criado automaticamente (se ainda não existisse) e agora tem um novo Import registrado.
@@ -106,7 +127,13 @@ function ImportResultPanel({ result }: { result: NonNullable<ImportSession["impo
 
 function DetectionPreviewPanel({ preview, isValidating }: { preview: ImportPreviewResult; isValidating: boolean }) {
   if (preview.status === "ready") {
-    return <YouTubeReadyPreview preview={preview.preview} isValidating={isValidating} />;
+    if (preview.platform === "youtube") {
+      return <YouTubeReadyPreview preview={preview.preview} isValidating={isValidating} />;
+    }
+    if (preview.platform === "tiktok") {
+      return <TikTokPromotionsReadyPreview preview={preview.preview} isValidating={isValidating} />;
+    }
+    return <InstagramAudienceReadyPreview preview={preview.preview} isValidating={isValidating} />;
   }
 
   const isUnsupported = preview.status === "unsupported";
@@ -197,6 +224,125 @@ function YouTubeReadyPreview({ preview, isValidating }: { preview: YouTubeImport
   );
 }
 
+function TikTokPromotionsReadyPreview({
+  preview,
+  isValidating,
+}: {
+  preview: TikTokPromotionsImportPreview;
+  isValidating: boolean;
+}) {
+  return (
+    <section className="rounded-3xl border border-emerald-900/60 bg-emerald-950/10 p-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-sm uppercase tracking-[0.24em] text-emerald-400">Detection Preview</p>
+          <h3 className="mt-2 text-xl font-semibold text-white">TikTok — Promoções</h3>
+        </div>
+        <span className="rounded-full border border-emerald-800/60 bg-emerald-950/40 px-3 py-1 text-xs font-medium text-emerald-300">
+          {isValidating ? "Validando..." : "Preview pronta"}
+        </span>
+      </div>
+
+      <dl className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <PreviewField label="Plataforma" value="TikTok" />
+        <PreviewField label="Tipo do arquivo" value={preview.format.toUpperCase()} />
+        <PreviewField
+          label="Período"
+          value={
+            preview.period
+              ? `${formatPeriodDate(preview.period.start)} – ${formatPeriodDate(preview.period.end)}`
+              : "—"
+          }
+        />
+        <PreviewField label="Quantidade de registros" value={formatNumber(preview.recordCount)} />
+        <PreviewField label="Confiança da detecção" value={formatConfidence(preview.confidence)} />
+      </dl>
+
+      <div className="mt-6">
+        <p className="text-sm font-medium text-slate-300">Métricas encontradas</p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          {preview.metrics.map((metric) => (
+            <div key={metric.key} className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4">
+              <p className="text-xs uppercase tracking-wide text-slate-500">{metric.label}</p>
+              <p className="mt-1 text-lg font-semibold text-white">{formatNumber(metric.total)}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * Mesma estrutura visual de `YouTubeReadyPreview` (Plataforma, Tipo do
+ * arquivo, Período, Quantidade de registros, Confiança, Métricas
+ * encontradas) — item 4 do escopo da Sprint 13: "da mesma forma que
+ * acontece hoje no YouTube". A única diferença de conteúdo é "Tipo de
+ * dataset" no lugar de "Quantidade de vídeos", já que um mesmo Adapter do
+ * Instagram cobre 4 formatos diferentes (`INSTAGRAM_DATASET_KIND_LABELS`).
+ */
+function InstagramAudienceReadyPreview({
+  preview,
+  isValidating,
+}: {
+  preview: InstagramAudiencePreview;
+  isValidating: boolean;
+}) {
+  const kind = preview.kinds[0] ?? null;
+
+  return (
+    <section className="rounded-3xl border border-emerald-900/60 bg-emerald-950/10 p-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-sm uppercase tracking-[0.24em] text-emerald-400">Detection Preview</p>
+          <h3 className="mt-2 text-xl font-semibold text-white">Instagram — Audiência</h3>
+        </div>
+        <span className="rounded-full border border-emerald-800/60 bg-emerald-950/40 px-3 py-1 text-xs font-medium text-emerald-300">
+          {isValidating ? "Validando..." : "Preview pronta"}
+        </span>
+      </div>
+
+      <dl className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <PreviewField label="Plataforma" value="Instagram" />
+        <PreviewField label="Tipo do arquivo" value={preview.format.toUpperCase()} />
+        <PreviewField label="Tipo de dataset" value={kind ? INSTAGRAM_DATASET_KIND_LABELS[kind.kind] : "—"} />
+        <PreviewField
+          label="Período"
+          value={kind?.period ? `${formatPeriodDate(kind.period.start)} – ${formatPeriodDate(kind.period.end)}` : "—"}
+        />
+        <PreviewField label="Quantidade de registros" value={formatNumber(preview.recordCount)} />
+        <PreviewField label="Confiança da detecção" value={formatConfidence(preview.confidence)} />
+      </dl>
+
+      <div className="mt-6">
+        <p className="text-sm font-medium text-slate-300">Métricas encontradas</p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {preview.metrics.map((metric) => (
+            <div key={metric.key} className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4">
+              <p className="text-xs uppercase tracking-wide text-slate-500">{metric.label}</p>
+              <p className="mt-1 text-lg font-semibold text-white">{formatNumber(metric.total)}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {preview.issues.length > 0 ? (
+        <div className="mt-6 rounded-2xl border border-amber-900/60 bg-amber-950/20 p-4 text-sm text-amber-200">
+          <p className="font-medium">Linhas ignoradas durante o processamento:</p>
+          <ul className="mt-2 space-y-1">
+            {preview.issues.map((issue, index) => (
+              <li key={index}>
+                • {issue.message}
+                {issue.row ? ` (linha ${issue.row})` : ""}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 function PreviewField({ label, value }: { label: string; value: string }) {
   return (
     <div>
@@ -221,7 +367,7 @@ const FOOTER_MESSAGE_STYLES: Record<ImportSessionStage, string> = {
 function footerMessage(session: ImportSession): string {
   switch (session.stage) {
     case "idle":
-      return "Selecione um arquivo do YouTube Studio para começar.";
+      return "Selecione um CSV do YouTube/TikTok ou um XLSX de audiência do Instagram para começar.";
     case "detecting":
       return "Rodando a Detection Preview...";
     case "validating":
@@ -233,7 +379,7 @@ function footerMessage(session: ImportSession): string {
     case "error":
       return session.errorMessage ?? "Não foi possível processar o arquivo.";
     case "importing":
-      return "Salvando os dados no Dataset do YouTube...";
+      return `Salvando os dados no Dataset do ${platformLabel(session.summary.platform ?? "unknown")}...`;
     case "imported":
       return "Importação concluída.";
     case "import_error":

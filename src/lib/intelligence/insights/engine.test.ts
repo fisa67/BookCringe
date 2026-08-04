@@ -5,9 +5,18 @@ import type { IntelligenceDatasetRecord, IntelligenceImportRecord } from "@/lib/
 const NOW = new Date("2026-08-01T00:00:00.000Z");
 
 describe("runIntelligenceRules", () => {
-  it("em um cenário totalmente vazio, só a ausência do Dataset do YouTube é apontada", () => {
+  it("em um cenário vazio, aponta as plataformas com persistência e sem Dataset", () => {
     const insights = runIntelligenceRules({ now: NOW, datasets: [], imports: [], contents: [], metrics: [] });
-    expect(insights.map((insight) => insight.ruleId)).toEqual(["platform-without-dataset"]);
+    expect(insights.map((insight) => insight.ruleId)).toEqual([
+      "platform-without-dataset",
+      "platform-without-dataset",
+      "platform-without-dataset",
+    ]);
+    expect(insights.map((insight) => insight.id)).toEqual([
+      "platform-without-dataset:youtube",
+      "platform-without-dataset:instagram",
+      "platform-without-dataset:tiktok",
+    ]);
   });
 
   it("agrega os insights de todas as regras registradas", () => {
@@ -33,8 +42,10 @@ describe("runIntelligenceRules", () => {
 
     // Dataset "instagram" antigo e sem Contents dispara stale-dataset,
     // low-content-volume e no-recent-import; platform-without-dataset
-    // dispara porque o YouTube (única plataforma com persistência) não
-    // tem Dataset nenhum.
+    // dispara só uma vez (para o YouTube) porque o Instagram já tem este
+    // Dataset — ainda que "Instagram — Reels" não seja o Dataset de
+    // audiência da Sprint 14, o suficiente para a regra (que só olha
+    // `dataset.platform`) considerar a plataforma coberta.
     expect(ruleIds).toEqual(new Set(["stale-dataset", "low-content-volume", "no-recent-import", "platform-without-dataset"]));
   });
 
@@ -47,6 +58,16 @@ describe("runIntelligenceRules", () => {
       "no-recent-import",
       "unmatched-content",
       "platform-without-dataset",
+      "audience-growth-leaders",
+      "audience-underserved-segments",
+      "audience-emerging-territories",
+      "audience-content-alignment",
+      "top-growth-drivers",
+      "top-engagement-drivers",
+      "audience-acquisition-patterns",
+      "audience-retention-patterns",
+      "content-audience-correlation",
+      "campaign-efficiency",
     ]);
   });
 });

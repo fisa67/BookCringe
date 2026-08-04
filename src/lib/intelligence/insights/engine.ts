@@ -4,6 +4,20 @@ import { lowContentVolumeRule } from "@/lib/intelligence/insights/rules/lowConte
 import { noRecentImportRule } from "@/lib/intelligence/insights/rules/noRecentImport";
 import { unmatchedContentRule } from "@/lib/intelligence/insights/rules/unmatchedContent";
 import { platformWithoutDatasetRule } from "@/lib/intelligence/insights/rules/platformWithoutDataset";
+import {
+  audienceContentAlignmentRule,
+  audienceEmergingTerritoriesRule,
+  audienceGrowthLeadersRule,
+  audienceUnderservedSegmentsRule,
+} from "@/lib/intelligence/insights/rules/audienceInsights";
+import {
+  audienceAcquisitionPatternsRule,
+  audienceRetentionPatternsRule,
+  topEngagementDriversRule,
+  topGrowthDriversRule,
+} from "@/lib/intelligence/insights/rules/contentPerformanceInsights";
+import { contentAudienceCorrelationRule } from "@/lib/intelligence/insights/rules/contentAudienceCorrelation";
+import { campaignEfficiencyRule } from "@/lib/intelligence/insights/rules/campaignEfficiency";
 
 /**
  * O Rules Engine em si: uma lista de regras independentes. Adicionar uma
@@ -16,6 +30,16 @@ export const INTELLIGENCE_RULES: Rule[] = [
   noRecentImportRule,
   unmatchedContentRule,
   platformWithoutDatasetRule,
+  audienceGrowthLeadersRule,
+  audienceUnderservedSegmentsRule,
+  audienceEmergingTerritoriesRule,
+  audienceContentAlignmentRule,
+  topGrowthDriversRule,
+  topEngagementDriversRule,
+  audienceAcquisitionPatternsRule,
+  audienceRetentionPatternsRule,
+  contentAudienceCorrelationRule,
+  campaignEfficiencyRule,
 ];
 
 export function runIntelligenceRules(context: RuleContext): Insight[] {

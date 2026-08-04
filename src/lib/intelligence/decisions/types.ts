@@ -2,6 +2,25 @@ import type { QuestionAnswer } from "@/lib/intelligence/questions/types";
 import type { BestContentAnswerData } from "@/lib/intelligence/questions/bestContent";
 import type { StaleDatasetAnswerData } from "@/lib/intelligence/questions/staleDataset";
 import type { UnmatchedContentAnswerData } from "@/lib/intelligence/questions/unmatchedContent";
+import type {
+  ActivityPeakAnswerData,
+  FollowerGrowthAnswerData,
+  PrimaryAudienceAnswerData,
+  TopTerritoryAnswerData,
+} from "@/lib/intelligence/questions/audience";
+import type {
+  AudienceContentMismatchAnswerData,
+  FastestGrowingSegmentAnswerData,
+  TerritoryGrowthOpportunityAnswerData,
+  UnderservedSegmentAnswerData,
+} from "@/lib/intelligence/questions/audienceStrategy";
+import type {
+  AudienceAcquisitionContentAnswerData,
+  EngagementFormatAnswerData,
+  GrowthThemeAnswerData,
+  RetentionContentAnswerData,
+} from "@/lib/intelligence/questions/contentPerformance";
+import type { LowestCostPerFollowerAnswerData } from "@/lib/intelligence/questions/campaign";
 
 /**
  * Decision Engine (Sprint 11, `docs/intelligence/DECISIONS_ENGINE.md`):
@@ -40,6 +59,20 @@ export interface DecisionContext {
   bestContent: QuestionAnswer<BestContentAnswerData>;
   staleDataset: QuestionAnswer<StaleDatasetAnswerData>;
   unmatchedContent: QuestionAnswer<UnmatchedContentAnswerData>;
+  followerGrowth?: QuestionAnswer<FollowerGrowthAnswerData>;
+  activityPeak?: QuestionAnswer<ActivityPeakAnswerData>;
+  topTerritory?: QuestionAnswer<TopTerritoryAnswerData>;
+  primaryAudience?: QuestionAnswer<PrimaryAudienceAnswerData>;
+  fastestGrowingSegment?: QuestionAnswer<FastestGrowingSegmentAnswerData>;
+  underservedSegment?: QuestionAnswer<UnderservedSegmentAnswerData>;
+  territoryGrowthOpportunity?: QuestionAnswer<TerritoryGrowthOpportunityAnswerData>;
+  audienceContentMismatch?: QuestionAnswer<AudienceContentMismatchAnswerData>;
+  growthTheme?: QuestionAnswer<GrowthThemeAnswerData>;
+  engagementFormat?: QuestionAnswer<EngagementFormatAnswerData>;
+  audienceAcquisitionContent?: QuestionAnswer<AudienceAcquisitionContentAnswerData>;
+  retentionContent?: QuestionAnswer<RetentionContentAnswerData>;
+  /** Sprint 20.5, ADR-010: mesma ideia de `fastestGrowingSegment`, mas para a campanha mais eficiente por custo/seguidor. */
+  lowestCostPerFollower?: QuestionAnswer<LowestCostPerFollowerAnswerData>;
 }
 
 /**

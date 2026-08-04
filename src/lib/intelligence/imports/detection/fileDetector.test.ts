@@ -104,8 +104,27 @@ describe("IntelligenceFileDetector", () => {
     });
 
     expect(result.platform).toBe("tiktok");
+    expect(result.datasetKind).toBe("tiktok_creator");
     expect(result.format).toBe("csv");
     expect(result.issues).toEqual([]);
+  });
+
+  it("detecta histórico de promoções do TikTok pelas colunas canônicas", async () => {
+    const relativePath = "tiktok/tiktok-promotions-history.csv";
+    const content = readFixture(relativePath);
+
+    const result = await detector.detect({
+      file: descriptor(relativePath),
+      contentSample: content,
+    });
+
+    expect(result).toMatchObject({
+      platform: "tiktok",
+      datasetKind: "tiktok_promotions",
+      format: "csv",
+      issues: [],
+    });
+    expect(result.confidence).toBeGreaterThanOrEqual(0.8);
   });
 
   it("detecta relatório de Meta Ads por colunas de campanha paga", async () => {

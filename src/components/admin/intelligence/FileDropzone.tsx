@@ -48,7 +48,7 @@ export function FileDropzone({ onSelectFile, disabled, selectedFileName }: FileD
     <input
       ref={inputRef}
       type="file"
-      accept=".csv,text/csv"
+      accept=".csv,text/csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
       className="hidden"
       onChange={(event) => handleFiles(event.target.files)}
     />
@@ -93,10 +93,12 @@ export function FileDropzone({ onSelectFile, disabled, selectedFileName }: FileD
       <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-800 bg-slate-900 text-slate-300">
         <UploadIcon />
       </div>
-      <p className="mt-5 text-lg font-semibold text-white">Arraste um CSV do YouTube Studio para esta área</p>
+      <p className="mt-5 text-lg font-semibold text-white">
+        Arraste um CSV do YouTube/TikTok ou um .xlsx de audiência do Instagram para esta área
+      </p>
       <p className="mt-2 max-w-md text-sm text-slate-400">
-        Instagram, TikTok, Meta Ads, Google Analytics e Manual chegam em sprints futuras — por
-        enquanto, só arquivos do YouTube seguem até o fim do fluxo.
+        YouTube, TikTok Promotions e Instagram (audiência) já passam pela Detection Preview e
+        confirmam a importação até o fim.
       </p>
       <button
         type="button"
