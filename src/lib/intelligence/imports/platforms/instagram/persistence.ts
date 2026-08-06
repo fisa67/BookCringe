@@ -104,12 +104,19 @@ function toMetricRows(
 }
 
 export const instagramAudiencePersistence: ImportPersistence<InstagramAudienceNormalizedRecord> = {
-  async persist(records: InstagramAudienceNormalizedRecord[], batch: ImportBatch): Promise<PersistenceReceipt> {
+  async persist(
+    records: InstagramAudienceNormalizedRecord[],
+    batch: ImportBatch,
+    ownerId: string
+  ): Promise<PersistenceReceipt> {
     if (records.length === 0) {
       return failureReceipt(batch.id, 0, "Nenhum registro normalizado para importar.");
     }
 
-    const dataset = await findOrCreateDataset({ platform: "instagram", name: INSTAGRAM_AUDIENCE_DATASET_NAME });
+    const dataset = await findOrCreateDataset(ownerId, {
+      platform: "instagram",
+      name: INSTAGRAM_AUDIENCE_DATASET_NAME,
+    });
     if (!dataset) {
       return failureReceipt(
         batch.id,

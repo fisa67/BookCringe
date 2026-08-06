@@ -23,12 +23,16 @@ function failureReceipt(batchId: string, rejectedRecords: number, message: strin
 }
 
 export const tiktokPromotionsPersistence: ImportPersistence<TikTokPromotionNormalizedRecord> = {
-  async persist(records: TikTokPromotionNormalizedRecord[], batch: ImportBatch): Promise<PersistenceReceipt> {
+  async persist(
+    records: TikTokPromotionNormalizedRecord[],
+    batch: ImportBatch,
+    ownerId: string
+  ): Promise<PersistenceReceipt> {
     if (records.length === 0) {
       return failureReceipt(batch.id, 0, "Nenhum registro normalizado para importar.");
     }
 
-    const dataset = await findOrCreateDataset({
+    const dataset = await findOrCreateDataset(ownerId, {
       platform: "tiktok",
       name: TIKTOK_PROMOTIONS_DATASET_NAME,
     });

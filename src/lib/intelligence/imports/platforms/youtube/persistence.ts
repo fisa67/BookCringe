@@ -35,12 +35,12 @@ function failureReceipt(batchId: string, rejectedRecords: number, message: strin
 }
 
 export const youtubeStudioPersistence: ImportPersistence<YouTubeNormalizedRecord> = {
-  async persist(records: YouTubeNormalizedRecord[], batch: ImportBatch): Promise<PersistenceReceipt> {
+  async persist(records: YouTubeNormalizedRecord[], batch: ImportBatch, ownerId: string): Promise<PersistenceReceipt> {
     if (records.length === 0) {
       return failureReceipt(batch.id, 0, "Nenhum registro normalizado para importar.");
     }
 
-    const dataset = await findOrCreateDataset({ platform: "youtube", name: YOUTUBE_DATASET_NAME });
+    const dataset = await findOrCreateDataset(ownerId, { platform: "youtube", name: YOUTUBE_DATASET_NAME });
     if (!dataset) {
       return failureReceipt(
         batch.id,

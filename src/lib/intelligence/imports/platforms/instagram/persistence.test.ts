@@ -25,6 +25,8 @@ const BATCH: ImportBatch = {
   createdAt: "2026-08-03T12:00:00.000Z",
 };
 
+const OWNER_ID = "filipe-santos";
+
 const DATASET_ROW = {
   id: "dataset-1",
   platform: "instagram" as const,
@@ -93,7 +95,7 @@ beforeEach(() => {
 
 describe("instagramAudiencePersistence.persist", () => {
   it("retorna falha sem chamar o banco quando não há registros", async () => {
-    const receipt = await instagramAudiencePersistence.persist([], BATCH);
+    const receipt = await instagramAudiencePersistence.persist([], BATCH, OWNER_ID);
 
     expect(receipt).toMatchObject({ status: "failed", acceptedRecords: 0, rejectedRecords: 0 });
     expect(findOrCreateDatasetMock).not.toHaveBeenCalled();
@@ -101,10 +103,10 @@ describe("instagramAudiencePersistence.persist", () => {
 
   it("encontra/cria um único Dataset 'Instagram — Audiência' (sem depender de datasetKind)", async () => {
     const records = [historyRecord("2026-07-25", 1000, 10), historyRecord("2026-07-26", 1015, 15)];
-    await instagramAudiencePersistence.persist(records, BATCH);
+    await instagramAudiencePersistence.persist(records, BATCH, OWNER_ID);
 
     expect(findOrCreateDatasetMock).toHaveBeenCalledTimes(1);
-    expect(findOrCreateDatasetMock).toHaveBeenCalledWith({
+    expect(findOrCreateDatasetMock).toHaveBeenCalledWith(OWNER_ID, {
       platform: "instagram",
       name: "Instagram — Audiência",
     });
@@ -113,7 +115,7 @@ describe("instagramAudiencePersistence.persist", () => {
 
   it("nunca chama upsertContent — persiste FollowerHistory como Metric sem Content", async () => {
     const records = [historyRecord("2026-07-25", 1000, 10)];
-    const receipt = await instagramAudiencePersistence.persist(records, BATCH);
+    const receipt = await instagramAudiencePersistence.persist(records, BATCH, OWNER_ID);
 
     expect(insertMetricsMock).toHaveBeenCalledTimes(1);
     expect(insertMetricsMock).toHaveBeenCalledWith([
@@ -155,7 +157,7 @@ describe("instagramAudiencePersistence.persist", () => {
 
   it("persiste FollowerActivity combinando data + hora em measured_at", async () => {
     const records = [activityRecord("2026-07-25", 14, 320)];
-    await instagramAudiencePersistence.persist(records, BATCH);
+    await instagramAudiencePersistence.persist(records, BATCH, OWNER_ID);
 
     expect(insertMetricsMock).toHaveBeenCalledWith([
       expect.objectContaining({
@@ -169,7 +171,7 @@ describe("instagramAudiencePersistence.persist", () => {
 
   it("persiste FollowerGender com a categoria embutida na key e measured_at do Import (batch.createdAt)", async () => {
     const records = [demographicsRecord("Male", 0.62), demographicsRecord("Female", 0.38)];
-    await instagramAudiencePersistence.persist(records, BATCH);
+    await instagramAudiencePersistence.persist(records, BATCH, OWNER_ID);
 
     expect(insertMetricsMock).toHaveBeenNthCalledWith(1, [
       expect.objectContaining({ key: "gender:Male", value: 0.62, unit: "ratio", measured_at: BATCH.createdAt }),
@@ -181,7 +183,7 @@ describe("instagramAudiencePersistence.persist", () => {
 
   it("persiste FollowerTopTerritories com a categoria embutida na key", async () => {
     const records = [territoryRecord("BR", 0.71), territoryRecord("Others", 0.05)];
-    const receipt = await instagramAudiencePersistence.persist(records, BATCH);
+    const receipt = await instagramAudiencePersistence.persist(records, BATCH, OWNER_ID);
 
     expect(insertMetricsMock).toHaveBeenNthCalledWith(1, [
       expect.objectContaining({ key: "territory:BR", value: 0.71, unit: "ratio" }),
@@ -195,7 +197,7 @@ describe("instagramAudiencePersistence.persist", () => {
   it("marca como falha quando o Dataset não pode ser encontrado/criado", async () => {
     findOrCreateDatasetMock.mockResolvedValue(null);
 
-    const receipt = await instagramAudiencePersistence.persist([historyRecord("2026-07-25", 1000, 10)], BATCH);
+    const receipt = await instagramAudiencePersistence.persist([historyRecord("2026-07-25", 1000, 10)], BATCH, OWNER_ID);
 
     expect(receipt.status).toBe("failed");
     expect(createImportMock).not.toHaveBeenCalled();
@@ -204,7 +206,7 @@ describe("instagramAudiencePersistence.persist", () => {
   it("marca como falha quando o Import não pode ser criado", async () => {
     createImportMock.mockResolvedValue(null);
 
-    const receipt = await instagramAudiencePersistence.persist([historyRecord("2026-07-25", 1000, 10)], BATCH);
+    const receipt = await instagramAudiencePersistence.persist([historyRecord("2026-07-25", 1000, 10)], BATCH, OWNER_ID);
 
     expect(receipt.status).toBe("failed");
     expect(insertMetricsMock).not.toHaveBeenCalled();
@@ -214,7 +216,7 @@ describe("instagramAudiencePersistence.persist", () => {
     insertMetricsMock.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
 
     const records = [historyRecord("2026-07-25", 1000, 10), historyRecord("2026-07-26", 1015, 15)];
-    const receipt = await instagramAudiencePersistence.persist(records, BATCH);
+    const receipt = await instagramAudiencePersistence.persist(records, BATCH, OWNER_ID);
 
     expect(receipt.acceptedRecords).toBe(1);
     expect(receipt.rejectedRecords).toBe(1);
@@ -231,7 +233,7 @@ describe("instagramAudiencePersistence.persist", () => {
   it("marca o Import como falho quando nenhum registro é aceito", async () => {
     insertMetricsMock.mockResolvedValue(false);
 
-    const receipt = await instagramAudiencePersistence.persist([historyRecord("2026-07-25", 1000, 10)], BATCH);
+    const receipt = await instagramAudiencePersistence.persist([historyRecord("2026-07-25", 1000, 10)], BATCH, OWNER_ID);
 
     expect(receipt.status).toBe("failed");
     expect(finalizeImportMock).toHaveBeenCalledWith({

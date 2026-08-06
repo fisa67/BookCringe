@@ -28,6 +28,8 @@ const BATCH: ImportBatch = {
   createdAt: "2026-08-01T00:00:00.000Z",
 };
 
+const OWNER_ID = "filipe-santos";
+
 function buildRecord(title: string): YouTubeNormalizedRecord {
   return {
     platform: "youtube",
@@ -75,19 +77,19 @@ beforeEach(() => {
 
 describe("youtubeStudioPersistence.persist", () => {
   it("retorna falha sem chamar o banco quando não há registros", async () => {
-    const receipt = await youtubeStudioPersistence.persist([], BATCH);
+    const receipt = await youtubeStudioPersistence.persist([], BATCH, OWNER_ID);
 
     expect(receipt).toMatchObject({ status: "failed", acceptedRecords: 0, rejectedRecords: 0 });
     expect(findOrCreateDatasetMock).not.toHaveBeenCalled();
   });
 
-  it("encontra/cria o Dataset, cria o Import e persiste Content + Metrics de cada registro", async () => {
+  it("encontra/cria o Dataset do dono, cria o Import e persiste Content + Metrics de cada registro", async () => {
     upsertContentMock.mockResolvedValue({ id: "content-1", dataset_id: "dataset-1", title: "Vídeo 1" });
 
     const records = [buildRecord("Vídeo 1"), buildRecord("Vídeo 2")];
-    const receipt = await youtubeStudioPersistence.persist(records, BATCH);
+    const receipt = await youtubeStudioPersistence.persist(records, BATCH, OWNER_ID);
 
-    expect(findOrCreateDatasetMock).toHaveBeenCalledWith({
+    expect(findOrCreateDatasetMock).toHaveBeenCalledWith(OWNER_ID, {
       platform: "youtube",
       name: "YouTube Studio — Desempenho de vídeos",
     });
@@ -118,7 +120,7 @@ describe("youtubeStudioPersistence.persist", () => {
   it("marca como falha quando o Dataset não pode ser encontrado/criado", async () => {
     findOrCreateDatasetMock.mockResolvedValue(null);
 
-    const receipt = await youtubeStudioPersistence.persist([buildRecord("Vídeo 1")], BATCH);
+    const receipt = await youtubeStudioPersistence.persist([buildRecord("Vídeo 1")], BATCH, OWNER_ID);
 
     expect(receipt.status).toBe("failed");
     expect(createImportMock).not.toHaveBeenCalled();
@@ -127,7 +129,7 @@ describe("youtubeStudioPersistence.persist", () => {
   it("marca como falha quando o Import não pode ser criado", async () => {
     createImportMock.mockResolvedValue(null);
 
-    const receipt = await youtubeStudioPersistence.persist([buildRecord("Vídeo 1")], BATCH);
+    const receipt = await youtubeStudioPersistence.persist([buildRecord("Vídeo 1")], BATCH, OWNER_ID);
 
     expect(receipt.status).toBe("failed");
     expect(upsertContentMock).not.toHaveBeenCalled();
@@ -138,7 +140,11 @@ describe("youtubeStudioPersistence.persist", () => {
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({ id: "content-2", dataset_id: "dataset-1", title: "Vídeo 2" });
 
-    const receipt = await youtubeStudioPersistence.persist([buildRecord("Vídeo 1"), buildRecord("Vídeo 2")], BATCH);
+    const receipt = await youtubeStudioPersistence.persist(
+      [buildRecord("Vídeo 1"), buildRecord("Vídeo 2")],
+      BATCH,
+      OWNER_ID
+    );
 
     expect(receipt.acceptedRecords).toBe(1);
     expect(receipt.rejectedRecords).toBe(1);
@@ -155,7 +161,7 @@ describe("youtubeStudioPersistence.persist", () => {
   it("marca o Import como falho quando nenhum registro é aceito", async () => {
     upsertContentMock.mockResolvedValue(null);
 
-    const receipt = await youtubeStudioPersistence.persist([buildRecord("Vídeo 1")], BATCH);
+    const receipt = await youtubeStudioPersistence.persist([buildRecord("Vídeo 1")], BATCH, OWNER_ID);
 
     expect(receipt.status).toBe("failed");
     expect(finalizeImportMock).toHaveBeenCalledWith({

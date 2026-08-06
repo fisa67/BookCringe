@@ -25,8 +25,12 @@ vi.mock("@/lib/supabase/client", () => ({
   },
 }));
 
+const OWNER_ID = "filipe-santos";
+const OTHER_OWNER_ID = "outro-criador";
+
 const DATASET_ROW = {
   id: "dataset-1",
+  owner_id: OWNER_ID,
   platform: "youtube",
   name: "YouTube Studio — Desempenho de vídeos",
   description: undefined,
@@ -39,33 +43,35 @@ beforeEach(() => {
 });
 
 describe("findDatasetByPlatform", () => {
-  it("retorna o Dataset quando ele existe", async () => {
-    fromMock.mockReturnValue({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          maybeSingle: vi.fn().mockResolvedValue({ data: DATASET_ROW, error: null }),
-        })),
-      })),
-    });
+  it("retorna o Dataset quando ele existe para o dono informado", async () => {
+    const eqPlatformMock = vi.fn(() => ({
+      maybeSingle: vi.fn().mockResolvedValue({ data: DATASET_ROW, error: null }),
+    }));
+    const eqOwnerMock = vi.fn(() => ({ eq: eqPlatformMock }));
+    fromMock.mockReturnValue({ select: vi.fn(() => ({ eq: eqOwnerMock })) });
 
-    await expect(findDatasetByPlatform("youtube")).resolves.toEqual(DATASET_ROW);
+    await expect(findDatasetByPlatform(OWNER_ID, "youtube")).resolves.toEqual(DATASET_ROW);
+    expect(eqOwnerMock).toHaveBeenCalledWith("owner_id", OWNER_ID);
+    expect(eqPlatformMock).toHaveBeenCalledWith("platform", "youtube");
   });
 
   it("retorna null em caso de erro", async () => {
     fromMock.mockReturnValue({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
-          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: new Error("boom") }),
+          eq: vi.fn(() => ({
+            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: new Error("boom") }),
+          })),
         })),
       })),
     });
 
-    await expect(findDatasetByPlatform("youtube")).resolves.toBeNull();
+    await expect(findDatasetByPlatform(OWNER_ID, "youtube")).resolves.toBeNull();
   });
 });
 
 describe("createDataset", () => {
-  it("insere e retorna o Dataset criado", async () => {
+  it("insere o Dataset com o owner_id do criador e retorna o Dataset criado", async () => {
     const insertMock = vi.fn(() => ({
       select: vi.fn(() => ({
         single: vi.fn().mockResolvedValue({ data: DATASET_ROW, error: null }),
@@ -74,36 +80,46 @@ describe("createDataset", () => {
     fromMock.mockReturnValue({ insert: insertMock });
 
     await expect(
-      createDataset({ platform: "youtube", name: "YouTube Studio — Desempenho de vídeos" })
+      createDataset(OWNER_ID, { platform: "youtube", name: "YouTube Studio — Desempenho de vídeos" })
     ).resolves.toEqual(DATASET_ROW);
+    expect(insertMock).toHaveBeenCalledWith(
+      expect.objectContaining({ owner_id: OWNER_ID, platform: "youtube" })
+    );
   });
 });
 
 describe("findOrCreateDataset", () => {
-  it("não cria um novo Dataset quando já existe um para a Platform", async () => {
+  it("não cria um novo Dataset quando já existe um para o dono e a Platform", async () => {
     const insertMock = vi.fn();
     fromMock
       .mockReturnValueOnce({
         select: vi.fn(() => ({
           eq: vi.fn(() => ({
-            maybeSingle: vi.fn().mockResolvedValue({ data: DATASET_ROW, error: null }),
+            eq: vi.fn(() => ({
+              maybeSingle: vi.fn().mockResolvedValue({ data: DATASET_ROW, error: null }),
+            })),
           })),
         })),
       })
       .mockReturnValueOnce({ insert: insertMock });
 
-    const result = await findOrCreateDataset({ platform: "youtube", name: "YouTube Studio — Desempenho de vídeos" });
+    const result = await findOrCreateDataset(OWNER_ID, {
+      platform: "youtube",
+      name: "YouTube Studio — Desempenho de vídeos",
+    });
 
     expect(result).toEqual(DATASET_ROW);
     expect(insertMock).not.toHaveBeenCalled();
   });
 
-  it("cria o Dataset quando ainda não existe um para a Platform", async () => {
+  it("cria o Dataset para o dono quando ainda não existe um para a Platform", async () => {
     fromMock
       .mockReturnValueOnce({
         select: vi.fn(() => ({
           eq: vi.fn(() => ({
-            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+            eq: vi.fn(() => ({
+              maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+            })),
           })),
         })),
       })
@@ -116,8 +132,38 @@ describe("findOrCreateDataset", () => {
       });
 
     await expect(
-      findOrCreateDataset({ platform: "youtube", name: "YouTube Studio — Desempenho de vídeos" })
+      findOrCreateDataset(OWNER_ID, { platform: "youtube", name: "YouTube Studio — Desempenho de vídeos" })
     ).resolves.toEqual(DATASET_ROW);
+  });
+
+  it("dois donos diferentes recebem Datasets distintos para a mesma Platform (isolamento multi-tenant)", async () => {
+    const otherDatasetRow = { ...DATASET_ROW, id: "dataset-2", owner_id: OTHER_OWNER_ID };
+
+    fromMock
+      .mockReturnValueOnce({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+            })),
+          })),
+        })),
+      })
+      .mockReturnValueOnce({
+        insert: vi.fn(() => ({
+          select: vi.fn(() => ({
+            single: vi.fn().mockResolvedValue({ data: otherDatasetRow, error: null }),
+          })),
+        })),
+      });
+
+    const result = await findOrCreateDataset(OTHER_OWNER_ID, {
+      platform: "youtube",
+      name: "YouTube Studio — Desempenho de vídeos",
+    });
+
+    expect(result?.owner_id).toBe(OTHER_OWNER_ID);
+    expect(result?.id).not.toBe(DATASET_ROW.id);
   });
 });
 
@@ -246,104 +292,211 @@ describe("insertMetrics", () => {
 });
 
 describe("listDatasets", () => {
-  it("retorna os Datasets ordenados por nome", async () => {
-    const orderMock = vi.fn().mockResolvedValue({ data: [DATASET_ROW], error: null });
-    fromMock.mockReturnValue({ select: vi.fn(() => ({ order: orderMock })) });
+  it("retorna só os Datasets do dono informado, ordenados por nome", async () => {
+    const eqMock = vi.fn(() => ({ order: vi.fn().mockResolvedValue({ data: [DATASET_ROW], error: null }) }));
+    fromMock.mockReturnValue({ select: vi.fn(() => ({ eq: eqMock })) });
 
-    await expect(listDatasets()).resolves.toEqual([DATASET_ROW]);
+    await expect(listDatasets(OWNER_ID)).resolves.toEqual([DATASET_ROW]);
+    expect(eqMock).toHaveBeenCalledWith("owner_id", OWNER_ID);
   });
 
   it("retorna null em caso de erro", async () => {
     fromMock.mockReturnValue({
-      select: vi.fn(() => ({ order: vi.fn().mockResolvedValue({ data: null, error: new Error("boom") }) })),
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({ order: vi.fn().mockResolvedValue({ data: null, error: new Error("boom") }) })),
+      })),
     });
 
-    await expect(listDatasets()).resolves.toBeNull();
+    await expect(listDatasets(OWNER_ID)).resolves.toBeNull();
   });
 });
 
 describe("listImports", () => {
-  it("retorna os Imports ordenados do mais recente para o mais antigo", async () => {
+  it("filtra pelos dataset_id dos Datasets do dono antes de buscar os Imports", async () => {
     const importRow = { id: "import-1", dataset_id: "dataset-1", started_at: "2026-08-01T00:00:00.000Z" };
-    const orderMock = vi.fn().mockResolvedValue({ data: [importRow], error: null });
-    fromMock.mockReturnValue({ select: vi.fn(() => ({ order: orderMock })) });
+    const inMock = vi.fn(() => ({ order: vi.fn().mockResolvedValue({ data: [importRow], error: null }) }));
 
-    await expect(listImports()).resolves.toEqual([importRow]);
-    expect(orderMock).toHaveBeenCalledWith("started_at", { ascending: false });
+    fromMock
+      .mockReturnValueOnce({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({ order: vi.fn().mockResolvedValue({ data: [DATASET_ROW], error: null }) })),
+        })),
+      })
+      .mockReturnValueOnce({ select: vi.fn(() => ({ in: inMock })) });
+
+    await expect(listImports(OWNER_ID)).resolves.toEqual([importRow]);
+    expect(inMock).toHaveBeenCalledWith("dataset_id", ["dataset-1"]);
   });
 
-  it("retorna null em caso de erro", async () => {
-    fromMock.mockReturnValue({
-      select: vi.fn(() => ({ order: vi.fn().mockResolvedValue({ data: null, error: new Error("boom") }) })),
+  it("retorna lista vazia sem consultar Imports quando o dono não tem nenhum Dataset", async () => {
+    fromMock.mockReturnValueOnce({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({ order: vi.fn().mockResolvedValue({ data: [], error: null }) })),
+      })),
     });
 
-    await expect(listImports()).resolves.toBeNull();
+    await expect(listImports(OWNER_ID)).resolves.toEqual([]);
+    expect(fromMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("retorna null quando a resolução dos Datasets do dono falha", async () => {
+    fromMock.mockReturnValueOnce({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({ order: vi.fn().mockResolvedValue({ data: null, error: new Error("boom") }) })),
+      })),
+    });
+
+    await expect(listImports(OWNER_ID)).resolves.toBeNull();
   });
 });
 
 describe("listMetrics", () => {
-  it("retorna todas as Metrics", async () => {
+  it("filtra pelos dataset_id dos Datasets do dono antes de buscar as Metrics", async () => {
     const metricRow = { id: "metric-1", dataset_id: "dataset-1", import_id: "import-1", key: "views", value: 100 };
-    const orderMock = vi.fn().mockResolvedValue({ data: [metricRow], error: null });
-    fromMock.mockReturnValue({ select: vi.fn(() => ({ order: orderMock })) });
+    const inMock = vi.fn(() => ({ order: vi.fn().mockResolvedValue({ data: [metricRow], error: null }) }));
 
-    await expect(listMetrics()).resolves.toEqual([metricRow]);
-  });
+    fromMock
+      .mockReturnValueOnce({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({ order: vi.fn().mockResolvedValue({ data: [DATASET_ROW], error: null }) })),
+        })),
+      })
+      .mockReturnValueOnce({ select: vi.fn(() => ({ in: inMock })) });
 
-  it("retorna null em caso de erro", async () => {
-    fromMock.mockReturnValue({
-      select: vi.fn(() => ({ order: vi.fn().mockResolvedValue({ data: null, error: new Error("boom") }) })),
-    });
-
-    await expect(listMetrics()).resolves.toBeNull();
+    await expect(listMetrics(OWNER_ID)).resolves.toEqual([metricRow]);
+    expect(inMock).toHaveBeenCalledWith("dataset_id", ["dataset-1"]);
   });
 });
 
 describe("listContents", () => {
-  it("retorna os Contents ordenados por título", async () => {
+  it("filtra pelos dataset_id dos Datasets do dono antes de buscar os Contents", async () => {
     const contentRow = { id: "content-1", dataset_id: "dataset-1", title: "Como ler mais em 2026" };
-    const orderMock = vi.fn().mockResolvedValue({ data: [contentRow], error: null });
-    fromMock.mockReturnValue({ select: vi.fn(() => ({ order: orderMock })) });
+    const inMock = vi.fn(() => ({ order: vi.fn().mockResolvedValue({ data: [contentRow], error: null }) }));
 
-    await expect(listContents()).resolves.toEqual([contentRow]);
+    fromMock
+      .mockReturnValueOnce({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({ order: vi.fn().mockResolvedValue({ data: [DATASET_ROW], error: null }) })),
+        })),
+      })
+      .mockReturnValueOnce({ select: vi.fn(() => ({ in: inMock })) });
+
+    await expect(listContents(OWNER_ID)).resolves.toEqual([contentRow]);
   });
 });
 
 describe("linkContentToBook", () => {
-  it("grava só a referência (book_id) e retorna o Content atualizado", async () => {
+  it("grava só a referência (book_id) quando o Content pertence ao dono", async () => {
     const contentRow = { id: "content-1", dataset_id: "dataset-1", title: "Como ler mais em 2026", book_id: "book-1" };
-    const eqMock = vi.fn(() => ({
+    const updateEqMock = vi.fn(() => ({
       select: vi.fn(() => ({ single: vi.fn().mockResolvedValue({ data: contentRow, error: null }) })),
     }));
-    const updateMock = vi.fn(() => ({ eq: eqMock }));
-    fromMock.mockReturnValue({ update: updateMock });
 
-    await expect(linkContentToBook({ contentId: "content-1", bookId: "book-1" })).resolves.toEqual(contentRow);
-    expect(updateMock).toHaveBeenCalledWith(expect.objectContaining({ book_id: "book-1" }));
-    expect(eqMock).toHaveBeenCalledWith("id", "content-1");
+    fromMock
+      // 1. resolve dataset_id do Content.
+      .mockReturnValueOnce({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({ maybeSingle: vi.fn().mockResolvedValue({ data: { dataset_id: "dataset-1" }, error: null }) })),
+        })),
+      })
+      // 2. confirma que o Dataset pertence ao dono.
+      .mockReturnValueOnce({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            eq: vi.fn(() => ({ maybeSingle: vi.fn().mockResolvedValue({ data: DATASET_ROW, error: null }) })),
+          })),
+        })),
+      })
+      // 3. update real.
+      .mockReturnValueOnce({ update: vi.fn(() => ({ eq: updateEqMock })) });
+
+    await expect(linkContentToBook(OWNER_ID, { contentId: "content-1", bookId: "book-1" })).resolves.toEqual(
+      contentRow
+    );
+    expect(updateEqMock).toHaveBeenCalledWith("id", "content-1");
   });
 
-  it("retorna null em caso de erro", async () => {
-    fromMock.mockReturnValue({
-      update: vi.fn(() => ({
-        eq: vi.fn(() => ({ select: vi.fn(() => ({ single: vi.fn().mockResolvedValue({ data: null, error: new Error("boom") }) })) })),
+  it("retorna null sem escrever quando o Content pertence a outro dono (defesa contra IDOR)", async () => {
+    const updateMock = vi.fn();
+
+    fromMock
+      .mockReturnValueOnce({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({ maybeSingle: vi.fn().mockResolvedValue({ data: { dataset_id: "dataset-1" }, error: null }) })),
+        })),
+      })
+      .mockReturnValueOnce({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            eq: vi.fn(() => ({ maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) })),
+          })),
+        })),
+      })
+      .mockReturnValueOnce({ update: updateMock });
+
+    await expect(
+      linkContentToBook(OTHER_OWNER_ID, { contentId: "content-1", bookId: "book-1" })
+    ).resolves.toBeNull();
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("retorna null quando o Content não existe", async () => {
+    fromMock.mockReturnValueOnce({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({ maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) })),
       })),
     });
 
-    await expect(linkContentToBook({ contentId: "content-1", bookId: "book-1" })).resolves.toBeNull();
+    await expect(
+      linkContentToBook(OWNER_ID, { contentId: "content-inexistente", bookId: "book-1" })
+    ).resolves.toBeNull();
   });
 });
 
 describe("unlinkContentFromBook", () => {
-  it("limpa o book_id do Content", async () => {
+  it("limpa o book_id do Content quando ele pertence ao dono", async () => {
     const contentRow = { id: "content-1", dataset_id: "dataset-1", title: "Como ler mais em 2026", book_id: null };
-    const eqMock = vi.fn(() => ({
+    const updateEqMock = vi.fn(() => ({
       select: vi.fn(() => ({ single: vi.fn().mockResolvedValue({ data: contentRow, error: null }) })),
     }));
-    const updateMock = vi.fn(() => ({ eq: eqMock }));
-    fromMock.mockReturnValue({ update: updateMock });
 
-    await expect(unlinkContentFromBook("content-1")).resolves.toEqual(contentRow);
-    expect(updateMock).toHaveBeenCalledWith(expect.objectContaining({ book_id: null }));
+    fromMock
+      .mockReturnValueOnce({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({ maybeSingle: vi.fn().mockResolvedValue({ data: { dataset_id: "dataset-1" }, error: null }) })),
+        })),
+      })
+      .mockReturnValueOnce({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            eq: vi.fn(() => ({ maybeSingle: vi.fn().mockResolvedValue({ data: DATASET_ROW, error: null }) })),
+          })),
+        })),
+      })
+      .mockReturnValueOnce({ update: vi.fn(() => ({ eq: updateEqMock })) });
+
+    await expect(unlinkContentFromBook(OWNER_ID, "content-1")).resolves.toEqual(contentRow);
+  });
+
+  it("retorna null sem escrever quando o Content pertence a outro dono (defesa contra IDOR)", async () => {
+    const updateMock = vi.fn();
+
+    fromMock
+      .mockReturnValueOnce({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({ maybeSingle: vi.fn().mockResolvedValue({ data: { dataset_id: "dataset-1" }, error: null }) })),
+        })),
+      })
+      .mockReturnValueOnce({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            eq: vi.fn(() => ({ maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) })),
+          })),
+        })),
+      })
+      .mockReturnValueOnce({ update: updateMock });
+
+    await expect(unlinkContentFromBook(OTHER_OWNER_ID, "content-1")).resolves.toBeNull();
+    expect(updateMock).not.toHaveBeenCalled();
   });
 });

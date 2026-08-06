@@ -94,7 +94,7 @@ export function SettingsForm({ action, settings, years, monthOptions, errorMessa
       </section>
 
       <section className="space-y-4">
-        <SectionTitle title="Redes sociais" description="Links exibidos como fonte para o site público." />
+        <SectionTitle title="Redes sociais" description="Links exibidos no site e em materiais do BookCringe." />
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <label htmlFor="instagram_url" className={adminLabelClass}>
@@ -272,7 +272,7 @@ export function SettingsForm({ action, settings, years, monthOptions, errorMessa
       <section className="space-y-4">
         <SectionTitle
           title="Configurações do Clube"
-          description="Ano e mês marcados como ativos para referência administrativa. Ainda não conectado ao site público."
+          description="Ano e mês marcados como ativos para referência administrativa do Clube de Leitura."
         />
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">

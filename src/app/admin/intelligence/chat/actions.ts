@@ -1,5 +1,6 @@
 "use server";
 
+import { requireOwnerId } from "@/lib/auth/ownerId";
 import { askIntelligenceChat } from "@/lib/services/intelligenceChatService";
 import type { IntelligenceChatResult } from "@/lib/intelligence/chat/types";
 
@@ -16,5 +17,6 @@ export async function askIntelligenceChatAction(formData: FormData): Promise<Int
     return { status: "error", message: "Digite uma pergunta para o Chat de Intelligence." };
   }
 
-  return askIntelligenceChat(question);
+  const ownerId = await requireOwnerId();
+  return askIntelligenceChat(ownerId, question);
 }

@@ -1,17 +1,25 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { askIntelligenceChatAction } from "./actions";
 
-const { askIntelligenceChatMock } = vi.hoisted(() => ({
+const { askIntelligenceChatMock, requireOwnerIdMock } = vi.hoisted(() => ({
   askIntelligenceChatMock: vi.fn(),
+  requireOwnerIdMock: vi.fn(),
 }));
+
+const OWNER_ID = "filipe-santos";
 
 vi.mock("@/lib/services/intelligenceChatService", () => ({
   askIntelligenceChat: askIntelligenceChatMock,
 }));
 
+vi.mock("@/lib/auth/ownerId", () => ({
+  requireOwnerId: requireOwnerIdMock,
+}));
+
 describe("askIntelligenceChatAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    requireOwnerIdMock.mockResolvedValue(OWNER_ID);
   });
 
   it("repassa a pergunta do FormData para o service e devolve o resultado", async () => {
@@ -22,7 +30,7 @@ describe("askIntelligenceChatAction", () => {
 
     const result = await askIntelligenceChatAction(formData);
 
-    expect(askIntelligenceChatMock).toHaveBeenCalledWith("Qual foi o melhor conteúdo?");
+    expect(askIntelligenceChatMock).toHaveBeenCalledWith(OWNER_ID, "Qual foi o melhor conteúdo?");
     expect(result).toEqual({ status: "ok", reply: "Resposta", usedContext: [] });
   });
 

@@ -11,15 +11,22 @@ const {
   findOrCreateDatasetMock,
   insertMetricsMock,
   upsertContentMock,
+  requireOwnerIdMock,
 } = vi.hoisted(() => ({
   createImportMock: vi.fn(),
   finalizeImportMock: vi.fn(),
   findOrCreateDatasetMock: vi.fn(),
   insertMetricsMock: vi.fn(),
   upsertContentMock: vi.fn(),
+  requireOwnerIdMock: vi.fn(),
 }));
 
+const OWNER_ID = "filipe-santos";
+
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("@/lib/auth/ownerId", () => ({
+  requireOwnerId: requireOwnerIdMock,
+}));
 vi.mock("@/lib/services/intelligenceDatasetService", () => ({
   createImport: createImportMock,
   finalizeImport: finalizeImportMock,
@@ -46,8 +53,29 @@ function formDataWithFile(file: File): FormData {
   return formData;
 }
 
+/**
+ * Simula o comportamento de `File` em Server Actions de produção: a segunda
+ * chamada a `text()` retorna vazio (stream já consumido). Antes da Sprint
+ * 22B, `confirmImportAction` lia o arquivo duas vezes (preview + import) e
+ * a persistência recebia CSV vazio — a UI ficava presa em "Importando..." ou
+ * caía em erro silencioso.
+ */
+function createSingleReadCsvFile(content: string, name: string): File {
+  const file = new File([content], name, { type: "text/csv" });
+  let consumed = false;
+
+  file.text = async () => {
+    if (consumed) return "";
+    consumed = true;
+    return content;
+  };
+
+  return file;
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
+  requireOwnerIdMock.mockResolvedValue(OWNER_ID);
   findOrCreateDatasetMock.mockResolvedValue({ id: "dataset-tiktok" });
   createImportMock.mockResolvedValue({ id: "import-tiktok" });
   insertMetricsMock.mockResolvedValue(true);
@@ -125,10 +153,22 @@ describe("confirmImportAction — paridade com Preview", () => {
     const receipt = await confirmImportAction(formDataWithFile(file));
 
     expect(receipt.status).toBe("persisted");
-    expect(findOrCreateDatasetMock).toHaveBeenCalledWith({
+    expect(findOrCreateDatasetMock).toHaveBeenCalledWith(OWNER_ID, {
       platform: "tiktok",
       name: "TikTok — Promoções",
     });
+    expect(insertMetricsMock).toHaveBeenCalled();
+  });
+
+  it("persiste TikTok Promotions mesmo quando File.text() só funciona na primeira leitura (regressão: UI presa em Importando)", async () => {
+    const relativePath = "tiktok/tiktok-promotions-history.csv";
+    const content = readFileSync(fixtureUrl(relativePath), "utf8");
+    const file = createSingleReadCsvFile(content, "tiktok-promotions-history.csv");
+
+    const receipt = await confirmImportAction(formDataWithFile(file));
+
+    expect(receipt.status).toBe("persisted");
+    expect(receipt.acceptedRecords).toBeGreaterThan(0);
     expect(insertMetricsMock).toHaveBeenCalled();
   });
 

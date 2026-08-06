@@ -19,13 +19,15 @@ const DECISION: Decision = {
   rationale: 'Baseado na pergunta "Quanto do meu conteúdo ainda não foi vinculado a um Livro?": ...',
 };
 
+const OWNER_ID = "filipe-santos";
+
 describe("getWorkspaceActions", () => {
   it("busca as Decisions via getRecommendedDecisions e devolve as WorkspaceActions calculadas", async () => {
     getRecommendedDecisionsMock.mockResolvedValue([DECISION]);
 
-    const actions = await getWorkspaceActions();
+    const actions = await getWorkspaceActions(OWNER_ID);
 
-    expect(getRecommendedDecisionsMock).toHaveBeenCalledOnce();
+    expect(getRecommendedDecisionsMock).toHaveBeenCalledWith(OWNER_ID);
     expect(actions).toHaveLength(1);
     expect(actions[0]).toMatchObject({ id: "complete-matching", category: "matching", href: "/admin/intelligence/conteudos" });
   });
@@ -33,7 +35,7 @@ describe("getWorkspaceActions", () => {
   it("devolve lista vazia quando não há nenhuma Decision", async () => {
     getRecommendedDecisionsMock.mockResolvedValue([]);
 
-    const actions = await getWorkspaceActions();
+    const actions = await getWorkspaceActions(OWNER_ID);
 
     expect(actions).toEqual([]);
   });

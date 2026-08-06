@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { requireOwnerId } from "@/lib/auth/ownerId";
 import { getBooks } from "@/lib/services/bookService";
 import { listContents, listDatasets } from "@/lib/services/intelligenceDatasetService";
 import { suggestBookMatch, type MatchableBook } from "@/lib/intelligence/matching";
@@ -38,7 +39,12 @@ interface IntelligenceContentsPageProps {
  */
 export default async function IntelligenceContentsPage({ searchParams }: IntelligenceContentsPageProps) {
   const { error } = await searchParams;
-  const [contents, datasets, books] = await Promise.all([listContents(), listDatasets(), getBooks()]);
+  const ownerId = await requireOwnerId();
+  const [contents, datasets, books] = await Promise.all([
+    listContents(ownerId),
+    listDatasets(ownerId),
+    getBooks(),
+  ]);
 
   const datasetById = new Map((datasets ?? []).map((dataset) => [dataset.id, dataset]));
   const bookById = new Map((books ?? []).map((book) => [book.id, book]));

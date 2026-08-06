@@ -269,3 +269,83 @@ describe("useImportSession — Instagram (Sprint 14, com persistência)", () => 
     expect(probe.current!.session.importResult).toEqual(INSTAGRAM_PERSISTED_RECEIPT);
   });
 });
+
+const TIKTOK_READY_PREVIEW: ImportPreviewResult = {
+  status: "ready",
+  platform: "tiktok",
+  datasetKind: "tiktok_promotions",
+  preview: {
+    format: "csv",
+    confidence: 0.95,
+    recordCount: 3,
+    period: { start: "2026-07-01", end: "2026-07-08" },
+    metrics: [
+      { key: "promo:adCostBrl", label: "Custo (BRL)", total: 150 },
+      { key: "promo:views", label: "Visualizações", total: 12000 },
+      { key: "promo:newFollowers", label: "Novos seguidores", total: 45 },
+    ],
+    issues: [],
+  },
+};
+
+const TIKTOK_PERSISTED_RECEIPT: PersistenceReceipt = {
+  batchId: "batch-tiktok-1",
+  status: "persisted",
+  acceptedRecords: 3,
+  rejectedRecords: 0,
+  issues: [],
+};
+
+describe("useImportSession — TikTok Promotions (Sprint 22B, regressão Importando)", () => {
+  let root: Root;
+
+  beforeEach(async () => {
+    previewImportActionMock.mockReset().mockResolvedValue(TIKTOK_READY_PREVIEW);
+    confirmImportActionMock.mockReset().mockResolvedValue(TIKTOK_PERSISTED_RECEIPT);
+
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+    probe.current = null;
+
+    await act(async () => {
+      root.render(<HookProbe />);
+    });
+  });
+
+  it("reconhece o CSV de promoções, chega em 'ready' e confirma até 'imported' sem travar em 'importing'", async () => {
+    const file = new File(["conteudo csv"], "tiktok-promotions-history.csv", { type: "text/csv" });
+
+    await act(async () => {
+      probe.current!.selectFile(file);
+    });
+
+    for (let i = 0; i < 20 && probe.current!.session.stage === "detecting"; i += 1) {
+      await act(async () => {
+        await flush(50);
+      });
+    }
+    for (let i = 0; i < 20 && probe.current!.session.stage === "validating"; i += 1) {
+      await act(async () => {
+        await flush(100);
+      });
+    }
+
+    expect(probe.current!.session.stage).toBe("ready");
+    expect(probe.current!.session.validation?.isValid).toBe(true);
+
+    await act(async () => {
+      probe.current!.confirmImport();
+    });
+
+    for (let i = 0; i < 20 && probe.current!.session.stage === "importing"; i += 1) {
+      await act(async () => {
+        await flush(50);
+      });
+    }
+
+    expect(confirmImportActionMock).toHaveBeenCalledTimes(1);
+    expect(probe.current!.session.stage).toBe("imported");
+    expect(probe.current!.session.importResult).toEqual(TIKTOK_PERSISTED_RECEIPT);
+  });
+});

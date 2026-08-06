@@ -36,8 +36,12 @@ const EMPTY_REPLY_MESSAGE = "Não foi possível gerar uma resposta agora. Tente 
  * criada aqui: a única camada nova é a seleção de contexto relevante
  * (`chat/intent.ts`, determinística) e a chamada ao LLM para gerar uma
  * resposta amigável em português a partir do que já existe.
+ *
+ * `ownerId` (Sprint "Multi-Tenant Foundation"): repassado sem alteração
+ * para todos os services de dados abaixo — o Chat de cada criador só
+ * enxerga (e só responde com base em) os dados que pertencem a ele.
  */
-export async function askIntelligenceChat(question: string): Promise<IntelligenceChatResult> {
+export async function askIntelligenceChat(ownerId: string, question: string): Promise<IntelligenceChatResult> {
   const trimmedQuestion = question.trim();
   if (!trimmedQuestion) {
     return { status: "error", message: EMPTY_QUESTION_MESSAGE };
@@ -50,15 +54,15 @@ export async function askIntelligenceChat(question: string): Promise<Intelligenc
 
   const [bestContent, staleDataset, unmatchedContent, audience, audienceStrategy, contentPerformance, campaign, decisions, dashboard] =
     await Promise.all([
-      getBestContentAnswer(),
-      getStaleDatasetAnswer(),
-      getUnmatchedContentAnswer(),
-      getAudienceAnswers(),
-      getAudienceStrategyAnswers(),
-      getContentPerformanceAnswers(),
-      getCampaignAnswers(),
-      getRecommendedDecisions(),
-      getIntelligenceDashboardData(),
+      getBestContentAnswer(ownerId),
+      getStaleDatasetAnswer(ownerId),
+      getUnmatchedContentAnswer(ownerId),
+      getAudienceAnswers(ownerId),
+      getAudienceStrategyAnswers(ownerId),
+      getContentPerformanceAnswers(ownerId),
+      getCampaignAnswers(ownerId),
+      getRecommendedDecisions(ownerId),
+      getIntelligenceDashboardData(ownerId),
     ]);
 
   const items = buildContextItems({

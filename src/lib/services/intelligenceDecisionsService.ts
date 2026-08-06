@@ -34,13 +34,17 @@ import type { Decision } from "@/lib/intelligence/decisions";
  * 3 `QuestionAnswer`s necessários (uma única vez, com os mesmos dados já
  * buscados) e delega as Decisions para `runDecisionEngine`, que só enxerga
  * QuestionAnswer, nunca os registros brutos buscados aqui.
+ *
+ * `ownerId` (Sprint "Multi-Tenant Foundation"): repassado sem alteração
+ * para `intelligenceDatasetService` — as Decisions de cada criador
+ * consideram só os dados que pertencem a ele.
  */
-export async function getRecommendedDecisions(): Promise<Decision[]> {
+export async function getRecommendedDecisions(ownerId: string): Promise<Decision[]> {
   const [datasets, imports, contents, metrics, books] = await Promise.all([
-    listDatasets(),
-    listImports(),
-    listContents(),
-    listMetrics(),
+    listDatasets(ownerId),
+    listImports(ownerId),
+    listContents(ownerId),
+    listMetrics(ownerId),
     getBooks(),
   ]);
 

@@ -35,8 +35,11 @@ vi.mock("@/lib/services/bookService", () => ({
   getBooks: getBooksMock,
 }));
 
+const OWNER_ID = "filipe-santos";
+
 const DATASET: IntelligenceDatasetRecord = {
   id: "dataset-1",
+  owner_id: OWNER_ID,
   platform: "youtube",
   name: "YouTube Studio — Desempenho de vídeos",
   created_at: "2026-08-01T00:00:00.000Z",
@@ -80,7 +83,7 @@ describe("getBestContentAnswer", () => {
     listMetricsMock.mockResolvedValue([METRIC]);
     getBooksMock.mockResolvedValue([BOOK]);
 
-    const result = await getBestContentAnswer();
+    const result = await getBestContentAnswer(OWNER_ID);
 
     expect(result.questionId).toBe("best-content");
     expect(result.hasAnswer).toBe(true);
@@ -93,7 +96,7 @@ describe("getBestContentAnswer", () => {
     listMetricsMock.mockResolvedValue(null);
     getBooksMock.mockResolvedValue(null);
 
-    const result = await getBestContentAnswer();
+    const result = await getBestContentAnswer(OWNER_ID);
 
     expect(result.hasAnswer).toBe(false);
     expect(result.data).toBeNull();
@@ -115,7 +118,7 @@ describe("getStaleDatasetAnswer", () => {
     listDatasetsMock.mockResolvedValue([DATASET]);
     listImportsMock.mockResolvedValue([IMPORT]);
 
-    const result = await getStaleDatasetAnswer();
+    const result = await getStaleDatasetAnswer(OWNER_ID);
 
     expect(result.questionId).toBe("stale-dataset");
     expect(result.hasAnswer).toBe(true);
@@ -126,7 +129,7 @@ describe("getStaleDatasetAnswer", () => {
     listDatasetsMock.mockResolvedValue(null);
     listImportsMock.mockResolvedValue(null);
 
-    const result = await getStaleDatasetAnswer();
+    const result = await getStaleDatasetAnswer(OWNER_ID);
 
     expect(result.hasAnswer).toBe(false);
     expect(result.data).toBeNull();
@@ -137,7 +140,7 @@ describe("getUnmatchedContentAnswer", () => {
   it("busca Contents e delega a resposta para unmatchedContentQuestion", async () => {
     listContentsMock.mockResolvedValue([CONTENT]);
 
-    const result = await getUnmatchedContentAnswer();
+    const result = await getUnmatchedContentAnswer(OWNER_ID);
 
     expect(result.questionId).toBe("unmatched-content");
     expect(result.hasAnswer).toBe(true);
@@ -147,7 +150,7 @@ describe("getUnmatchedContentAnswer", () => {
   it("trata retorno null como lista vazia", async () => {
     listContentsMock.mockResolvedValue(null);
 
-    const result = await getUnmatchedContentAnswer();
+    const result = await getUnmatchedContentAnswer(OWNER_ID);
 
     expect(result.hasAnswer).toBe(false);
     expect(result.data).toBeNull();
@@ -172,7 +175,7 @@ describe("getAudienceAnswers", () => {
     listDatasetsMock.mockResolvedValue([audienceDataset]);
     listMetricsMock.mockResolvedValue(audienceMetrics);
 
-    const result = await getAudienceAnswers();
+    const result = await getAudienceAnswers(OWNER_ID);
 
     expect(result.followerGrowth.data).toMatchObject({ growth: 42, followers: 1800 });
     expect(result.activityPeak.data).toMatchObject({ activeFollowers: 900 });
@@ -202,7 +205,7 @@ describe("getAudienceStrategyAnswers", () => {
       { ...METRIC, id: "t4", dataset_id: audienceDataset.id, content_id: undefined, key: "territory:MX", value: 0.25, measured_at: "2026-08-01T00:00:00.000Z" },
     ]);
 
-    const result = await getAudienceStrategyAnswers();
+    const result = await getAudienceStrategyAnswers(OWNER_ID);
 
     expect(result.fastestGrowingSegment.data).toMatchObject({ segment: "Mulheres", confidence: "high" });
     expect(result.underservedSegment.data).toMatchObject({ segment: "Homens" });
@@ -247,7 +250,7 @@ describe("getContentPerformanceAnswers", () => {
     ]);
     getBooksMock.mockResolvedValue([BOOK]);
 
-    const result = await getContentPerformanceAnswers();
+    const result = await getContentPerformanceAnswers(OWNER_ID);
 
     expect(result.growthTheme.hasAnswer).toBe(true);
     expect(result.engagementFormat.hasAnswer).toBe(true);
@@ -293,7 +296,7 @@ describe("getCampaignAnswers", () => {
       campaignMetric("followers-2", "promo:newFollowers", 200, "import-2", "2026-07-08T00:00:00.000Z"),
     ]);
 
-    const result = await getCampaignAnswers();
+    const result = await getCampaignAnswers(OWNER_ID);
 
     expect(result.bestCampaign.hasAnswer).toBe(true);
     expect(result.lowestCostPerFollower.hasAnswer).toBe(true);
@@ -306,7 +309,7 @@ describe("getCampaignAnswers", () => {
     listContentsMock.mockResolvedValue(null);
     listMetricsMock.mockResolvedValue(null);
 
-    const result = await getCampaignAnswers();
+    const result = await getCampaignAnswers(OWNER_ID);
 
     expect(result.bestCampaign.hasAnswer).toBe(false);
     expect(result.lowestCostPerFollower.hasAnswer).toBe(false);

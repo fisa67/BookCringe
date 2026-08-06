@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { requireOwnerId } from "@/lib/auth/ownerId";
 import { linkContentToBook, unlinkContentFromBook } from "@/lib/services/intelligenceDatasetService";
 
 const CONTENTS_PATH = "/admin/intelligence/conteudos";
@@ -23,7 +24,8 @@ export async function linkContentToBookAction(formData: FormData): Promise<void>
     redirect(`${CONTENTS_PATH}?error=${encodeURIComponent("Selecione um livro para vincular.")}`);
   }
 
-  const updated = await linkContentToBook({ contentId, bookId });
+  const ownerId = await requireOwnerId();
+  const updated = await linkContentToBook(ownerId, { contentId, bookId });
 
   if (!updated) {
     redirect(`${CONTENTS_PATH}?error=${encodeURIComponent("Não foi possível vincular o livro. Tente novamente.")}`);
@@ -40,7 +42,8 @@ export async function unlinkContentFromBookAction(formData: FormData): Promise<v
     redirect(`${CONTENTS_PATH}?error=${encodeURIComponent("Conteúdo inválido.")}`);
   }
 
-  const updated = await unlinkContentFromBook(contentId);
+  const ownerId = await requireOwnerId();
+  const updated = await unlinkContentFromBook(ownerId, contentId);
 
   if (!updated) {
     redirect(`${CONTENTS_PATH}?error=${encodeURIComponent("Não foi possível desvincular o livro. Tente novamente.")}`);

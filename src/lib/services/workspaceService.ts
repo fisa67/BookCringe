@@ -9,7 +9,7 @@ import type { WorkspaceAction } from "@/lib/intelligence/actions";
  * delega a transformação para `buildWorkspaceActions`, que só enxerga
  * `Decision[]` — nunca um Dataset/Import/Content/Metric bruto.
  */
-export async function getWorkspaceActions(): Promise<WorkspaceAction[]> {
-  const decisions = await getRecommendedDecisions();
+export async function getWorkspaceActions(ownerId: string): Promise<WorkspaceAction[]> {
+  const decisions = await getRecommendedDecisions(ownerId);
   return buildWorkspaceActions(decisions);
 }

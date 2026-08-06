@@ -162,3 +162,36 @@ export function isContentPublished(publishedAt: string | null | undefined, now: 
   if (Number.isNaN(publishedDate.getTime())) return false;
   return publishedDate.getTime() <= now.getTime();
 }
+
+/**
+ * Normaliza `thumbnail_path` do CMS antes de renderizar em `<img>`. O campo
+ * aceita URL absoluta (CDN do Instagram/TikTok/YouTube) ou path relativo
+ * (`/public`). Valores em branco, inválidos ou só com espaços viram
+ * `undefined` para acionar o fallback visual — evita `<img src="">` ou links
+ * quebrados sem tratamento.
+ */
+export function resolveThumbnailPath(path?: string | null): string | undefined {
+  if (!path) return undefined;
+
+  const trimmed = path.trim();
+  if (!trimmed) return undefined;
+
+  if (trimmed.startsWith("/") && !trimmed.startsWith("//")) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith("//")) {
+    return `https:${trimmed}`;
+  }
+
+  try {
+    const url = new URL(trimmed);
+    if (url.protocol === "http:" || url.protocol === "https:") {
+      return trimmed;
+    }
+  } catch {
+    return undefined;
+  }
+
+  return undefined;
+}

@@ -6,13 +6,6 @@ const supabaseUrl = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
 
-console.log({
-  url: !!supabaseUrl,
-  anon: !!supabaseAnonKey,
-  service: !!supabaseServiceRoleKey,
-  serviceLength: supabaseServiceRoleKey.length,
-});
-
 /**
  * Cria o client de forma preguiçosa (sob demanda) via Proxy.
  *
@@ -40,11 +33,6 @@ function createLazyClient(key: string): SupabaseClient<Database> {
     },
   });
 }
-console.log("SUPABASE_URL:", !!supabaseUrl);
-console.log("SUPABASE_ANON_KEY:", !!supabaseAnonKey);
-console.log("SUPABASE_SERVICE_ROLE_KEY:", !!supabaseServiceRoleKey);
-console.log("SERVICE_ROLE length:", supabaseServiceRoleKey?.length);
-
 
 export const supabaseAdminClient: SupabaseClient<Database> = createLazyClient(supabaseServiceRoleKey);
 

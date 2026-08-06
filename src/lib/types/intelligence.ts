@@ -15,10 +15,23 @@ import type { ImportPlatform } from "@/lib/intelligence/imports/types";
  * Metric — só o suficiente para persistir o importador do YouTube).
  * `Platform` e `Insight` continuam sem tabela — ver `docs/datasets.md`
  * seção 7 para o que falta e por quê.
+ *
+ * `owner_id` (Sprint "Multi-Tenant Foundation",
+ * `supabase/migrations/20260805_intelligence_owner.sql`): a fronteira de
+ * tenant do módulo. Só existe em `IntelligenceDatasetRecord`/`Create` — as
+ * outras 3 tabelas continuam sem coluna própria, pois todas alcançam o dono
+ * por `dataset_id` (ver `intelligenceDatasetService.ts`). Marcado opcional
+ * aqui (embora `not null` no banco) de propósito: quem garante que todo
+ * Dataset sempre tem um dono é `intelligenceDatasetService.ts` (todo
+ * `createDataset`/`findOrCreateDataset` exige `ownerId` como parâmetro) —
+ * torná-lo obrigatório neste tipo obrigaria as dezenas de fixtures de
+ * testes puros de agregação (que nunca leem `owner_id`) a inventar um
+ * valor irrelevante para elas.
  */
 
 export interface IntelligenceDatasetRecord {
   id: string;
+  owner_id?: string;
   platform: ImportPlatform;
   name: string;
   description?: string;
@@ -27,6 +40,7 @@ export interface IntelligenceDatasetRecord {
 }
 
 export interface IntelligenceDatasetCreate {
+  owner_id?: string;
   platform: ImportPlatform;
   name: string;
   description?: string;

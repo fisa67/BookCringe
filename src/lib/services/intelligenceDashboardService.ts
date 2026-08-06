@@ -17,13 +17,19 @@ import type { IntelligenceDashboardData } from "@/lib/intelligence/dashboard/typ
  * diretamente, nunca SQL. Qualquer service que já existir é reaproveitado
  * sem alteração; nada aqui duplica uma consulta que já existe em outro
  * lugar do módulo.
+ *
+ * `ownerId` (Sprint "Multi-Tenant Foundation"): repassado sem alteração
+ * para `intelligenceDatasetService` — o Dashboard de cada criador só
+ * enxerga os Datasets/Imports/Contents/Metrics que pertencem a ele.
+ * `getBooks()` continua global (Books multi-tenant é fora de escopo desta
+ * sprint).
  */
-export async function getIntelligenceDashboardData(): Promise<IntelligenceDashboardData> {
+export async function getIntelligenceDashboardData(ownerId: string): Promise<IntelligenceDashboardData> {
   const [datasets, imports, contents, metrics, books] = await Promise.all([
-    listDatasets(),
-    listImports(),
-    listContents(),
-    listMetrics(),
+    listDatasets(ownerId),
+    listImports(ownerId),
+    listContents(ownerId),
+    listMetrics(ownerId),
     getBooks(),
   ]);
 

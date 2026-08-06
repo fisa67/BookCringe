@@ -46,8 +46,11 @@ function fileDescriptor(name: string): ImportFileDescriptor {
   return { id: randomUUID(), name, size: statSync(url).size, extension: "xlsx", format: "excel" };
 }
 
+const OWNER_ID = "filipe-santos";
+
 const DATASET_ROW = {
   id: "dataset-instagram-audience",
+  owner_id: OWNER_ID,
   platform: "instagram" as const,
   name: "Instagram — Audiência",
   created_at: "2026-08-03T00:00:00.000Z",
@@ -104,10 +107,13 @@ describe("Instagram — Sprint 14: fluxo real de ponta a ponta (Detection → Pr
       createdAt: "2026-08-03T12:00:00.000Z",
     };
 
-    const receipt = await instagramAudiencePersistence.persist(preview.preview.records, batch);
+    const receipt = await instagramAudiencePersistence.persist(preview.preview.records, batch, OWNER_ID);
 
     // Dataset criado (findOrCreate, sempre o mesmo nome — 1 Dataset para os 4 formatos).
-    expect(findOrCreateDatasetMock).toHaveBeenCalledWith({ platform: "instagram", name: "Instagram — Audiência" });
+    expect(findOrCreateDatasetMock).toHaveBeenCalledWith(OWNER_ID, {
+      platform: "instagram",
+      name: "Instagram — Audiência",
+    });
     // Import completed.
     expect(finalizeImportMock).toHaveBeenCalledWith({
       id: "import-FollowerHistory.xlsx",
@@ -158,7 +164,7 @@ describe("Instagram — Sprint 14: fluxo real de ponta a ponta (Detection → Pr
       createdAt: "2026-08-03T12:00:00.000Z",
     };
 
-    const receipt = await instagramAudiencePersistence.persist(preview.preview.records, batch);
+    const receipt = await instagramAudiencePersistence.persist(preview.preview.records, batch, OWNER_ID);
 
     expect(receipt.status).toBe("persisted");
     expect(receipt.acceptedRecords).toBe(144);
@@ -201,7 +207,7 @@ describe("Instagram — Sprint 14: fluxo real de ponta a ponta (Detection → Pr
       createdAt: "2026-08-03T12:00:00.000Z",
     };
 
-    const receipt = await instagramAudiencePersistence.persist(preview.preview.records, batch);
+    const receipt = await instagramAudiencePersistence.persist(preview.preview.records, batch, OWNER_ID);
 
     expect(receipt).toMatchObject({ status: "persisted", acceptedRecords: 3, rejectedRecords: 0 });
 
@@ -236,7 +242,7 @@ describe("Instagram — Sprint 14: fluxo real de ponta a ponta (Detection → Pr
       createdAt: "2026-08-03T12:00:00.000Z",
     };
 
-    const receipt = await instagramAudiencePersistence.persist(preview.preview.records, batch);
+    const receipt = await instagramAudiencePersistence.persist(preview.preview.records, batch, OWNER_ID);
 
     expect(receipt).toMatchObject({ status: "persisted", acceptedRecords: 6, rejectedRecords: 0 });
 
@@ -260,17 +266,24 @@ describe("Instagram — Sprint 14: fluxo real de ponta a ponta (Detection → Pr
     const preview = await previewImportFile({ file, buffer });
     if (preview.status !== "ready" || preview.platform !== "instagram") throw new Error("esperava ready");
 
-    await instagramAudiencePersistence.persist(preview.preview.records, {
-      id: randomUUID(),
-      platform: "instagram",
-      status: "detected",
-      files: [file],
-      createdAt: "2026-08-03T12:00:00.000Z",
-    });
+    await instagramAudiencePersistence.persist(
+      preview.preview.records,
+      {
+        id: randomUUID(),
+        platform: "instagram",
+        status: "detected",
+        files: [file],
+        createdAt: "2026-08-03T12:00:00.000Z",
+      },
+      OWNER_ID
+    );
 
     // `intelligenceDatasetService.upsertContent` nem é importado por `persistence.ts` — não há Content
     // artificial para audiência (item 2/6 do escopo da Sprint 14, `AUDIENCE_PERSISTENCE.md`).
     expect(findOrCreateDatasetMock).toHaveBeenCalledTimes(1);
-    expect(findOrCreateDatasetMock).toHaveBeenCalledWith({ platform: "instagram", name: "Instagram — Audiência" });
+    expect(findOrCreateDatasetMock).toHaveBeenCalledWith(OWNER_ID, {
+      platform: "instagram",
+      name: "Instagram — Audiência",
+    });
   });
 });

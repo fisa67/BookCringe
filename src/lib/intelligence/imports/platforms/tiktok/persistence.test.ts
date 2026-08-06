@@ -33,6 +33,8 @@ const batch: ImportBatch = {
   createdAt: "2026-08-04T12:00:00.000Z",
 };
 
+const OWNER_ID = "filipe-santos";
+
 function record(title?: string): TikTokPromotionNormalizedRecord {
   return {
     platform: "tiktok",
@@ -62,9 +64,9 @@ beforeEach(() => {
 
 describe("tiktokPromotionsPersistence", () => {
   it("reutiliza Dataset/Import/Metric e não cria Content quando a promoção é agregada", async () => {
-    const receipt = await tiktokPromotionsPersistence.persist([record()], batch);
+    const receipt = await tiktokPromotionsPersistence.persist([record()], batch, OWNER_ID);
 
-    expect(findOrCreateDatasetMock).toHaveBeenCalledWith({
+    expect(findOrCreateDatasetMock).toHaveBeenCalledWith(OWNER_ID, {
       platform: "tiktok",
       name: "TikTok — Promoções",
     });
@@ -82,7 +84,7 @@ describe("tiktokPromotionsPersistence", () => {
   });
 
   it("associa as Metrics a Content quando a linha identifica um vídeo", async () => {
-    await tiktokPromotionsPersistence.persist([record("Vídeo promovido")], batch);
+    await tiktokPromotionsPersistence.persist([record("Vídeo promovido")], batch, OWNER_ID);
 
     expect(upsertContentMock).toHaveBeenCalledWith({
       dataset_id: "dataset-1",

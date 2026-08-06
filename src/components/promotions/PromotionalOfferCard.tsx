@@ -32,7 +32,7 @@ export function PromotionalOfferCard({ item }: PromotionalOfferCardProps) {
           <img
             src={item.imageUrl}
             alt={item.title}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+            className="h-full w-full object-contain p-2 transition-transform duration-300 group-hover:scale-[1.02]"
             loading="lazy"
           />
         ) : null}

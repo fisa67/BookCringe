@@ -66,12 +66,16 @@ import type {
  * de IA em `/admin/intelligence/ia`, ou uma API) sem que nenhum deles
  * precise saber como o dado é buscado — mesma divisão de responsabilidade
  * já usada por `intelligenceDashboardService.ts`.
+ *
+ * `ownerId` (Sprint "Multi-Tenant Foundation"): repassado sem alteração
+ * para `intelligenceDatasetService` em toda função deste arquivo — cada
+ * resposta considera só os dados do dono informado.
  */
-export async function getBestContentAnswer(): Promise<QuestionAnswer<BestContentAnswerData>> {
+export async function getBestContentAnswer(ownerId: string): Promise<QuestionAnswer<BestContentAnswerData>> {
   const [datasets, contents, metrics, books] = await Promise.all([
-    listDatasets(),
-    listContents(),
-    listMetrics(),
+    listDatasets(ownerId),
+    listContents(ownerId),
+    listMetrics(ownerId),
     getBooks(),
   ]);
 
@@ -85,15 +89,15 @@ export async function getBestContentAnswer(): Promise<QuestionAnswer<BestContent
 }
 
 /** Mesma ideia de `getBestContentAnswer`, para a pergunta "Qual é o Dataset mais desatualizado?" (Sprint 11). */
-export async function getStaleDatasetAnswer(): Promise<QuestionAnswer<StaleDatasetAnswerData>> {
-  const [datasets, imports] = await Promise.all([listDatasets(), listImports()]);
+export async function getStaleDatasetAnswer(ownerId: string): Promise<QuestionAnswer<StaleDatasetAnswerData>> {
+  const [datasets, imports] = await Promise.all([listDatasets(ownerId), listImports(ownerId)]);
 
   return staleDatasetQuestion.answer({ now: new Date(), datasets: datasets ?? [], imports: imports ?? [] });
 }
 
 /** Mesma ideia de `getBestContentAnswer`, para a pergunta "Quanto do meu conteúdo ainda não foi vinculado a um Livro?" (Sprint 11). */
-export async function getUnmatchedContentAnswer(): Promise<QuestionAnswer<UnmatchedContentAnswerData>> {
-  const contents = await listContents();
+export async function getUnmatchedContentAnswer(ownerId: string): Promise<QuestionAnswer<UnmatchedContentAnswerData>> {
+  const contents = await listContents(ownerId);
 
   return unmatchedContentQuestion.answer({ now: new Date(), contents: contents ?? [] });
 }
@@ -105,8 +109,8 @@ export interface AudienceQuestionAnswers {
   primaryAudience: QuestionAnswer<PrimaryAudienceAnswerData>;
 }
 
-export async function getAudienceAnswers(): Promise<AudienceQuestionAnswers> {
-  const [datasets, metrics] = await Promise.all([listDatasets(), listMetrics()]);
+export async function getAudienceAnswers(ownerId: string): Promise<AudienceQuestionAnswers> {
+  const [datasets, metrics] = await Promise.all([listDatasets(ownerId), listMetrics(ownerId)]);
   const context = {
     now: new Date(),
     datasets: datasets ?? [],
@@ -128,11 +132,11 @@ export interface AudienceStrategyQuestionAnswers {
   audienceContentMismatch: QuestionAnswer<AudienceContentMismatchAnswerData>;
 }
 
-export async function getAudienceStrategyAnswers(): Promise<AudienceStrategyQuestionAnswers> {
+export async function getAudienceStrategyAnswers(ownerId: string): Promise<AudienceStrategyQuestionAnswers> {
   const [datasets, metrics, contents] = await Promise.all([
-    listDatasets(),
-    listMetrics(),
-    listContents(),
+    listDatasets(ownerId),
+    listMetrics(ownerId),
+    listContents(ownerId),
   ]);
   const context = {
     now: new Date(),
@@ -156,11 +160,11 @@ export interface ContentPerformanceQuestionAnswers {
   retentionContent: QuestionAnswer<RetentionContentAnswerData>;
 }
 
-export async function getContentPerformanceAnswers(): Promise<ContentPerformanceQuestionAnswers> {
+export async function getContentPerformanceAnswers(ownerId: string): Promise<ContentPerformanceQuestionAnswers> {
   const [datasets, contents, metrics, books] = await Promise.all([
-    listDatasets(),
-    listContents(),
-    listMetrics(),
+    listDatasets(ownerId),
+    listContents(ownerId),
+    listMetrics(ownerId),
     getBooks(),
   ]);
   const context = {
@@ -186,12 +190,12 @@ export interface CampaignQuestionAnswers {
 }
 
 /** Mesma ideia de `getAudienceAnswers`, para as perguntas mínimas de Campaign Datasets (Sprint 20.5, ADR-010). */
-export async function getCampaignAnswers(): Promise<CampaignQuestionAnswers> {
+export async function getCampaignAnswers(ownerId: string): Promise<CampaignQuestionAnswers> {
   const [datasets, imports, metrics, contents] = await Promise.all([
-    listDatasets(),
-    listImports(),
-    listMetrics(),
-    listContents(),
+    listDatasets(ownerId),
+    listImports(ownerId),
+    listMetrics(ownerId),
+    listContents(ownerId),
   ]);
   const context = {
     now: new Date(),

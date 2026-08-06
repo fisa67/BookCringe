@@ -2,6 +2,7 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { requireOwnerId } from "@/lib/auth/ownerId";
 import { previewImportFile, type ImportPreviewResult } from "@/lib/intelligence/imports/preview";
 import { parseXlsxToRows } from "@/lib/intelligence/imports/xlsx";
 import { normalizeYouTubeStudioCsv } from "@/lib/intelligence/imports/platforms/youtube/parser";
@@ -18,6 +19,8 @@ import type {
   PersistenceReceipt,
 } from "@/lib/intelligence/imports/types";
 
+const IMPORTS_PATH = "/admin/intelligence/importacoes";
+
 function isXlsxFile(file: File): boolean {
   return file.name.toLowerCase().endsWith(".xlsx");
 }
@@ -28,6 +31,48 @@ function getRequiredFile(formData: FormData): File {
     throw new Error("Nenhum arquivo selecionado.");
   }
   return file;
+}
+
+function buildFileDescriptor(file: File): ImportFileDescriptor {
+  return {
+    id: randomUUID(),
+    name: file.name,
+    size: file.size,
+    mimeType: file.type || undefined,
+    extension: file.name.split(".").pop(),
+    format: isXlsxFile(file) ? "excel" : "unknown",
+  };
+}
+
+type CsvImportPayload = { kind: "csv"; content: string };
+type XlsxImportPayload = { kind: "xlsx"; buffer: Buffer };
+type ImportPayload = CsvImportPayload | XlsxImportPayload;
+
+/**
+ * Lê o conteúdo do arquivo uma única vez. `confirmImportAction` depende
+ * disso: reler o mesmo `File` vindo de `FormData` em Server Actions pode
+ * retornar vazio ou travar (stream já consumido pelo preview), deixando a
+ * UI presa em "Importando..." — bug observado em produção com TikTok.
+ */
+async function readImportPayload(file: File): Promise<ImportPayload> {
+  if (isXlsxFile(file)) {
+    return { kind: "xlsx", buffer: Buffer.from(await file.arrayBuffer()) };
+  }
+  return { kind: "csv", content: await file.text() };
+}
+
+function unsupportedImportReceipt(): PersistenceReceipt {
+  return {
+    batchId: randomUUID(),
+    status: "failed",
+    acceptedRecords: 0,
+    rejectedRecords: 0,
+    issues: [{
+      stage: "persist",
+      code: "unsupported-import-format",
+      message: "O arquivo não corresponde a um formato com persistência disponível.",
+    }],
+  };
 }
 
 /**
@@ -44,23 +89,14 @@ function getRequiredFile(formData: FormData): File {
  */
 export async function previewImportAction(formData: FormData): Promise<ImportPreviewResult> {
   const file = getRequiredFile(formData);
+  const descriptor = buildFileDescriptor(file);
+  const payload = await readImportPayload(file);
 
-  const descriptor: ImportFileDescriptor = {
-    id: randomUUID(),
-    name: file.name,
-    size: file.size,
-    mimeType: file.type || undefined,
-    extension: file.name.split(".").pop(),
-    format: "unknown",
-  };
-
-  if (isXlsxFile(file)) {
-    const buffer = Buffer.from(await file.arrayBuffer());
-    return previewImportFile({ file: descriptor, buffer });
+  if (payload.kind === "xlsx") {
+    return previewImportFile({ file: descriptor, buffer: payload.buffer });
   }
 
-  const content = await file.text();
-  return previewImportFile({ file: descriptor, content });
+  return previewImportFile({ file: descriptor, content: payload.content });
 }
 
 /**
@@ -75,16 +111,15 @@ export async function previewImportAction(formData: FormData): Promise<ImportPre
  */
 export async function importYouTubeDatasetAction(formData: FormData): Promise<PersistenceReceipt> {
   const file = getRequiredFile(formData);
-  const content = await file.text();
+  const payload = await readImportPayload(file);
+  if (payload.kind !== "csv") {
+    return unsupportedImportReceipt();
+  }
+  return persistYouTubeImport(file, payload.content);
+}
 
-  const descriptor: ImportFileDescriptor = {
-    id: randomUUID(),
-    name: file.name,
-    size: file.size,
-    mimeType: file.type || undefined,
-    format: "unknown",
-  };
-
+async function persistYouTubeImport(file: File, content: string): Promise<PersistenceReceipt> {
+  const descriptor = buildFileDescriptor(file);
   const batch: ImportBatch = {
     id: randomUUID(),
     platform: "youtube",
@@ -114,8 +149,9 @@ export async function importYouTubeDatasetAction(formData: FormData): Promise<Pe
     };
   }
 
-  const receipt = await youtubeStudioPersistence.persist(records, batch);
-  revalidatePath("/admin/intelligence/importacoes");
+  const ownerId = await requireOwnerId();
+  const receipt = await youtubeStudioPersistence.persist(records, batch, ownerId);
+  revalidatePath(IMPORTS_PATH);
   return receipt;
 }
 
@@ -131,16 +167,16 @@ export async function importYouTubeDatasetAction(formData: FormData): Promise<Pe
  */
 export async function importInstagramAudienceDatasetAction(formData: FormData): Promise<PersistenceReceipt> {
   const file = getRequiredFile(formData);
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const rows = await parseXlsxToRows(buffer);
+  const payload = await readImportPayload(file);
+  if (payload.kind !== "xlsx") {
+    return unsupportedImportReceipt();
+  }
+  return persistInstagramAudienceImport(file, payload.buffer);
+}
 
-  const descriptor: ImportFileDescriptor = {
-    id: randomUUID(),
-    name: file.name,
-    size: file.size,
-    mimeType: file.type || undefined,
-    format: "excel",
-  };
+async function persistInstagramAudienceImport(file: File, buffer: Buffer): Promise<PersistenceReceipt> {
+  const rows = await parseXlsxToRows(buffer);
+  const descriptor = buildFileDescriptor(file);
 
   const batch: ImportBatch = {
     id: randomUUID(),
@@ -171,22 +207,25 @@ export async function importInstagramAudienceDatasetAction(formData: FormData): 
     };
   }
 
-  const receipt = await instagramAudiencePersistence.persist(records, batch);
-  revalidatePath("/admin/intelligence/importacoes");
+  const ownerId = await requireOwnerId();
+  const receipt = await instagramAudiencePersistence.persist(records, batch, ownerId);
+  revalidatePath(IMPORTS_PATH);
   return receipt;
 }
 
 export async function importTikTokPromotionsDatasetAction(formData: FormData): Promise<PersistenceReceipt> {
   const file = getRequiredFile(formData);
-  const content = await file.text();
-  const descriptor: ImportFileDescriptor = {
-    id: randomUUID(),
-    name: file.name,
-    size: file.size,
-    mimeType: file.type || undefined,
-    extension: file.name.split(".").pop(),
-    format: "csv",
-  };
+  const payload = await readImportPayload(file);
+  if (payload.kind !== "csv") {
+    return unsupportedImportReceipt();
+  }
+  return persistTikTokPromotionsImport(file, payload.content);
+}
+
+async function persistTikTokPromotionsImport(file: File, content: string): Promise<PersistenceReceipt> {
+  const descriptor = buildFileDescriptor(file);
+  descriptor.format = "csv";
+
   const batch: ImportBatch = {
     id: randomUUID(),
     platform: "tiktok",
@@ -194,6 +233,7 @@ export async function importTikTokPromotionsDatasetAction(formData: FormData): P
     files: [descriptor],
     createdAt: new Date().toISOString(),
   };
+
   const input: ParserInput = {
     batchId: batch.id,
     platform: "tiktok",
@@ -214,8 +254,9 @@ export async function importTikTokPromotionsDatasetAction(formData: FormData): P
     };
   }
 
-  const receipt = await tiktokPromotionsPersistence.persist(records, batch);
-  revalidatePath("/admin/intelligence/importacoes");
+  const ownerId = await requireOwnerId();
+  const receipt = await tiktokPromotionsPersistence.persist(records, batch, ownerId);
+  revalidatePath(IMPORTS_PATH);
   return receipt;
 }
 
@@ -226,34 +267,29 @@ export async function importTikTokPromotionsDatasetAction(formData: FormData): P
  * duas de cima diretamente, para não precisar saber qual plataforma está em
  * jogo (o `session/validation.ts`, checagem "persistence", já garante que só
  * chegam aqui arquivos de plataformas com persistência implementada).
+ *
+ * Lê o arquivo **uma única vez** e reutiliza o mesmo payload para o preview
+ * e para a persistência — evita reler o `File` de `FormData`, que em runtime
+ * de Server Actions pode esgotar o stream e travar a UI em "Importando...".
  */
 export async function confirmImportAction(formData: FormData): Promise<PersistenceReceipt> {
   const file = getRequiredFile(formData);
+  const descriptor = buildFileDescriptor(file);
+  const payload = await readImportPayload(file);
 
-  if (isXlsxFile(file)) {
-    return importInstagramAudienceDatasetAction(formData);
+  if (payload.kind === "xlsx") {
+    return persistInstagramAudienceImport(file, payload.buffer);
   }
 
-  const preview = await previewImportAction(formData);
+  const preview = await previewImportFile({ file: descriptor, content: payload.content });
+
   if (preview.status === "ready" && preview.platform === "youtube") {
-    return importYouTubeDatasetAction(formData);
-  }
-  if (
-    preview.status === "ready" &&
-    dispatchTikTokImport(preview) === "tiktok_promotions"
-  ) {
-    return importTikTokPromotionsDatasetAction(formData);
+    return persistYouTubeImport(file, payload.content);
   }
 
-  return {
-    batchId: randomUUID(),
-    status: "failed",
-    acceptedRecords: 0,
-    rejectedRecords: 0,
-    issues: [{
-      stage: "persist",
-      code: "unsupported-import-format",
-      message: "O arquivo não corresponde a um formato com persistência disponível.",
-    }],
-  };
+  if (preview.status === "ready" && dispatchTikTokImport(preview) === "tiktok_promotions") {
+    return persistTikTokPromotionsImport(file, payload.content);
+  }
+
+  return unsupportedImportReceipt();
 }

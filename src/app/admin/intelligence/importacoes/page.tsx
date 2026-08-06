@@ -1,28 +1,56 @@
 import type { Metadata } from "next";
+import { requireOwnerId } from "@/lib/auth/ownerId";
 import { ImportCenter } from "@/components/admin/intelligence/ImportCenter";
+import { buildImportHistoryRows } from "@/lib/intelligence/imports/history";
+import { PLATFORM_LABELS } from "@/lib/intelligence/session";
+import { listDatasets, listImports } from "@/lib/services/intelligenceDatasetService";
+import { formatNumber } from "@/lib/utils";
+import type { IntelligenceImportRowStatus } from "@/lib/types/intelligence";
 
 export const metadata: Metadata = {
   title: "Importações — Intelligence — Admin BookCringe",
 };
 
+const DATE_TIME_FORMATTER = new Intl.DateTimeFormat("pt-BR", {
+  dateStyle: "short",
+  timeStyle: "short",
+  timeZone: "UTC",
+});
+
+const IMPORT_STATUS_LABELS: Record<IntelligenceImportRowStatus, string> = {
+  completed: "Concluído",
+  failed: "Falhou",
+  processing: "Processando",
+  pending: "Pendente",
+};
+
+function formatDateTime(value: string): string {
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? value : DATE_TIME_FORMATTER.format(parsed);
+}
+
+function platformLabel(platform: string): string {
+  return PLATFORM_LABELS[platform] ?? platform;
+}
+
 const IMPORTERS = [
   {
     name: "YouTube",
-    description: "Detecção e Detection Preview do YouTube Studio já disponíveis. Persistência chega na próxima sprint.",
+    description: "CSV do YouTube Studio — detecção, preview, validação e persistência completas no Import Center.",
     icon: "play",
-    status: "preview",
+    status: "available",
   },
   {
     name: "Instagram",
-    description: "Importação futura de posts, reels, alcance e engajamento.",
+    description: "XLSX de audiência (Follower History) — detecção, preview, validação e persistência de métricas de seguidores.",
     icon: "camera",
-    status: "planned",
+    status: "available",
   },
   {
     name: "TikTok",
-    description: "Importação futura de vídeos curtos, visualizações e interações.",
+    description: "CSV de Promoções — detecção, preview, validação e persistência de campanhas pagas (custo, views, seguidores).",
     icon: "music",
-    status: "planned",
+    status: "available",
   },
   {
     name: "Meta Ads",
@@ -108,15 +136,19 @@ function ImporterIcon({ icon }: { icon: (typeof IMPORTERS)[number]["icon"] }) {
   }
 }
 
-export default function IntelligenceImportsPage() {
+export default async function IntelligenceImportsPage() {
+  const ownerId = await requireOwnerId();
+  const [imports, datasets] = await Promise.all([listImports(ownerId), listDatasets(ownerId)]);
+  const historyRows = buildImportHistoryRows(imports ?? [], datasets ?? []);
+
   return (
     <div className="space-y-6">
       <section className="rounded-3xl border border-slate-800 bg-slate-950/80 p-8">
         <p className="text-sm uppercase tracking-[0.24em] text-slate-400">Importações</p>
         <h2 className="mt-3 text-3xl font-semibold text-white">Importações</h2>
         <p className="mt-4 max-w-2xl text-slate-300">
-          Centralize aqui os dados vindos das plataformas do BookCringe para preparar futuras análises,
-          relatórios e automações editoriais.
+          Centralize aqui os dados vindos das plataformas do BookCringe para análises, decisões e o Chat de
+          Intelligence.
         </p>
       </section>
 
@@ -125,12 +157,12 @@ export default function IntelligenceImportsPage() {
           <div>
             <h3 className="text-xl font-semibold text-white">Import Center</h3>
             <p className="mt-1 text-sm text-slate-400">
-              Fluxo completo de importação — seleção, Detection Preview e Validação — para
-              arquivos do YouTube Studio.
+              Fluxo completo de importação — seleção, Detection Preview, validação e persistência — para YouTube,
+              Instagram (audiência) e TikTok (promoções).
             </p>
           </div>
           <span className="rounded-full border border-emerald-800/60 bg-emerald-950/40 px-3 py-1 text-xs font-medium text-emerald-300">
-            Import Center: YouTube
+            YouTube · Instagram · TikTok
           </span>
         </div>
 
@@ -141,7 +173,7 @@ export default function IntelligenceImportsPage() {
         <div>
           <h3 className="text-xl font-semibold text-white">Importadores disponíveis</h3>
           <p className="mt-1 text-sm text-slate-400">
-            Conectores planejados para as próximas fases do Intelligence.
+            Plataformas com importação disponível e conectores planejados.
           </p>
         </div>
 
@@ -155,9 +187,9 @@ export default function IntelligenceImportsPage() {
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-800 bg-slate-900 text-slate-300">
                   <ImporterIcon icon={importer.icon} />
                 </div>
-                {importer.status === "preview" ? (
+                {importer.status === "available" ? (
                   <span className="rounded-full border border-emerald-800/60 bg-emerald-950/40 px-2.5 py-1 text-xs font-medium text-emerald-300">
-                    Preview disponível
+                    Importação disponível
                   </span>
                 ) : (
                   <span className="rounded-full border border-amber-900/60 bg-amber-950/40 px-2.5 py-1 text-xs font-medium text-amber-300">
@@ -176,7 +208,7 @@ export default function IntelligenceImportsPage() {
         <div>
           <h3 className="text-xl font-semibold text-white">Histórico de importações</h3>
           <p className="mt-1 text-sm text-slate-400">
-            As importações realizadas aparecerão aqui quando a funcionalidade for implementada.
+            Todas as importações concluídas ou em andamento, ordenadas da mais recente para a mais antiga.
           </p>
         </div>
 
@@ -192,34 +224,65 @@ export default function IntelligenceImportsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800 bg-slate-950/60 text-slate-300">
-              <tr>
-                <td colSpan={5} className="px-5 py-12 text-center">
-                  <div className="mx-auto flex max-w-sm flex-col items-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-800 bg-slate-900 text-slate-400">
-                      <svg
-                        width="22"
-                        height="22"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        aria-hidden="true"
-                      >
-                        <path d="M3 3v18h18" />
-                        <path d="M7 14h3" />
-                        <path d="M12 10h3" />
-                        <path d="M17 6h3" />
-                      </svg>
+              {historyRows.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-5 py-12 text-center">
+                    <div className="mx-auto flex max-w-sm flex-col items-center">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-800 bg-slate-900 text-slate-400">
+                        <svg
+                          width="22"
+                          height="22"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="M3 3v18h18" />
+                          <path d="M7 14h3" />
+                          <path d="M12 10h3" />
+                          <path d="M17 6h3" />
+                        </svg>
+                      </div>
+                      <p className="mt-4 font-semibold text-white">Nenhuma importação registrada</p>
+                      <p className="mt-2 text-sm text-slate-400">
+                        Assim que uma importação for concluída no Import Center acima, ela aparecerá aqui.
+                      </p>
                     </div>
-                    <p className="mt-4 font-semibold text-white">Nenhuma importação registrada</p>
-                    <p className="mt-2 text-sm text-slate-400">
-                      O histórico será preenchido quando os importadores estiverem ativos.
-                    </p>
-                  </div>
-                </td>
-              </tr>
+                  </td>
+                </tr>
+              ) : (
+                historyRows.map((entry) => (
+                  <tr key={entry.id}>
+                    <td className="px-5 py-4 font-medium text-white">{platformLabel(entry.platform)}</td>
+                    <td className="max-w-[220px] truncate px-5 py-4" title={entry.fileName}>
+                      {entry.fileName}
+                    </td>
+                    <td className="px-5 py-4">{formatDateTime(entry.startedAt)}</td>
+                    <td className="px-5 py-4">
+                      <span
+                        className={
+                          entry.status === "completed"
+                            ? "text-emerald-300"
+                            : entry.status === "failed"
+                              ? "text-red-300"
+                              : "text-amber-300"
+                        }
+                      >
+                        {IMPORT_STATUS_LABELS[entry.status]}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4">
+                      {formatNumber(entry.acceptedRecords)} aceitos
+                      {entry.rejectedRecords > 0 ? (
+                        <span className="text-red-400"> · {formatNumber(entry.rejectedRecords)} rejeitados</span>
+                      ) : null}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

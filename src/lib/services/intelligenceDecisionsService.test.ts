@@ -27,8 +27,11 @@ vi.mock("@/lib/services/bookService", () => ({
   getBooks: getBooksMock,
 }));
 
+const OWNER_ID = "filipe-santos";
+
 const DATASET: IntelligenceDatasetRecord = {
   id: "dataset-1",
+  owner_id: OWNER_ID,
   platform: "youtube",
   name: "YouTube Studio — Desempenho de vídeos",
   created_at: "2026-01-01T00:00:00.000Z",
@@ -84,7 +87,7 @@ describe("getRecommendedDecisions", () => {
     listMetricsMock.mockResolvedValue([METRIC]);
     getBooksMock.mockResolvedValue([{ id: "book-1", slug: "livro", title: "Livro", author: "Autor", genres: [], metadata: {}, created_at: "2026-01-01T00:00:00.000Z", updated_at: "2026-01-01T00:00:00.000Z" }]);
 
-    const decisions = await getRecommendedDecisions();
+    const decisions = await getRecommendedDecisions(OWNER_ID);
 
     expect(decisions.map((decision) => decision.id)).toEqual(
       expect.arrayContaining(["repeat-best-theme", "import-stale-dataset"])
@@ -98,7 +101,7 @@ describe("getRecommendedDecisions", () => {
     listMetricsMock.mockResolvedValue(null);
     getBooksMock.mockResolvedValue(null);
 
-    const decisions = await getRecommendedDecisions();
+    const decisions = await getRecommendedDecisions(OWNER_ID);
 
     expect(decisions).toEqual([]);
   });
@@ -137,7 +140,7 @@ describe("getRecommendedDecisions", () => {
     ]);
     getBooksMock.mockResolvedValue([]);
 
-    const decisions = await getRecommendedDecisions();
+    const decisions = await getRecommendedDecisions(OWNER_ID);
 
     expect(decisions.map((decision) => decision.id)).toEqual(
       expect.arrayContaining([
@@ -186,7 +189,7 @@ describe("getRecommendedDecisions", () => {
     ]);
     getBooksMock.mockResolvedValue([]);
 
-    const decisions = await getRecommendedDecisions();
+    const decisions = await getRecommendedDecisions(OWNER_ID);
 
     expect(decisions.map((decision) => decision.id)).toEqual(
       expect.arrayContaining([
@@ -245,7 +248,7 @@ describe("getRecommendedDecisions", () => {
       },
     ]);
 
-    const decisions = await getRecommendedDecisions();
+    const decisions = await getRecommendedDecisions(OWNER_ID);
 
     expect(decisions.map((decision) => decision.id)).toEqual(
       expect.arrayContaining([
@@ -294,7 +297,7 @@ describe("getRecommendedDecisions", () => {
     ]);
     getBooksMock.mockResolvedValue([]);
 
-    const decisions = await getRecommendedDecisions();
+    const decisions = await getRecommendedDecisions(OWNER_ID);
 
     expect(decisions.map((decision) => decision.id)).toEqual(expect.arrayContaining(["reallocate-campaign-budget"]));
     const decision = decisions.find((d) => d.id === "reallocate-campaign-budget");

@@ -35,7 +35,6 @@ export default async function AdminSettingsPage({ searchParams }: AdminSettingsP
         <h1 className="mt-3 text-3xl font-semibold text-white">Central de configurações</h1>
         <p className="mt-4 max-w-2xl text-slate-300">
           Informações institucionais, redes sociais, textos globais e configurações do Clube de Leitura.
-          Estas alterações ainda não estão conectadas ao site público.
         </p>
       </div>
 
@@ -59,19 +58,6 @@ export default async function AdminSettingsPage({ searchParams }: AdminSettingsP
               monthOptions={monthOptions}
               errorMessage={error}
             />
-          </div>
-
-          <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-8">
-            <h2 className="text-xl font-semibold text-white">Outras configurações</h2>
-            <p className="mt-1 text-sm text-slate-400">
-              Campos fora do escopo deste módulo — somente leitura por aqui (ver relatório).
-            </p>
-            <dl className="mt-6 grid gap-4 sm:grid-cols-2">
-              <div>
-                <dt className="text-xs uppercase tracking-[0.24em] text-slate-400">Meta anual</dt>
-                <dd className="mt-1 text-sm text-slate-200">{settings.annual_goal}</dd>
-              </div>
-            </dl>
           </div>
         </>
       )}

@@ -117,13 +117,15 @@ function setupHappyPathMocks() {
   getIntelligenceChatModelMock.mockReturnValue({ modelId: "mock-model" });
 }
 
+const OWNER_ID = "filipe-santos";
+
 describe("askIntelligenceChat", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it("retorna erro amigável, sem chamar nenhum service, quando a pergunta está vazia", async () => {
-    const result = await askIntelligenceChat("   ");
+    const result = await askIntelligenceChat(OWNER_ID, "   ");
 
     expect(result).toEqual({ status: "error", message: expect.stringContaining("Digite uma pergunta") });
     expect(getBestContentAnswerMock).not.toHaveBeenCalled();
@@ -132,7 +134,7 @@ describe("askIntelligenceChat", () => {
   it("retorna erro amigável, sem chamar nenhum service de dados, quando não há provedor de IA configurado", async () => {
     getIntelligenceChatModelMock.mockReturnValue(null);
 
-    const result = await askIntelligenceChat("Qual foi o melhor conteúdo?");
+    const result = await askIntelligenceChat(OWNER_ID, "Qual foi o melhor conteúdo?");
 
     expect(result).toEqual({
       status: "error",
@@ -145,7 +147,7 @@ describe("askIntelligenceChat", () => {
     setupHappyPathMocks();
     generateTextMock.mockResolvedValue({ text: "O vídeo 'Vídeo X' foi o destaque, com ótimo desempenho!" });
 
-    const result = await askIntelligenceChat("Qual foi o conteúdo com melhor desempenho?");
+    const result = await askIntelligenceChat(OWNER_ID, "Qual foi o conteúdo com melhor desempenho?");
 
     expect(result.status).toBe("ok");
     if (result.status !== "ok") throw new Error("expected ok result");
@@ -156,13 +158,15 @@ describe("askIntelligenceChat", () => {
     const call = generateTextMock.mock.calls[0][0];
     expect(call.model).toEqual({ modelId: "mock-model" });
     expect(call.user ?? call.prompt).toContain("Vídeo X");
+
+    expect(getBestContentAnswerMock).toHaveBeenCalledWith(OWNER_ID);
   });
 
   it("nunca lança e devolve erro amigável quando o provedor de IA falha", async () => {
     setupHappyPathMocks();
     generateTextMock.mockRejectedValue(new Error("network error"));
 
-    const result = await askIntelligenceChat("Qual foi o conteúdo com melhor desempenho?");
+    const result = await askIntelligenceChat(OWNER_ID, "Qual foi o conteúdo com melhor desempenho?");
 
     expect(result).toEqual({
       status: "error",
@@ -174,7 +178,7 @@ describe("askIntelligenceChat", () => {
     setupHappyPathMocks();
     generateTextMock.mockResolvedValue({ text: "   " });
 
-    const result = await askIntelligenceChat("Qual foi o conteúdo com melhor desempenho?");
+    const result = await askIntelligenceChat(OWNER_ID, "Qual foi o conteúdo com melhor desempenho?");
 
     expect(result).toEqual({
       status: "error",

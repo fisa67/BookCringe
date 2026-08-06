@@ -29,7 +29,13 @@ export interface ImportNormalizer<
 }
 
 export interface ImportPersistence<TRecord extends NormalizedImportRecord = NormalizedImportRecord> {
-  persist(records: TRecord[], batch: ImportBatch): Promise<PersistenceReceipt>;
+  /**
+   * `ownerId` (Sprint "Multi-Tenant Foundation"): o criador autenticado
+   * dono da importação — repassado para `findOrCreateDataset`, para que o
+   * Dataset resultante nasça isolado por dono, nunca compartilhado entre
+   * criadores da mesma Platform.
+   */
+  persist(records: TRecord[], batch: ImportBatch, ownerId: string): Promise<PersistenceReceipt>;
 }
 
 export interface ImporterDefinition<

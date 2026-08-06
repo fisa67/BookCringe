@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { requireOwnerId } from "@/lib/auth/ownerId";
 import { getIntelligenceDashboardData } from "@/lib/services/intelligenceDashboardService";
 import { getWorkspaceActions } from "@/lib/services/workspaceService";
 import { PLATFORM_LABELS } from "@/lib/intelligence/session";
@@ -61,7 +62,11 @@ const IMPORT_STATUS_LABELS: Record<string, string> = {
  * Engine (Sprint 11).
  */
 export default async function IntelligenceDashboardPage() {
-  const [data, todayActions] = await Promise.all([getIntelligenceDashboardData(), getWorkspaceActions()]);
+  const ownerId = await requireOwnerId();
+  const [data, todayActions] = await Promise.all([
+    getIntelligenceDashboardData(ownerId),
+    getWorkspaceActions(ownerId),
+  ]);
 
   if (data.summary.importsCount === 0) {
     return <DashboardEmptyState />;
